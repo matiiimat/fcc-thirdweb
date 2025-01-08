@@ -18,7 +18,7 @@ export default function HomePage() {
   const router = useRouter(); // Initialize the useRouter hook
 
   const goToShootingTraining = () => {
-    router.push("/shootingTraining"); // Navigate to ShootingTraining page
+    router.push("/shooting"); // Navigate to ShootingTraining page
   };
 
   return (

@@ -1,11 +1,14 @@
-import ShootingTraining from "./ShootingTraining";
+// pages/index.tsx
+import React from "react";
+import PenaltyMiniGame from "./PenaltyMiniGame";
 
-export default function Page() {
+const Home: React.FC = () => {
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
-      <h1>Penalty Shooting Game</h1>
-      <p>Swipe to shoot the ball into the goal. You have 5 shots</p>
-      <ShootingTraining />
+    <div>
+      <h1>Welcome to the Shooting Training</h1>
+      <PenaltyMiniGame />
     </div>
   );
-}
+};
+
+export default Home;
