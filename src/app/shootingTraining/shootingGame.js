@@ -3,7 +3,7 @@
 import Phaser from 'phaser';
 import { useEffect, useRef } from 'react';
 
-export default function PenaltyGame() {
+export default function ShootingGame() {
   const gameRef = useRef(null);
 
   useEffect(() => {
