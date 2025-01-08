@@ -68,6 +68,14 @@ const PenaltyMiniGame: React.FC = () => {
     const goalkeeperDivesTo = directions[randomKeeperPosition];
 
     let ballTargetX = 150; // Default to center
+    let goalkeeperX = 120; // Default to center
+
+    if (goalkeeperDivesTo === "left") {
+      goalkeeperX = 70; // Move goalkeeper left
+    } else if (goalkeeperDivesTo === "right") {
+      goalkeeperX = 170; // Move goalkeeper right
+    }
+
     if (swipeDirection === "left") {
       ballTargetX = 100; // Move ball left
     } else if (swipeDirection === "right") {
@@ -87,6 +95,7 @@ const PenaltyMiniGame: React.FC = () => {
     setGameState((prev) => ({
       ...prev,
       ball: { ...prev.ball, x: ballTargetX, y: ballTargetY },
+      goalkeeper: { ...prev.goalkeeper, x: goalkeeperX },
       result,
     }));
   };
@@ -107,12 +116,22 @@ const PenaltyMiniGame: React.FC = () => {
 
   return (
     <div style={{ textAlign: "center", marginTop: "20px" }}>
+      <style jsx global>{`
+        body {
+          margin: 0;
+          overflow: hidden; /* Prevent scrolling */
+        }
+      `}</style>
       <h2>Penalty Mini Game</h2>
       <canvas
         ref={canvasRef}
         width={300}
         height={500}
-        style={{ border: "1px solid #000", backgroundColor: "#4CAF50" }}
+        style={{
+          border: "1px solid #000",
+          backgroundColor: "#4CAF50",
+          touchAction: "none", // Prevent scrolling
+        }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       />
