@@ -27,7 +27,7 @@ export default function RootLayout({
           {/* Page content */}
           {children}
 
-          {/* The Footer goes on bottom */}
+          {/* The Footer goes on bottom here */}
           <Footer />
         </ThirdwebProvider>
       </body>
