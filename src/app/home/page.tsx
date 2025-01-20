@@ -22,7 +22,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="p-4 min-h-[100vh] flex flex-col items-center justify-center relative">
+    <main className="p-4 min-h-[100vh] flex flex-col items-center justify-start relative">
       {/* Connect Button in the Top-Right */}
       <div className="absolute top-4 right-4">
         <ConnectButton
@@ -36,10 +36,11 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Page Content: Centered */}
-      <h1 className="text-3xl md:text-5xl font-bold text-zinc-100 mb-6">
+      {/* "Home" text: moved to top and half the original size */}
+      <h1 className="text-2xl md:text-3xl font-bold text-zinc-100 mt-6 mb-4">
         Home
       </h1>
+
       <button
         onClick={goToShootingTraining}
         className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"

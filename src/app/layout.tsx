@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
-import Footer from "./Footer"; // <-- Import the new Footer
+import Header from "./Header"; // <-- Import the new Header
+import Footer from "./Footer"; // <-- Import the existing Footer
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "thirdweb SDK + Next starter",
-  description:
-    "Starter template for using thirdweb SDK with Next.js App router",
+  title: "Farcaster FC",
+  description: "Online football management game on the Farcaster",
 };
 
 export default function RootLayout({
@@ -21,8 +21,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThirdwebProvider>
+          {/* The Header goes on top */}
+          <Header />
+
+          {/* Page content */}
           {children}
-          {/* Conditionally render the Footer on all pages except "/" */}
+
+          {/* The Footer goes on bottom */}
           <Footer />
         </ThirdwebProvider>
       </body>
