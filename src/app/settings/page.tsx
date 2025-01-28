@@ -15,17 +15,13 @@ const wallets = [
   createWallet("com.coinbase.wallet"),
 ];
 
-export default function HomePage() {
+export default function SettingsPage() {
   const router = useRouter();
-
-  const goToShootingTraining = () => {
-    router.push("/shooting");
-  };
 
   return (
     <>
       {/* Pass the pageName prop to the Header */}
-      <Header pageName="Home" />
+      <Header pageName="Settings" />
 
       <main className="p-4 min-h-[100vh] flex flex-col items-center justify-center relative">
         {/* Connect Button in the Top-Right */}
@@ -40,17 +36,6 @@ export default function HomePage() {
             }}
           />
         </div>
-
-        {/* Page Content: Centered */}
-        <h1 className="text-3xl md:text-5xl font-bold text-zinc-100 mb-6">
-          Home
-        </h1>
-        <button
-          onClick={goToShootingTraining}
-          className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
-        >
-          Go to Shooting Training
-        </button>
       </main>
     </>
   );

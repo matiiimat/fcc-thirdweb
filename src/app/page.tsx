@@ -27,15 +27,10 @@ export default function Home() {
         <h1 className="text-2xl md:text-6xl font-semibold md:font-bold tracking-tighter text-zinc-100">
           Farcaster FC
         </h1>
-
-        {/* PLAY Button */}
-        <button
-          onClick={goToHome}
-          className="px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold transition-colors"
-        >
-          PLAY
-        </button>
-
+        <div>
+          Connect to your web3 wallet and click on the play button to get
+          started.
+        </div>
         {/* Connect Button */}
         <div className="flex justify-center">
           <ConnectButton
@@ -48,6 +43,14 @@ export default function Home() {
             }}
           />
         </div>
+
+        {/* PLAY Button */}
+        <button
+          onClick={goToHome}
+          className="px-6 py-3 text-white bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold transition-colors"
+        >
+          PLAY
+        </button>
       </div>
     </main>
   );
