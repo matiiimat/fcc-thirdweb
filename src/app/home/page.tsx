@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Header from "../components/Header";
-import { ConnectButton } from "thirdweb/react";
+import { ConnectButton, useActiveWallet } from "thirdweb/react";
 import { client } from "../client";
 import { useRouter } from "next/navigation";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
@@ -17,6 +17,8 @@ const wallets = [
 ];
 
 export default function HomePage() {
+  const wallet = useActiveWallet();
+
   return (
     <>
       {/* Header */}
@@ -39,7 +41,13 @@ export default function HomePage() {
       <div className="flex flex-col items-center mt-4">
         {/* TODO: update to player's name instead of "PLAYER" */}
         <h2 className="text-center text-[26px]">PLAYER</h2>
-
+        <div>
+          {wallet ? (
+            <p>Connected Wallet Address: {wallet.id}</p>
+          ) : (
+            <p>No wallet connected</p>
+          )}
+        </div>
         {/* Stats */}
         <div className="flex flex-col items-start space-y-2 mt-4">
           <div>
