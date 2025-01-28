@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
+import Header from "../components/Header";
 import { ConnectButton } from "thirdweb/react";
 import { client } from "../client";
 import { useRouter } from "next/navigation";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
-import Header from "../components/Header"; // Import the Header
 
 const wallets = [
   inAppWallet({
@@ -16,42 +17,53 @@ const wallets = [
 ];
 
 export default function HomePage() {
-  const router = useRouter();
-
-  const goToShootingTraining = () => {
-    router.push("/shooting");
-  };
-
   return (
     <>
-      {/* Pass the pageName prop to the Header */}
+      {/* Header */}
       <Header pageName="Home" />
 
-      <main className="p-4 min-h-[100vh] flex flex-col items-center justify-center relative">
-        {/* Connect Button in the Top-Right */}
-        <div className="absolute top-4 right-4">
-          <ConnectButton
-            client={client}
-            wallets={wallets}
-            connectModal={{ size: "compact" }}
-            appMetadata={{
-              name: "Home",
-              url: "https://example.com",
-            }}
-          />
-        </div>
+      {/* Image centered at 75% width */}
+      <div className="flex justify-center mt-4">
+        <Image
+          src="/assets/home.png"
+          alt="Home"
+          width={0}
+          height={0}
+          sizes="100vw"
+          className="w-3/4 h-auto"
+          priority
+        />
+      </div>
 
-        {/* Page Content: Centered */}
-        <h1 className="text-3xl md:text-5xl font-bold text-zinc-100 mb-6">
-          Home
-        </h1>
-        <button
-          onClick={goToShootingTraining}
-          className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
-        >
-          Go to Shooting Training
-        </button>
-      </main>
+      {/* Player section, just below the image */}
+      <div className="flex flex-col items-center mt-4">
+        {/* TODO: update to player's name instead of "PLAYER" */}
+        <h2 className="text-center text-[26px]">PLAYER</h2>
+
+        {/* Stats */}
+        <div className="flex flex-col items-start space-y-2 mt-4">
+          <div>
+            <span className="font-semibold">OVERALL: </span>
+            {/* Replace 99 with your real variable */}
+            <span>99</span>
+          </div>
+          <div>
+            <span className="font-semibold">LAST GAME: </span>
+            {/* Replace 3 with your real variable */}
+            <span>3</span>
+          </div>
+          <div>
+            <span className="font-semibold">TRAINING BONUS: </span>
+            {/* Replace 5 with your real variable */}
+            <span>5</span>
+          </div>
+          <div>
+            <span className="font-semibold">CAPITAL: </span>
+            {/* Replace 1000 with your real variable */}
+            <span>1000</span>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

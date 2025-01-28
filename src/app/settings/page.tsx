@@ -23,9 +23,10 @@ export default function SettingsPage() {
       {/* Pass the pageName prop to the Header */}
       <Header pageName="Settings" />
 
-      <main className="p-4 min-h-[100vh] flex flex-col items-center justify-center relative">
+      <main>
+        <br></br>
         {/* Connect Button in the Top-Right */}
-        <div className="absolute top-4 right-4">
+        <div className="flex flex-col items-center space-y-4">
           <ConnectButton
             client={client}
             wallets={wallets}
@@ -35,6 +36,16 @@ export default function SettingsPage() {
               url: "https://example.com",
             }}
           />
+        </div>
+        <br></br>
+        {/* Centered Back Button */}
+        <div className="flex flex-col items-center space-y-4">
+          <button
+            onClick={() => router.back()}
+            className="bg-gray-200 text-black hover:bg-gray-300 rounded px-4 py-2 font-medium"
+          >
+            Back
+          </button>
         </div>
       </main>
     </>
