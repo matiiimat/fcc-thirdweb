@@ -2,9 +2,24 @@
 
 import Image from "next/image";
 import Header from "../components/Header";
+import { ConnectButton, useActiveWallet } from "thirdweb/react";
+import { client } from "../client";
+import { useRouter } from "next/navigation";
+import { inAppWallet, createWallet } from "thirdweb/wallets";
 import Footer from "../components/Footer";
 
+const wallets = [
+  inAppWallet({
+    auth: {
+      options: ["farcaster"],
+    },
+  }),
+  createWallet("com.coinbase.wallet"),
+];
+
 export default function HomePage() {
+  const wallet = useActiveWallet()?.getAccount();
+
   return (
     <>
       {/* Header */}
