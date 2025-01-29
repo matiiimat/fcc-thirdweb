@@ -14,10 +14,10 @@ export default function Footer() {
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 flex justify-around items-center bg-zinc-800 p-4 text-2xl">
+      <button onClick={() => router.push("/home")}>🏠</button>
       <button onClick={() => router.push("/train")}>👟</button>
-      <button>🛒</button>
+      <button onClick={() => router.push("/invest")}>📈</button>
       <button>👥</button>
-      <button>🏆</button>
     </footer>
   );
 }

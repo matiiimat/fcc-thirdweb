@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["farcaster"],
+      options: ["farcaster", "apple", "google"],
     },
   }),
   createWallet("com.coinbase.wallet"),
