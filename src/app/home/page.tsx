@@ -28,7 +28,7 @@ export default function HomePage() {
       {/* Image centered at 75% width */}
       <div className="flex justify-center mt-4">
         <Image
-          src="/assets/home.png"
+          src="/home.png"
           alt="Home"
           width={0}
           height={0}
