@@ -15,7 +15,7 @@ export default function Header({ pageName }: HeaderProps) {
   };
 
   return (
-    <header className="relative h-16 bg-[#25121B] text-white py-4">
+    <header className="relative h-16 bg-[#FFFFF] text-white py-4">
       <h1 className="absolute top-2 left-2 font-bold text-[32px]">
         {pageName}
       </h1>
