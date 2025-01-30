@@ -5,6 +5,7 @@ import { client } from "../client";
 import { useRouter } from "next/navigation";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import Header from "../components/Header"; // Import the Header
+import { base } from "thirdweb/chains"; // TEST CHAIN ID
 
 const wallets = [
   inAppWallet({
@@ -29,6 +30,7 @@ export default function SettingsPage() {
         <div className="flex flex-col items-center space-y-4">
           <ConnectButton
             client={client}
+            chain={base} // TEST CHAIN BASE
             wallets={wallets}
             connectModal={{ size: "compact" }}
             appMetadata={{
