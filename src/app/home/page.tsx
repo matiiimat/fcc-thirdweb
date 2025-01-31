@@ -35,7 +35,8 @@ const wallets = [
 ];
 
 export default function HomePage() {
-  const wallet = useActiveWallet()?.getAccount();
+  const activeWallet = useActiveWallet();
+  const wallet = activeWallet?.getAccount();
   const router = useRouter();
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,19 +50,27 @@ export default function HomePage() {
       }
 
       try {
-        const response = await fetch(`/api/players/address/${wallet}`);
+        console.log("Fetching player for wallet:", wallet.toString()); // Debug log
+        const response = await fetch(
+          `/api/players/address/${wallet.toString()}`
+        );
+
         if (!response.ok) {
           if (response.status === 404) {
-            // Player doesn't exist yet
+            console.log("No player found for wallet"); // Debug log
             setPlayer(null);
           } else {
-            throw new Error("Failed to fetch player data");
+            const errorData = await response.json();
+            console.error("Error response:", errorData); // Debug log
+            throw new Error(errorData.error || "Failed to fetch player data");
           }
         } else {
           const data = await response.json();
+          console.log("Player data fetched:", data); // Debug log
           setPlayer(data);
         }
       } catch (err) {
+        console.error("Fetch player error:", err); // Debug log
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
@@ -81,6 +90,19 @@ export default function HomePage() {
     <>
       {/* Header */}
       <Header pageName="Home" />
+
+      {/* Image centered at 75% width */}
+      <div className="flex justify-center mt-4">
+        <Image
+          src="/home.png"
+          alt="Home"
+          width={0}
+          height={0}
+          sizes="100vw"
+          className="w-3/4 h-auto"
+          priority
+        />
+      </div>
 
       {/* Player section, just below the image */}
       <div className="flex flex-col items-center mt-4">
@@ -105,6 +127,9 @@ export default function HomePage() {
             >
               Create Player
             </button>
+            <div className="mt-4 text-sm text-gray-600">
+              Wallet: {wallet.toString()}
+            </div>
           </div>
         ) : (
           <>

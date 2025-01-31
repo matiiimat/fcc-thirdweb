@@ -7,7 +7,8 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 export default function CreatePlayerPage() {
-  const wallet = useActiveWallet()?.getAccount();
+  const activeWallet = useActiveWallet();
+  const wallet = activeWallet?.getAccount();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,9 @@ export default function CreatePlayerPage() {
         }
 
         // Check if player already exists
-        const response = await fetch(`/api/players/address/${wallet}`);
+        const response = await fetch(
+          `/api/players/address/${wallet.toString()}`
+        );
         if (response.ok) {
           // Player exists, redirect to home
           router.push("/");
@@ -49,21 +52,27 @@ export default function CreatePlayerPage() {
     setError(null);
 
     try {
+      console.log("Creating player with wallet:", wallet.toString()); // Debug log
+
       const response = await fetch("/api/players", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ethAddress: wallet,
+          ethAddress: wallet.toString(),
           team: "Unassigned", // Default team
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
+        console.error("Server error response:", data); // Debug log
         throw new Error(data.error || "Failed to create player");
       }
+
+      const data = await response.json();
+      console.log("Player created successfully:", data); // Debug log
 
       // Redirect to home page after successful creation
       router.push("/");
@@ -124,6 +133,10 @@ export default function CreatePlayerPage() {
           >
             {loading ? "Creating Player..." : "CREATE PLAYER"}
           </button>
+
+          <div className="mt-4 text-sm text-gray-600">
+            Connected Wallet: {wallet.toString()}
+          </div>
         </div>
       </div>
 
