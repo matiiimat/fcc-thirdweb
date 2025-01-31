@@ -1,59 +1,195 @@
+# Soccer Game Web3
 
-![tw-banner](https://github.com/thirdweb-example/next-starter/assets/57885104/20c8ce3b-4e55-4f10-ae03-2fe4743a5ee8)
+A web-based soccer management game with Web3 integration, built on Next.js and MongoDB.
 
-# thirdweb-next-starter
+## Features
 
-Starter template to build an onchain react native app with [thirdweb](https://thirdweb.com/) and [next](https://nextjs.org/).
+- Player Management System
+- Training Mechanics
+- Investment System
+- Team Matches
+- Web3 Integration (Base Network)
 
-## Installation
+## Tech Stack
 
-Install the template using [thirdweb create](https://portal.thirdweb.com/cli/create)
+- Frontend: Next.js with TypeScript
+- Backend: Next.js API Routes
+- Database: MongoDB
+- Authentication: Thirdweb
+- Styling: Tailwind CSS
 
-```bash
-  npx thirdweb create app --next
-```
+## Getting Started
 
-## Environment Variables
+### Prerequisites
 
-To run this project, you will need to add the following environment variables to your .env file:
+- Node.js 16.x or later
+- MongoDB Atlas account
+- Web3 wallet (MetaMask recommended)
 
-`CLIENT_ID`
+### Installation
 
-To learn how to create a client ID, refer to the [client documentation](https://portal.thirdweb.com/typescript/v5/client). 
-
-## Run locally
-
-Install dependencies
-
-```bash
-yarn
-```
-
-Start development server
-
-```bash
-yarn dev
-```
-
-Create a production build
+1. Clone the repository:
 
 ```bash
-yarn build
+git clone <repository-url>
+cd soccer-game-web3
 ```
 
-Preview the production build
+2. Install dependencies:
 
 ```bash
-yarn start
+npm install
 ```
 
-## Resources
+3. Set up environment variables:
+   Create a `.env.local` file with the following variables:
 
-- [Documentation](https://portal.thirdweb.com/typescript/v5)
-- [Templates](https://thirdweb.com/templates)
-- [YouTube](https://www.youtube.com/c/thirdweb)
-- [Blog](https://blog.thirdweb.com)
+```
+MONGODB_URI=your_mongodb_connection_string
+```
 
-## Need help?
+4. Run the development server:
 
-For help or feedback, please [visit our support site](https://thirdweb.com/support)
+```bash
+npm run dev
+```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## API Endpoints
+
+### Player Management
+
+#### GET /api/players
+
+Get all players
+
+#### GET /api/players/[id]
+
+Get a specific player by ID
+
+#### POST /api/players
+
+Create a new player
+
+```json
+{
+  "playerName": "string",
+  "ethAddress": "string",
+  "team": "string"
+}
+```
+
+#### PUT /api/players/[id]
+
+Update a player
+
+```json
+{
+  "playerName": "string",
+  "team": "string"
+  // other updateable fields
+}
+```
+
+#### DELETE /api/players/[id]
+
+Delete a player
+
+### Training System
+
+#### POST /api/game/train
+
+Train a player's stat
+
+```json
+{
+  "playerId": "string",
+  "statToTrain": "strength|stamina|passing|shooting|defending|speed|positioning"
+}
+```
+
+### Investment System
+
+#### GET /api/game/invest
+
+Get available investment options
+
+#### POST /api/game/invest
+
+Make an investment
+
+```json
+{
+  "playerId": "string",
+  "investmentType": "SAFE|MODERATE|RISKY",
+  "amount": "number"
+}
+```
+
+### Match System
+
+#### POST /api/game/match
+
+Simulate a match between teams
+
+```json
+{
+  "homeTeamId": "string",
+  "awayTeamId": "string"
+}
+```
+
+## Game Mechanics
+
+### Player Stats
+
+- Range: 0.00 - 20.00
+- Stats:
+  - Strength
+  - Stamina
+  - Passing
+  - Shooting
+  - Defending
+  - Speed
+  - Positioning
+
+### Training
+
+- Cost increases with stat level
+- Success rate decreases with stat level
+- Stat increase: 0.5 per successful training
+
+### Investments
+
+1. Safe Investment
+   - Min Amount: 100
+   - Max Return: 15%
+   - Risk: 10%
+2. Moderate Investment
+   - Min Amount: 500
+   - Max Return: 35%
+   - Risk: 30%
+3. Risky Investment
+   - Min Amount: 1000
+   - Max Return: 100%
+   - Risk: 60%
+
+### Matches
+
+- Team performance based on player stats
+- Rewards for participation
+- Bonus rewards for winning
+- Individual player performance tracking
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
