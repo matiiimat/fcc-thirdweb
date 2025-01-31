@@ -1,3 +1,5 @@
+import { IPlayerStats } from '../models/Player';
+
 // Soccer player family names by nationality
 export const PLAYER_NAMES = {
   ENGLISH: [
@@ -32,19 +34,47 @@ export const PLAYER_NAMES = {
   ]
 } as const;
 
-type Nationality = keyof typeof PLAYER_NAMES;
+export type Nationality = keyof typeof PLAYER_NAMES;
 
 // Generate a random name based on ETH address
-export function generatePlayerName(ethAddress: string): string {
-  // Use the first few characters of the address to determine nationality
-  const nationalityHash = parseInt(ethAddress.slice(2, 4), 16);
+export function generatePlayerName(ethAddress: string): {
+  name: string;
+  nationality: Nationality;
+} {
+  // Use different parts of the address for better randomization
+  const nationalityHash = parseInt(ethAddress.slice(2, 6), 16);
+  const nameHash = parseInt(ethAddress.slice(6, 10), 16);
+  
   const nationalities = Object.keys(PLAYER_NAMES) as Nationality[];
   const nationality = nationalities[nationalityHash % nationalities.length];
-
-  // Use the next few characters to determine the name index
-  const nameHash = parseInt(ethAddress.slice(4, 6), 16);
+  
   const names = PLAYER_NAMES[nationality];
   const name = names[nameHash % names.length];
 
-  return name;
+  return { name, nationality };
+}
+
+// Apply nationality bonus to stats
+export function applyNationalityBonus(stats: IPlayerStats, nationality: Nationality): IPlayerStats {
+  const newStats = { ...stats };
+
+  switch (nationality) {
+    case 'ENGLISH':
+      newStats.strength = Math.min(20, newStats.strength + 5);
+      break;
+    case 'SPANISH':
+      newStats.passing = Math.min(20, newStats.passing + 5);
+      break;
+    case 'ITALIAN':
+      newStats.defending = Math.min(20, newStats.defending + 5);
+      break;
+    case 'BRAZILIAN':
+      newStats.shooting = Math.min(20, newStats.shooting + 5);
+      break;
+    case 'FRENCH':
+      newStats.speed = Math.min(20, newStats.speed + 5);
+      break;
+  }
+
+  return newStats;
 }

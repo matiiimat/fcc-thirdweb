@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Header from "../components/Header";
 import { ConnectButton, useActiveWallet } from "thirdweb/react";
 import { client } from "../client";
@@ -8,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import Footer from "../components/Footer";
 import { useEffect, useState } from "react";
-import { calculatePlayerRating } from "../lib/game";
+import { calculatePlayerRating, getStarRating } from "../lib/game";
 
 interface PlayerData {
   playerName: string;
@@ -91,21 +90,8 @@ export default function HomePage() {
       {/* Header */}
       <Header pageName="Home" />
 
-      {/* Image centered at 75% width */}
-      <div className="flex justify-center mt-4">
-        <Image
-          src="/home.png"
-          alt="Home"
-          width={0}
-          height={0}
-          sizes="100vw"
-          className="w-3/4 h-auto"
-          priority
-        />
-      </div>
-
-      {/* Player section, just below the image */}
-      <div className="flex flex-col items-center mt-4">
+      {/* Player section */}
+      <div className="flex flex-col items-center mt-8">
         {loading ? (
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
@@ -133,13 +119,14 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <h2 className="text-center text-[26px]">{player.playerName}</h2>
+            <h2 className="text-center text-[26px] mb-2">
+              {player.playerName}
+            </h2>
+            <div className="text-2xl mb-4">
+              {getStarRating(calculatePlayerRating(player.stats))}
+            </div>
             {/* Stats */}
             <div className="flex flex-col items-start space-y-2 mt-4">
-              <div>
-                <span className="font-semibold">OVERALL: </span>
-                <span>{calculatePlayerRating(player.stats)}</span>
-              </div>
               <div>
                 <span className="font-semibold">TRAINING STATUS: </span>
                 <span

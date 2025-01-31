@@ -79,8 +79,17 @@ export function calculateTrainingResult(
 
 // Calculate overall player rating
 export function calculatePlayerRating(stats: IPlayerStats): number {
-  const totalStats = Object.values(stats).reduce((sum, stat) => sum + stat, 0);
-  return Number((totalStats / Object.keys(stats).length).toFixed(2));
+  const totalStats = Object.entries(stats).reduce((sum, [key, value]) => {
+    return sum + value;
+  }, 0);
+  
+  // Calculate average on a scale of 0-5 stars
+  return Math.floor((totalStats / (Object.keys(stats).length * 20)) * 5);
+}
+
+// Get star rating display
+export function getStarRating(rating: number): string {
+  return '⭐️'.repeat(rating);
 }
 
 // Format stat name for display
@@ -94,4 +103,12 @@ export function getStatColor(value: number): string {
   if (value >= 10) return 'text-blue-500';
   if (value >= 5) return 'text-yellow-500';
   return 'text-red-500';
+}
+
+// Get all player stats for display
+export function getPlayerStats(stats: IPlayerStats): Array<{ name: string; value: number }> {
+  return Object.entries(stats).map(([key, value]) => ({
+    name: formatStatName(key),
+    value: value,
+  }));
 }

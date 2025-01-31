@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player, { IPlayer } from '@/app/models/Player';
 import { randomUUID } from 'crypto';
-import { generatePlayerName } from '@/app/lib/names';
+import { generatePlayerName, applyNationalityBonus } from '@/app/lib/names';
 import { validatePlayerData } from '@/app/lib/validation';
 
 // GET /api/players - Get all players
@@ -66,12 +66,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate player name based on ETH address
-    try {
-      const playerName = generatePlayerName(ethAddress);
-      console.log('Generated player name:', playerName); // Debug log
+    // Generate player name and nationality
+    const { name: playerName, nationality } = generatePlayerName(ethAddress);
+    console.log('Generated player name and nationality:', { playerName, nationality }); // Debug log
 
-      // Create new player with default stats
+    // Create base stats (all starting at 1)
+    const baseStats = {
+      strength: 1,
+      stamina: 1,
+      passing: 1,
+      shooting: 1,
+      defending: 1,
+      speed: 1,
+      positioning: 1,
+    };
+
+    // Apply nationality bonus
+    const stats = applyNationalityBonus(baseStats, nationality);
+    console.log('Applied nationality bonus:', stats); // Debug log
+
+    try {
+      // Create new player
       const newPlayer = new Player({
         playerId: randomUUID(),
         playerName,
@@ -79,35 +94,20 @@ export async function POST(req: NextRequest) {
         team,
         money: 1000, // Default starting money
         investments: [],
-        stats: {
-          strength: 5,
-          stamina: 5,
-          passing: 5,
-          shooting: 5,
-          defending: 5,
-          speed: 5,
-          positioning: 5,
-        },
+        stats,
         lastTrainingDate: null,
       });
 
       console.log('Attempting to save new player:', JSON.stringify(newPlayer.toJSON())); // Debug log
 
-      try {
-        await newPlayer.save();
-        console.log('Player saved successfully'); // Debug log
-        return NextResponse.json(newPlayer, { status: 201 });
-      } catch (saveError) {
-        console.error('Error saving player:', saveError);
-        return NextResponse.json(
-          { error: 'Failed to save player to database' },
-          { status: 500 }
-        );
-      }
-    } catch (error) {
-      console.error('Error creating player:', error);
+      await newPlayer.save();
+      console.log('Player saved successfully'); // Debug log
+
+      return NextResponse.json(newPlayer, { status: 201 });
+    } catch (saveError) {
+      console.error('Error saving player:', saveError);
       return NextResponse.json(
-        { error: 'Failed to create player' },
+        { error: 'Failed to save player to database' },
         { status: 500 }
       );
     }
