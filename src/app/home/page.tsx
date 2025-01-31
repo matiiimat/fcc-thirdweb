@@ -36,6 +36,7 @@ const wallets = [
 
 export default function HomePage() {
   const wallet = useActiveWallet()?.getAccount();
+  const router = useRouter();
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,19 +82,6 @@ export default function HomePage() {
       {/* Header */}
       <Header pageName="Home" />
 
-      {/* Image centered at 75% width */}
-      <div className="flex justify-center mt-4">
-        <Image
-          src="/home.png"
-          alt="Home"
-          width={0}
-          height={0}
-          sizes="100vw"
-          className="w-3/4 h-auto"
-          priority
-        />
-      </div>
-
       {/* Player section, just below the image */}
       <div className="flex flex-col items-center mt-4">
         {loading ? (
@@ -113,10 +101,7 @@ export default function HomePage() {
             <p className="mb-4">No player found for this wallet</p>
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              onClick={() => {
-                // Redirect to create player page
-                window.location.href = "/createPlayer";
-              }}
+              onClick={() => router.push("/createPlayer")}
             >
               Create Player
             </button>

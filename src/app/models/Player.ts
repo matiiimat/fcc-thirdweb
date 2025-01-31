@@ -109,6 +109,7 @@ const PlayerSchema = new Schema<IPlayer>(
       type: String,
       required: true,
       unique: true,
+      index: true,
     },
     playerName: {
       type: String,
@@ -121,6 +122,7 @@ const PlayerSchema = new Schema<IPlayer>(
       type: String,
       required: true,
       unique: true,
+      index: true,
     },
     team: {
       type: String,
@@ -143,11 +145,6 @@ const PlayerSchema = new Schema<IPlayer>(
     timestamps: true,
   }
 );
-
-// Indexes for better query performance
-PlayerSchema.index({ playerId: 1 });
-PlayerSchema.index({ ethAddress: 1 });
-PlayerSchema.index({ team: 1 });
 
 // Create the model
 export default mongoose.models.Player || mongoose.model<IPlayer>('Player', PlayerSchema);
