@@ -48,7 +48,7 @@ export default function TrainPage() {
       }
 
       try {
-        const walletAddress = wallet.address; // Use address property instead of toString()
+        const walletAddress = wallet.address;
         console.log("Fetching player for wallet:", walletAddress); // Debug log
 
         const response = await fetch(
@@ -98,6 +98,13 @@ export default function TrainPage() {
       }
 
       const result = await response.json();
+      // Ensure all stats are numbers in the result
+      result.player.stats = Object.fromEntries(
+        Object.entries(result.player.stats).map(([key, value]) => [
+          key,
+          Number(value),
+        ])
+      );
       setPlayer(result.player);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Training failed");
@@ -134,6 +141,12 @@ export default function TrainPage() {
   // Filter out work ethic from visible stats
   const visibleStats = playerStats.filter((stat) => stat.name !== "Work Ethic");
 
+  // Format stat value safely
+  const formatStatValue = (value: any) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? num.toFixed(2) : "0.00";
+  };
+
   return (
     <>
       <Header pageName="Train" />
@@ -167,15 +180,17 @@ export default function TrainPage() {
               <div key={name} className="bg-gray-800 p-4 rounded-lg shadow-md">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-white">{name}</span>
-                  <span className={getStatColor(value)}>
-                    {value.toFixed(2)}
+                  <span className={getStatColor(Number(value))}>
+                    {formatStatValue(value)}
                   </span>
                 </div>
                 {/* Progress bar */}
                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                   <div
-                    className={`${getStatColor(value)} h-2.5 rounded-full`}
-                    style={{ width: `${(value / 20) * 100}%` }}
+                    className={`${getStatColor(
+                      Number(value)
+                    )} h-2.5 rounded-full`}
+                    style={{ width: `${(Number(value) / 20) * 100}%` }}
                   ></div>
                 </div>
               </div>

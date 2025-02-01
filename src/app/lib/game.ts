@@ -1,114 +1,68 @@
-import { IPlayerStats } from '../models/Player';
-
-// Training bonus ranges based on current skill level
-const TRAINING_BONUS_RANGES = {
-  NOVICE: { min: 0.4, max: 0.6, maxSkill: 5 },
-  INTERMEDIATE: { min: 0.3, max: 0.4, maxSkill: 10 },
-  ADVANCED: { min: 0.2, max: 0.3, maxSkill: 16 },
-  EXPERT: { min: 0.1, max: 0.2, maxSkill: 19 },
-  MASTER: { min: 0.1, max: 0.1, maxSkill: 20 },
-};
-
-// Get random number between min and max
-function getRandomBonus(min: number, max: number): number {
-  return Number((Math.random() * (max - min) + min).toFixed(2));
+// Calculate player rating based on stats
+export function calculatePlayerRating(stats: any) {
+  const values = Object.values(stats).map(Number);
+  const sum = values.reduce((a: number, b: number) => a + b, 0);
+  return sum / values.length;
 }
 
-// Get training bonus based on current skill level
-function getTrainingBonus(currentSkill: number): number {
-  if (currentSkill <= TRAINING_BONUS_RANGES.NOVICE.maxSkill) {
-    return getRandomBonus(TRAINING_BONUS_RANGES.NOVICE.min, TRAINING_BONUS_RANGES.NOVICE.max);
-  } else if (currentSkill <= TRAINING_BONUS_RANGES.INTERMEDIATE.maxSkill) {
-    return getRandomBonus(TRAINING_BONUS_RANGES.INTERMEDIATE.min, TRAINING_BONUS_RANGES.INTERMEDIATE.max);
-  } else if (currentSkill <= TRAINING_BONUS_RANGES.ADVANCED.maxSkill) {
-    return getRandomBonus(TRAINING_BONUS_RANGES.ADVANCED.min, TRAINING_BONUS_RANGES.ADVANCED.max);
-  } else if (currentSkill <= TRAINING_BONUS_RANGES.EXPERT.maxSkill) {
-    return getRandomBonus(TRAINING_BONUS_RANGES.EXPERT.min, TRAINING_BONUS_RANGES.EXPERT.max);
-  } else {
-    return TRAINING_BONUS_RANGES.MASTER.min;
-  }
-}
-
-// Get random trainable stat
-export function getRandomTrainableStat(): keyof IPlayerStats {
-  const stats: (keyof IPlayerStats)[] = [
-    'strength',
-    'stamina',
-    'passing',
-    'shooting',
-    'defending',
-    'speed',
-    'positioning',
-  ];
-  return stats[Math.floor(Math.random() * stats.length)];
-}
-
-// Check if player can train today
-export function canTrainToday(lastTrainingDate: Date | null): boolean {
-  if (!lastTrainingDate) return true;
-
-  const now = new Date();
-  const lastTraining = new Date(lastTrainingDate);
-
-  // Reset hours, minutes, seconds, and milliseconds for date comparison
-  now.setHours(0, 0, 0, 0);
-  lastTraining.setHours(0, 0, 0, 0);
-
-  return now.getTime() > lastTraining.getTime();
-}
-
-// Calculate training result
-export function calculateTrainingResult(
-  currentStats: IPlayerStats
-): {
-  trainedStat: keyof IPlayerStats;
-  bonus: number;
-  newValue: number;
-} {
-  const trainedStat = getRandomTrainableStat();
-  const currentValue = currentStats[trainedStat];
-  const bonus = getTrainingBonus(currentValue);
-  const newValue = Math.min(20, Number((currentValue + bonus).toFixed(2)));
-
-  return {
-    trainedStat,
-    bonus,
-    newValue,
-  };
-}
-
-// Calculate overall player rating
-export function calculatePlayerRating(stats: IPlayerStats): number {
-  const totalStats = Object.entries(stats).reduce((sum, [key, value]) => {
-    return sum + value;
-  }, 0);
-  
-  // Calculate average on a scale of 0-5 stars
-  return Math.floor((totalStats / (Object.keys(stats).length * 20)) * 5);
-}
-
-// Get star rating display
-export function getStarRating(rating: number): string {
-  return '⭐️'.repeat(rating);
-}
-
-// Format stat name for display
-export function formatStatName(stat: string): string {
-  return stat.charAt(0).toUpperCase() + stat.slice(1);
+// Get star rating based on player rating
+export function getStarRating(rating: number) {
+  const stars = '⭐'.repeat(Math.floor(rating / 4));
+  return stars || '⭐';
 }
 
 // Get color class based on stat value
-export function getStatColor(value: number): string {
-  if (value >= 15) return 'text-green-500';
-  if (value >= 10) return 'text-blue-500';
-  if (value >= 5) return 'text-yellow-500';
-  return 'text-red-500';
+export function getStatColor(value: number) {
+  if (value >= 15) return 'text-yellow-400'; // Gold
+  if (value >= 10) return 'text-green-400'; // Green
+  if (value >= 5) return 'text-blue-400'; // Blue
+  return 'text-gray-400'; // Gray
 }
 
-// Get all player stats for display
-export function getPlayerStats(stats: IPlayerStats): Array<{ name: string; value: number }> {
+// Get player stats as array of name/value pairs
+export function getPlayerStats(stats: any) {
+  const statNames = {
+    strength: 'Strength',
+    stamina: 'Stamina',
+    passing: 'Passing',
+    shooting: 'Shooting',
+    defending: 'Defending',
+    speed: 'Speed',
+    positioning: 'Positioning',
+    workEthic: 'Work Ethic',
+  };
+
   return Object.entries(stats).map(([key, value]) => ({
-    name: formatStatName(key),
-    value: value,
+    name: statNames[key as keyof typeof statNames],
+    value: Number(value), // Ensure value is a number
   }));
+}
+
+// Calculate training result
+export function calculateTrainingResult(stats: any) {
+  // Convert stats to numbers
+  const currentStats = Object.fromEntries(
+    Object.entries(stats).map(([key, value]) => [key, Number(value)])
+  );
+
+  // Get trainable stats (exclude workEthic)
+  const trainableStats = Object.entries(currentStats)
+    .filter(([key]) => key !== 'workEthic')
+    .map(([key]) => key);
+
+  // Randomly select a stat to train
+  const trainedStat = trainableStats[Math.floor(Math.random() * trainableStats.length)];
+  const currentValue = currentStats[trainedStat];
+
+  // Calculate bonus (higher bonus for lower stats)
+  const baseBonus = (20 - currentValue) / 10; // Max 2.0 bonus at stat level 0
+  const randomFactor = 0.5 + Math.random(); // Random factor between 0.5 and 1.5
+  const bonus = baseBonus * randomFactor;
+
+  return {
+    trainedStat,
+    currentValue,
+    newValue: currentValue,
+    bonus: Math.max(0.1, Math.min(bonus, 2.0)), // Clamp bonus between 0.1 and 2.0
+  };
 }
