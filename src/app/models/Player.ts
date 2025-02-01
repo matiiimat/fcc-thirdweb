@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { PLAYER_CONSTANTS, VALIDATION } from '../lib/constants';
 
 // Interface for player stats
 export interface IPlayerStats {
@@ -40,9 +41,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   strength: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -51,9 +52,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   stamina: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -62,9 +63,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   passing: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -73,9 +74,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   shooting: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -84,9 +85,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   defending: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -95,9 +96,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   speed: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -106,9 +107,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   positioning: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -117,9 +118,9 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   workEthic: {
     type: Number,
     required: true,
-    min: 0,
-    max: 20,
-    default: 1,
+    min: PLAYER_CONSTANTS.MIN_STAT_VALUE,
+    max: PLAYER_CONSTANTS.MAX_STAT_VALUE,
+    default: PLAYER_CONSTANTS.DEFAULT_STAT_VALUE,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
@@ -163,20 +164,19 @@ const PlayerSchema = new Schema<IPlayer>(
       type: String,
       required: true,
       trim: true,
-      minlength: 2,
-      maxlength: 50,
+      minlength: PLAYER_CONSTANTS.MIN_NAME_LENGTH,
+      maxlength: PLAYER_CONSTANTS.MAX_NAME_LENGTH,
     },
     ethAddress: {
       type: String,
       required: true,
       unique: true,
       trim: true,
-      lowercase: true, // Ensure addresses are stored in lowercase
+      lowercase: true,
       index: true,
       validate: {
         validator: function(v: string) {
-          // Basic ETH address validation (starts with 0x and has correct length)
-          return /^0x[a-fA-F0-9]{40}$/.test(v);
+          return VALIDATION.ETH_ADDRESS_REGEX.test(v);
         },
         message: props => `${props.value} is not a valid ETH address!`
       }
@@ -185,11 +185,12 @@ const PlayerSchema = new Schema<IPlayer>(
       type: String,
       required: true,
       trim: true,
+      default: PLAYER_CONSTANTS.DEFAULT_TEAM,
     },
     money: {
       type: Number,
       required: true,
-      default: 1000,
+      default: PLAYER_CONSTANTS.DEFAULT_MONEY,
       min: 0,
       validate: {
         validator: Number.isFinite,
@@ -240,11 +241,13 @@ PlayerSchema.pre('save', function(next) {
     return;
   }
 
-  // Validate each stat is a finite number between 0 and 20
+  // Validate each stat is a finite number between min and max values
   const statNames = ['strength', 'stamina', 'passing', 'shooting', 'defending', 'speed', 'positioning', 'workEthic'];
   for (const stat of statNames) {
     const value = stats[stat as keyof IPlayerStats];
-    if (!Number.isFinite(value) || value < 0 || value > 20) {
+    if (!Number.isFinite(value) || 
+        value < PLAYER_CONSTANTS.MIN_STAT_VALUE || 
+        value > PLAYER_CONSTANTS.MAX_STAT_VALUE) {
       next(new Error(`Invalid value for ${stat}: ${value}`));
       return;
     }
