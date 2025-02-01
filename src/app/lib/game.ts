@@ -38,21 +38,38 @@ export function getPlayerStats(stats: any) {
   }));
 }
 
+// Convert Mongoose document to plain object
+function toPlainObject(obj: any): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'number' && !isNaN(value)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 // Calculate training result
 export function calculateTrainingResult(stats: any) {
-  // Convert stats to numbers
-  const currentStats = Object.fromEntries(
-    Object.entries(stats).map(([key, value]) => [key, Number(value)])
-  );
+  // Convert stats to plain object and ensure they're numbers
+  const currentStats = toPlainObject(stats);
 
   // Get trainable stats (exclude workEthic)
   const trainableStats = Object.entries(currentStats)
-    .filter(([key]) => key !== 'workEthic')
+    .filter(([key]) => key !== 'workEthic' && !key.startsWith('$'))
     .map(([key]) => key);
+
+  if (trainableStats.length === 0) {
+    throw new Error('No valid stats found for training');
+  }
 
   // Randomly select a stat to train
   const trainedStat = trainableStats[Math.floor(Math.random() * trainableStats.length)];
   const currentValue = currentStats[trainedStat];
+
+  if (typeof currentValue !== 'number' || isNaN(currentValue)) {
+    throw new Error(`Invalid value for stat ${trainedStat}: ${currentValue}`);
+  }
 
   // Calculate bonus (higher bonus for lower stats)
   const baseBonus = (20 - currentValue) / 10; // Max 2.0 bonus at stat level 0

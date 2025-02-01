@@ -42,8 +42,12 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      // Convert player stats to plain object
+      const plainStats = player.stats.toObject();
+      console.log('Plain stats:', plainStats); // Debug log
+
       // Calculate training result
-      const trainingResult = calculateTrainingResult(player.stats);
+      const trainingResult = calculateTrainingResult(plainStats);
       console.log('Training result:', trainingResult); // Debug log
 
       // Apply work ethic bonus based on consecutive connections
@@ -90,6 +94,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+      console.error('Training calculation error:', error);
       throw error;
     }
   } catch (error) {
