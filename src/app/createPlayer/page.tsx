@@ -23,7 +23,7 @@ export default function CreatePlayerPage() {
           return;
         }
 
-        const walletAddress = wallet.toString().toLowerCase(); // Normalize address
+        const walletAddress = wallet.address; // Use address property instead of toString()
         console.log("Checking wallet address:", walletAddress); // Debug log
 
         // Check if player already exists
@@ -61,7 +61,7 @@ export default function CreatePlayerPage() {
     setError(null);
 
     try {
-      const walletAddress = wallet.toString().toLowerCase(); // Normalize address
+      const walletAddress = wallet.address; // Use address property instead of toString()
       console.log("Creating player for wallet:", walletAddress); // Debug log
 
       const response = await fetch("/api/players", {
@@ -151,7 +151,7 @@ export default function CreatePlayerPage() {
           </button>
 
           <div className="mt-4 text-sm text-gray-600">
-            Connected Wallet: {wallet.toString()}
+            Connected Wallet: {wallet.address}
           </div>
         </div>
       </div>

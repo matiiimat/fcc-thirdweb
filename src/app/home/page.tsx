@@ -12,7 +12,7 @@ import { calculatePlayerRating, getStarRating } from "../lib/game";
 interface PlayerData {
   playerId: string;
   playerName: string;
-  ethAddress: string; // Add this to track stored address
+  ethAddress: string;
   stats: {
     strength: number;
     stamina: number;
@@ -53,7 +53,7 @@ export default function HomePage() {
         return;
       }
 
-      const walletAddress = wallet.toString().toLowerCase(); // Normalize address
+      const walletAddress = wallet.address; // Use address property instead of toString()
       console.log("Connected wallet address:", walletAddress); // Debug log
 
       try {
@@ -84,10 +84,10 @@ export default function HomePage() {
           }); // Debug log
 
           // Verify the addresses match
-          if (data.ethAddress.toLowerCase() !== walletAddress) {
+          if (data.ethAddress.toLowerCase() !== walletAddress.toLowerCase()) {
             console.error("Address mismatch:", {
               stored: data.ethAddress.toLowerCase(),
-              requested: walletAddress,
+              requested: walletAddress.toLowerCase(),
             });
             setPlayer(null);
           } else {
@@ -183,7 +183,7 @@ export default function HomePage() {
               Create Player
             </button>
             <div className="mt-4 text-sm text-gray-600">
-              Wallet: {wallet.toString()}
+              Wallet: {wallet.address}
             </div>
           </div>
         ) : (

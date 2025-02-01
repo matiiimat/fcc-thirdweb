@@ -15,6 +15,7 @@ import {
 interface PlayerData {
   playerId: string;
   playerName: string;
+  ethAddress: string;
   stats: {
     strength: number;
     stamina: number;
@@ -47,10 +48,12 @@ export default function TrainPage() {
       }
 
       try {
-        const walletAddress = wallet.toString();
+        const walletAddress = wallet.address; // Use address property instead of toString()
         console.log("Fetching player for wallet:", walletAddress); // Debug log
 
-        const response = await fetch(`/api/players/address/${walletAddress}`);
+        const response = await fetch(
+          `/api/players/address/${encodeURIComponent(walletAddress)}`
+        );
         if (!response.ok) {
           if (response.status === 404) {
             router.push("/");
