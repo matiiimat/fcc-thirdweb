@@ -23,15 +23,23 @@ export default function CreatePlayerPage() {
           return;
         }
 
-        const walletAddress = wallet.toString();
+        const walletAddress = wallet.toString().toLowerCase(); // Normalize address
         console.log("Checking wallet address:", walletAddress); // Debug log
 
         // Check if player already exists
-        const response = await fetch(`/api/players/address/${walletAddress}`);
+        const response = await fetch(
+          `/api/players/address/${encodeURIComponent(walletAddress)}`
+        );
+        console.log("Check player response status:", response.status); // Debug log
+
         if (response.ok) {
-          // Player exists, redirect to home
+          console.log("Player already exists, redirecting to home"); // Debug log
           router.push("/");
           return;
+        } else if (response.status !== 404) {
+          // If error is not 404 (not found), log it
+          const errorData = await response.json();
+          console.error("Unexpected error checking player:", errorData); // Debug log
         }
       } catch (err) {
         console.error("Error checking player:", err);
@@ -53,7 +61,7 @@ export default function CreatePlayerPage() {
     setError(null);
 
     try {
-      const walletAddress = wallet.toString();
+      const walletAddress = wallet.toString().toLowerCase(); // Normalize address
       console.log("Creating player for wallet:", walletAddress); // Debug log
 
       const response = await fetch("/api/players", {
@@ -67,10 +75,20 @@ export default function CreatePlayerPage() {
         }),
       });
 
+      console.log("Create player response status:", response.status); // Debug log
+
       if (!response.ok) {
         const data = await response.json();
+        console.error("Create player error response:", data); // Debug log
         throw new Error(data.error || "Failed to create player");
       }
+
+      const data = await response.json();
+      console.log("Player created successfully:", {
+        playerId: data.playerId,
+        name: data.playerName,
+        address: data.ethAddress,
+      }); // Debug log
 
       // Redirect to home page after successful creation
       router.push("/");

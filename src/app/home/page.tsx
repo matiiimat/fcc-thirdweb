@@ -12,6 +12,7 @@ import { calculatePlayerRating, getStarRating } from "../lib/game";
 interface PlayerData {
   playerId: string;
   playerName: string;
+  ethAddress: string; // Add this to track stored address
   stats: {
     strength: number;
     stamina: number;
@@ -52,15 +53,21 @@ export default function HomePage() {
         return;
       }
 
-      const walletAddress = wallet.toString();
-      console.log("Wallet address:", walletAddress); // Debug log
+      const walletAddress = wallet.toString().toLowerCase(); // Normalize address
+      console.log("Connected wallet address:", walletAddress); // Debug log
 
       try {
-        const response = await fetch(`/api/players/address/${walletAddress}`);
+        console.log("Fetching player for address:", walletAddress); // Debug log
+        const response = await fetch(
+          `/api/players/address/${encodeURIComponent(walletAddress)}`
+        );
+        console.log("API response status:", response.status); // Debug log
 
         if (!response.ok) {
           if (response.status === 404) {
-            console.log("No player found for wallet"); // Debug log
+            console.log(
+              "No player found for wallet, redirecting to create player"
+            ); // Debug log
             setPlayer(null);
           } else {
             const errorData = await response.json();
@@ -69,11 +76,25 @@ export default function HomePage() {
           }
         } else {
           const data = await response.json();
-          console.log("Player data fetched:", data); // Debug log
-          setPlayer(data);
+          console.log("Player data fetched:", {
+            playerId: data.playerId,
+            name: data.playerName,
+            storedAddress: data.ethAddress,
+            requestedAddress: walletAddress,
+          }); // Debug log
 
-          // Update connection streak
-          updateConnectionStreak(data);
+          // Verify the addresses match
+          if (data.ethAddress.toLowerCase() !== walletAddress) {
+            console.error("Address mismatch:", {
+              stored: data.ethAddress.toLowerCase(),
+              requested: walletAddress,
+            });
+            setPlayer(null);
+          } else {
+            setPlayer(data);
+            // Update connection streak
+            updateConnectionStreak(data);
+          }
         }
       } catch (err) {
         console.error("Fetch player error:", err); // Debug log

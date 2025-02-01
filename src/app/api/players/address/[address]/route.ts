@@ -11,7 +11,8 @@ interface Params {
 // GET /api/players/address/[address] - Get player by ETH address
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    console.log('Looking up player by address:', params.address); // Debug log
+    const searchAddress = decodeURIComponent(params.address).toLowerCase();
+    console.log('Looking up player by address:', searchAddress); // Debug log
 
     try {
       await connectDB();
@@ -25,19 +26,36 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
 
     try {
-      const player = await Player.findOne({ 
-        ethAddress: params.address 
+      // List all players to debug address matching
+      const allPlayers = await Player.find({}).select('ethAddress playerName');
+      console.log('All players in DB:', allPlayers.map(p => ({
+        name: p.playerName,
+        address: p.ethAddress,
+        addressLower: p.ethAddress.toLowerCase(),
+        matches: p.ethAddress.toLowerCase() === searchAddress
+      }))); // Debug log
+
+      // Exact match with case-insensitive comparison
+      const player = await Player.findOne({
+        ethAddress: searchAddress
       }).select('-__v');
 
       if (!player) {
-        console.log('No player found for address:', params.address); // Debug log
+        console.log('No player found for address:', searchAddress); // Debug log
         return NextResponse.json(
           { error: 'Player not found' },
           { status: 404 }
         );
       }
 
-      console.log('Found player:', JSON.stringify(player.toJSON())); // Debug log
+      console.log('Found player:', {
+        id: player._id,
+        name: player.playerName,
+        address: player.ethAddress,
+        searchedAddress: searchAddress,
+        matches: player.ethAddress.toLowerCase() === searchAddress
+      }); // Debug log
+      
       return NextResponse.json(player);
     } catch (error) {
       console.error('Error finding player:', error);

@@ -22,6 +22,13 @@ async function connectDB() {
     );
   }
 
+  // Log the connection string (without credentials)
+  const sanitizedUri = MONGODB_URI.replace(
+    /mongodb\+srv:\/\/([^:]+):([^@]+)@/,
+    'mongodb+srv://[username]:[password]@'
+  );
+  console.log('Connecting to MongoDB:', sanitizedUri);
+
   if (cached.conn) {
     console.log('Using cached MongoDB connection');
     return cached.conn;
@@ -30,16 +37,31 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     };
 
-    console.log('Connecting to MongoDB...');
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      console.log('MongoDB connected successfully');
-      return mongoose;
-    }).catch((error) => {
-      console.error('MongoDB connection error:', error);
-      throw error;
-    });
+    console.log('Creating new MongoDB connection');
+    cached.promise = mongoose
+      .connect(MONGODB_URI, opts)
+      .then((mongoose) => {
+        console.log('MongoDB connected successfully');
+        mongoose.connection.on('error', (error) => {
+          console.error('MongoDB connection error:', error);
+        });
+        mongoose.connection.on('disconnected', () => {
+          console.log('MongoDB disconnected');
+        });
+        mongoose.connection.on('reconnected', () => {
+          console.log('MongoDB reconnected');
+        });
+        return mongoose;
+      })
+      .catch((error) => {
+        console.error('MongoDB connection error:', error);
+        throw error;
+      });
   }
 
   try {

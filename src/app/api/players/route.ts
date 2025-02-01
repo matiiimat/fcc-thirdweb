@@ -4,6 +4,7 @@ import Player, { IPlayer } from '@/app/models/Player';
 import { randomUUID } from 'crypto';
 import { generatePlayerName, applyNationalityBonus } from '@/app/lib/names';
 import { validatePlayerData } from '@/app/lib/validation';
+import mongoose from 'mongoose';
 
 // GET /api/players - Get all players
 export async function GET() {
@@ -48,11 +49,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Normalize the ETH address
+    const normalizedAddress = ethAddress.toString().toLowerCase();
+
     try {
       // Check if player with ethAddress already exists
-      const existingPlayer = await Player.findOne({ ethAddress });
+      console.log('Checking for existing player with address:', normalizedAddress); // Debug log
+      
+      const existingPlayer = await Player.findOne({ ethAddress: normalizedAddress });
       if (existingPlayer) {
-        console.log('Player already exists for address:', ethAddress); // Debug log
+        console.log('Player already exists for address:', normalizedAddress); // Debug log
         return NextResponse.json(
           { error: 'Player with this ETH address already exists' },
           { status: 400 }
@@ -66,32 +72,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate player name and nationality
-    const { name: playerName, nationality } = generatePlayerName(ethAddress);
-    console.log('Generated player name and nationality:', { playerName, nationality }); // Debug log
-
-    // Create base stats (all starting at 1)
-    const baseStats = {
-      strength: 1,
-      stamina: 1,
-      passing: 1,
-      shooting: 1,
-      defending: 1,
-      speed: 1,
-      positioning: 1,
-      workEthic: 1,
-    };
-
-    // Apply nationality bonus
-    const stats = applyNationalityBonus(baseStats, nationality);
-    console.log('Applied nationality bonus:', stats); // Debug log
-
     try {
+      // Generate player name and nationality
+      const { name: playerName, nationality } = generatePlayerName(normalizedAddress);
+      console.log('Generated player details:', { playerName, nationality }); // Debug log
+
+      if (!playerName) {
+        console.error('Failed to generate player name');
+        return NextResponse.json(
+          { error: 'Failed to generate player name' },
+          { status: 500 }
+        );
+      }
+
+      // Create base stats (all starting at 1)
+      const baseStats = {
+        strength: 1,
+        stamina: 1,
+        passing: 1,
+        shooting: 1,
+        defending: 1,
+        speed: 1,
+        positioning: 1,
+        workEthic: 1,
+      };
+
+      // Apply nationality bonus
+      const stats = applyNationalityBonus(baseStats, nationality);
+      console.log('Applied nationality bonus:', stats); // Debug log
+
       // Create new player
-      const newPlayer = new Player({
+      const playerData = {
         playerId: randomUUID(),
-        playerName,
-        ethAddress,
+        playerName: playerName, // Explicitly set playerName
+        ethAddress: normalizedAddress,
         team,
         money: 1000, // Default starting money
         investments: [],
@@ -99,18 +113,40 @@ export async function POST(req: NextRequest) {
         lastTrainingDate: null,
         lastConnectionDate: new Date(),
         consecutiveConnections: 1,
-      });
+      };
 
-      console.log('Attempting to save new player:', JSON.stringify(newPlayer.toJSON())); // Debug log
+      console.log('Creating player with data:', playerData); // Debug log
 
-      await newPlayer.save();
-      console.log('Player saved successfully'); // Debug log
+      const newPlayer = new Player(playerData);
 
-      return NextResponse.json(newPlayer, { status: 201 });
-    } catch (saveError) {
-      console.error('Error saving player:', saveError);
+      try {
+        await newPlayer.save();
+        console.log('Player saved successfully:', newPlayer.toJSON()); // Debug log
+        return NextResponse.json(newPlayer, { status: 201 });
+      } catch (error) {
+        if (error instanceof mongoose.Error.ValidationError) {
+          console.error('Validation error:', {
+            errors: error.errors,
+            message: error.message,
+          });
+          return NextResponse.json(
+            { error: 'Invalid player data', details: error.message },
+            { status: 400 }
+          );
+        }
+        console.error('Error saving player:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+        });
+        return NextResponse.json(
+          { error: 'Failed to save player to database' },
+          { status: 500 }
+        );
+      }
+    } catch (error) {
+      console.error('Error creating player:', error);
       return NextResponse.json(
-        { error: 'Failed to save player to database' },
+        { error: 'Failed to create player' },
         { status: 500 }
       );
     }

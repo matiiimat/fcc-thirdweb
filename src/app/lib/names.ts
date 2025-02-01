@@ -1,80 +1,86 @@
-import { IPlayerStats } from '../models/Player';
+import { createHash } from 'crypto';
 
-// Soccer player family names by nationality
-export const PLAYER_NAMES = {
-  ENGLISH: [
-    'Smith', 'Jones', 'Taylor', 'Brown', 'Wilson',
-    'Walker', 'White', 'Harris', 'Clark', 'Lewis',
-    'Robinson', 'Wood', 'Thompson', 'Hall', 'Green',
-    'Wright', 'Turner', 'Moore', 'King', 'Baker'
-  ],
-  SPANISH: [
-    'Garcia', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez',
-    'Gonzalez', 'Perez', 'Sanchez', 'Ramirez', 'Torres',
-    'Flores', 'Rivera', 'Morales', 'Ortiz', 'Cruz',
-    'Reyes', 'Moreno', 'Jimenez', 'Diaz', 'Ruiz'
-  ],
-  ITALIAN: [
-    'Rossi', 'Ferrari', 'Esposito', 'Bianchi', 'Romano',
-    'Colombo', 'Bruno', 'Ricci', 'Marino', 'Greco',
-    'Conti', 'Costa', 'Giordano', 'Mancini', 'Rizzo',
-    'Lombardi', 'Moretti', 'Barbieri', 'Fontana', 'Santoro'
-  ],
-  BRAZILIAN: [
-    'Silva', 'Santos', 'Oliveira', 'Pereira', 'Almeida',
-    'Costa', 'Carvalho', 'Ferreira', 'Rodrigues', 'Lima',
-    'Ribeiro', 'Alves', 'Monteiro', 'Mendes', 'Cardoso',
-    'Ramos', 'Nascimento', 'Teixeira', 'Correia', 'Sousa'
-  ],
-  FRENCH: [
-    'Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert',
-    'Richard', 'Petit', 'Durand', 'Leroy', 'Moreau',
-    'Simon', 'Laurent', 'Lefebvre', 'Michel', 'Garcia',
-    'David', 'Bertrand', 'Roux', 'Vincent', 'Fournier'
-  ]
-} as const;
+// List of first names by nationality
+const firstNames = {
+  english: ['Jack', 'Harry', 'James', 'William', 'George'],
+  spanish: ['Carlos', 'Juan', 'Diego', 'Luis', 'Pedro'],
+  italian: ['Marco', 'Giuseppe', 'Antonio', 'Mario', 'Luigi'],
+  brazilian: ['Lucas', 'Gabriel', 'Pedro', 'Thiago', 'Rafael'],
+  french: ['Hugo', 'Lucas', 'Thomas', 'Jules', 'Louis'],
+};
 
-export type Nationality = keyof typeof PLAYER_NAMES;
+// List of last names by nationality
+const lastNames = {
+  english: ['Smith', 'Jones', 'Williams', 'Brown', 'Taylor'],
+  spanish: ['Garcia', 'Rodriguez', 'Martinez', 'Lopez', 'Sanchez'],
+  italian: ['Rossi', 'Ferrari', 'Esposito', 'Romano', 'Colombo'],
+  brazilian: ['Silva', 'Santos', 'Oliveira', 'Pereira', 'Costa'],
+  french: ['Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert'],
+};
 
-// Generate a random name based on ETH address
-export function generatePlayerName(ethAddress: string): {
-  name: string;
-  nationality: Nationality;
-} {
-  // Use different parts of the address for better randomization
-  const nationalityHash = parseInt(ethAddress.slice(2, 6), 16);
-  const nameHash = parseInt(ethAddress.slice(6, 10), 16);
-  
-  const nationalities = Object.keys(PLAYER_NAMES) as Nationality[];
-  const nationality = nationalities[nationalityHash % nationalities.length];
-  
-  const names = PLAYER_NAMES[nationality];
-  const name = names[nameHash % names.length];
+// Nationality types
+type Nationality = 'english' | 'spanish' | 'italian' | 'brazilian' | 'french';
 
-  return { name, nationality };
+// Function to generate a deterministic hash from an address
+function generateHash(address: string): number {
+  const hash = createHash('sha256').update(address).digest('hex');
+  return parseInt(hash.slice(0, 8), 16);
 }
 
-// Apply nationality bonus to stats
-export function applyNationalityBonus(stats: IPlayerStats, nationality: Nationality): IPlayerStats {
-  const newStats = { ...stats };
+// Function to get a random element from an array using a seed
+function getSeededElement<T>(array: T[], seed: number): T {
+  return array[seed % array.length];
+}
 
+// Function to determine nationality from address
+function determineNationality(address: string): Nationality {
+  const hash = generateHash(address);
+  const nationalities: Nationality[] = ['english', 'spanish', 'italian', 'brazilian', 'french'];
+  return nationalities[hash % nationalities.length];
+}
+
+// Function to generate player name and nationality
+export function generatePlayerName(address: string): { name: string; nationality: Nationality } {
+  console.log('Generating name for address:', address); // Debug log
+
+  const nationality = determineNationality(address);
+  console.log('Determined nationality:', nationality); // Debug log
+
+  const hash = generateHash(address);
+  const firstName = getSeededElement(firstNames[nationality], hash);
+  const lastName = getSeededElement(lastNames[nationality], hash + 1);
+
+  const fullName = `${firstName} ${lastName}`;
+  console.log('Generated name:', fullName); // Debug log
+
+  return {
+    name: fullName,
+    nationality,
+  };
+}
+
+// Function to apply nationality bonus to stats
+export function applyNationalityBonus(baseStats: any, nationality: Nationality) {
+  const stats = { ...baseStats };
+
+  // Each nationality gets a +5 bonus to a specific stat
   switch (nationality) {
-    case 'ENGLISH':
-      newStats.strength = Math.min(20, newStats.strength + 5);
+    case 'english':
+      stats.strength += 5;
       break;
-    case 'SPANISH':
-      newStats.passing = Math.min(20, newStats.passing + 5);
+    case 'spanish':
+      stats.passing += 5;
       break;
-    case 'ITALIAN':
-      newStats.defending = Math.min(20, newStats.defending + 5);
+    case 'italian':
+      stats.defending += 5;
       break;
-    case 'BRAZILIAN':
-      newStats.shooting = Math.min(20, newStats.shooting + 5);
+    case 'brazilian':
+      stats.shooting += 5;
       break;
-    case 'FRENCH':
-      newStats.speed = Math.min(20, newStats.speed + 5);
+    case 'french':
+      stats.speed += 5;
       break;
   }
 
-  return newStats;
+  return stats;
 }
