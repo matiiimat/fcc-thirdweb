@@ -23,7 +23,7 @@ export default function CreatePlayerPage() {
           return;
         }
 
-        const walletAddress = wallet.address; // Use address property instead of toString()
+        const walletAddress = wallet.address;
         console.log("Checking wallet address:", walletAddress); // Debug log
 
         // Check if player already exists
@@ -34,7 +34,7 @@ export default function CreatePlayerPage() {
 
         if (response.ok) {
           console.log("Player already exists, redirecting to home"); // Debug log
-          router.push("/");
+          router.push("/home");
           return;
         } else if (response.status !== 404) {
           // If error is not 404 (not found), log it
@@ -61,7 +61,7 @@ export default function CreatePlayerPage() {
     setError(null);
 
     try {
-      const walletAddress = wallet.address; // Use address property instead of toString()
+      const walletAddress = wallet.address;
       console.log("Creating player for wallet:", walletAddress); // Debug log
 
       const response = await fetch("/api/players", {
@@ -91,7 +91,7 @@ export default function CreatePlayerPage() {
       }); // Debug log
 
       // Redirect to home page after successful creation
-      router.push("/");
+      router.push("/home");
     } catch (err) {
       console.error("Create player error:", err);
       setError(err instanceof Error ? err.message : "Failed to create player");
