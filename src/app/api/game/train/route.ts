@@ -44,14 +44,18 @@ export async function POST(req: NextRequest) {
     try {
       // Calculate training result
       const trainingResult = calculateTrainingResult(player.stats);
+      console.log('Training result:', trainingResult); // Debug log
 
       // Apply work ethic bonus based on consecutive connections
       const workEthicBonus = Math.min(player.consecutiveConnections / 10, 1); // Max 100% bonus at 10 days
       const finalBonus = trainingResult.bonus * (1 + workEthicBonus);
 
+      // Calculate new stat value
+      const newValue = Math.min(20, trainingResult.currentValue + finalBonus);
+
       // Update player stats and last training date
       const updateData = {
-        [`stats.${trainingResult.trainedStat}`]: Math.min(20, trainingResult.newValue + finalBonus),
+        [`stats.${trainingResult.trainedStat}`]: newValue,
         lastTrainingDate: new Date(),
         'stats.workEthic': Math.min(20, player.consecutiveConnections * 2), // 2 points per consecutive day
       };
@@ -63,18 +67,21 @@ export async function POST(req: NextRequest) {
         { new: true, runValidators: true }
       ).select('-__v');
 
+      if (!updatedPlayer) {
+        throw new Error('Failed to update player');
+      }
+
       return NextResponse.json({
         success: true,
         training: {
           stat: trainingResult.trainedStat,
-          previousValue: player.stats[trainingResult.trainedStat],
-          newValue: updateData[`stats.${trainingResult.trainedStat}`],
+          previousValue: trainingResult.currentValue,
+          newValue: newValue,
           baseBonus: trainingResult.bonus,
           workEthicBonus: workEthicBonus,
           finalBonus: finalBonus,
         },
         player: updatedPlayer,
-        message: `Successfully trained ${trainingResult.trainedStat} (+${finalBonus.toFixed(2)})`,
       });
     } catch (error) {
       if (error instanceof ValidationError) {

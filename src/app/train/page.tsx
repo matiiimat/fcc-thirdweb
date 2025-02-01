@@ -11,6 +11,7 @@ import {
   getPlayerStats,
   getStatColor,
 } from "../lib/game";
+import { STAT_NAMES } from "../lib/constants";
 
 interface PlayerData {
   playerId: string;
@@ -31,6 +32,15 @@ interface PlayerData {
   consecutiveConnections: number;
 }
 
+interface TrainingResult {
+  stat: string;
+  previousValue: number;
+  newValue: number;
+  baseBonus: number;
+  workEthicBonus: number;
+  finalBonus: number;
+}
+
 export default function TrainPage() {
   const activeWallet = useActiveWallet();
   const wallet = activeWallet?.getAccount();
@@ -39,6 +49,17 @@ export default function TrainPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [training, setTraining] = useState(false);
+  const [trainingResult, setTrainingResult] = useState<TrainingResult | null>(
+    null
+  );
+  const [showTrainingAnimation, setShowTrainingAnimation] = useState(false);
+
+  // Handle navigation when no wallet or player
+  useEffect(() => {
+    if (!loading && (!wallet || !player)) {
+      router.push("/");
+    }
+  }, [loading, wallet, player, router]);
 
   useEffect(() => {
     async function fetchPlayer() {
@@ -49,21 +70,20 @@ export default function TrainPage() {
 
       try {
         const walletAddress = wallet.address;
-        console.log("Fetching player for wallet:", walletAddress); // Debug log
+        console.log("Fetching player for wallet:", walletAddress);
 
         const response = await fetch(
           `/api/players/address/${encodeURIComponent(walletAddress)}`
         );
         if (!response.ok) {
           if (response.status === 404) {
-            router.push("/");
+            setPlayer(null);
             return;
           }
           throw new Error("Failed to fetch player data");
         }
 
         const data = await response.json();
-        // Ensure all stats are numbers
         data.stats = Object.fromEntries(
           Object.entries(data.stats).map(([key, value]) => [key, Number(value)])
         );
@@ -76,12 +96,15 @@ export default function TrainPage() {
     }
 
     fetchPlayer();
-  }, [wallet, router]);
+  }, [wallet]);
 
   const handleTrain = async () => {
     if (!player || training) return;
 
     setTraining(true);
+    setTrainingResult(null);
+    setShowTrainingAnimation(false);
+
     try {
       const response = await fetch("/api/game/train", {
         method: "POST",
@@ -98,14 +121,26 @@ export default function TrainPage() {
       }
 
       const result = await response.json();
-      // Ensure all stats are numbers in the result
-      result.player.stats = Object.fromEntries(
-        Object.entries(result.player.stats).map(([key, value]) => [
-          key,
-          Number(value),
-        ])
-      );
-      setPlayer(result.player);
+      console.log("Training result:", result); // Debug log
+
+      if (result.success && result.training) {
+        result.player.stats = Object.fromEntries(
+          Object.entries(result.player.stats).map(([key, value]) => [
+            key,
+            Number(value),
+          ])
+        );
+        setPlayer(result.player);
+        setTrainingResult(result.training);
+        setShowTrainingAnimation(true);
+
+        // Hide training animation after 2 seconds
+        setTimeout(() => {
+          setShowTrainingAnimation(false);
+        }, 2000);
+      } else {
+        throw new Error(result.error || "Training failed");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Training failed");
     } finally {
@@ -126,8 +161,8 @@ export default function TrainPage() {
     );
   }
 
+  // Early return if no wallet or player, navigation handled by effect
   if (!wallet || !player) {
-    router.push("/");
     return null;
   }
 
@@ -138,13 +173,21 @@ export default function TrainPage() {
     new Date().toDateString() !==
       new Date(player.lastTrainingDate).toDateString();
 
-  // Filter out work ethic from visible stats
-  const visibleStats = playerStats.filter((stat) => stat.name !== "Work Ethic");
-
-  // Format stat value safely
   const formatStatValue = (value: any) => {
     const num = Number(value);
     return Number.isFinite(num) ? num.toFixed(2) : "0.00";
+  };
+
+  // Format the training result message
+  const getTrainingMessage = () => {
+    if (!trainingResult || typeof trainingResult.finalBonus !== "number")
+      return "";
+
+    const bonus = trainingResult.finalBonus;
+    const statName =
+      STAT_NAMES[trainingResult.stat as keyof typeof STAT_NAMES] ||
+      trainingResult.stat;
+    return `+${bonus.toFixed(2)} ${statName}`;
   };
 
   return (
@@ -154,7 +197,7 @@ export default function TrainPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         <div className="max-w-2xl w-full">
           {/* Training Button and Status */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-8 relative">
             <button
               onClick={handleTrain}
               className={`
@@ -169,6 +212,19 @@ export default function TrainPage() {
             >
               {training ? "TRAINING..." : "TRAIN"}
             </button>
+
+            {/* Training Animation */}
+            {showTrainingAnimation && trainingResult && (
+              <div
+                key={`training-animation-${Date.now()}`}
+                className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
+              >
+                <div className="animate-bounce bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+                  {getTrainingMessage()}
+                </div>
+              </div>
+            )}
+
             <div className={canTrain ? "text-green-500" : "text-red-500"}>
               {canTrain ? "Training Available" : "Already trained today"}
             </div>
@@ -176,8 +232,17 @@ export default function TrainPage() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {visibleStats.map(({ name, value }) => (
-              <div key={name} className="bg-gray-800 p-4 rounded-lg shadow-md">
+            {playerStats.map(({ name, value }) => (
+              <div
+                key={`stat-${name}`}
+                className={`bg-gray-800 p-4 rounded-lg shadow-md ${
+                  trainingResult &&
+                  STAT_NAMES[trainingResult.stat as keyof typeof STAT_NAMES] ===
+                    name
+                    ? "ring-2 ring-green-500"
+                    : ""
+                }`}
+              >
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-white">{name}</span>
                   <span className={getStatColor(Number(value))}>

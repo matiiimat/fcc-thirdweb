@@ -34,7 +34,7 @@ export function getPlayerStats(stats: any) {
 
   return Object.entries(stats).map(([key, value]) => ({
     name: statNames[key as keyof typeof statNames],
-    value: Number(value), // Ensure value is a number
+    value: Number(value),
   }));
 }
 
@@ -57,12 +57,12 @@ export function calculateTrainingResult(stats: any) {
   // Calculate bonus (higher bonus for lower stats)
   const baseBonus = (20 - currentValue) / 10; // Max 2.0 bonus at stat level 0
   const randomFactor = 0.5 + Math.random(); // Random factor between 0.5 and 1.5
-  const bonus = baseBonus * randomFactor;
+  const bonus = Math.max(0.1, Math.min(baseBonus * randomFactor, 2.0)); // Clamp bonus between 0.1 and 2.0
 
   return {
     trainedStat,
     currentValue,
-    newValue: currentValue,
-    bonus: Math.max(0.1, Math.min(bonus, 2.0)), // Clamp bonus between 0.1 and 2.0
+    newValue: Math.min(20, currentValue + bonus),
+    bonus,
   };
 }
