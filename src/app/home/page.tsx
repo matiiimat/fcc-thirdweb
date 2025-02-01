@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { calculatePlayerRating, getStarRating } from "../lib/game";
 
 interface PlayerData {
+  playerId: string;
   playerName: string;
   stats: {
     strength: number;
@@ -19,9 +20,12 @@ interface PlayerData {
     defending: number;
     speed: number;
     positioning: number;
+    workEthic: number;
   };
   money: number;
   lastTrainingDate: string | null;
+  lastConnectionDate: string | null;
+  consecutiveConnections: number;
 }
 
 const wallets = [
@@ -48,11 +52,11 @@ export default function HomePage() {
         return;
       }
 
+      const walletAddress = wallet.toString();
+      console.log("Wallet address:", walletAddress); // Debug log
+
       try {
-        console.log("Fetching player for wallet:", wallet.toString()); // Debug log
-        const response = await fetch(
-          `/api/players/address/${wallet.toString()}`
-        );
+        const response = await fetch(`/api/players/address/${walletAddress}`);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -67,6 +71,9 @@ export default function HomePage() {
           const data = await response.json();
           console.log("Player data fetched:", data); // Debug log
           setPlayer(data);
+
+          // Update connection streak
+          updateConnectionStreak(data);
         }
       } catch (err) {
         console.error("Fetch player error:", err); // Debug log
@@ -78,6 +85,47 @@ export default function HomePage() {
 
     fetchPlayer();
   }, [wallet]);
+
+  // Update player's connection streak
+  async function updateConnectionStreak(playerData: PlayerData) {
+    const today = new Date();
+    const lastConnection = playerData.lastConnectionDate
+      ? new Date(playerData.lastConnectionDate)
+      : null;
+
+    // Check if we need to update the streak
+    const needsUpdate =
+      !lastConnection || today.toDateString() !== lastConnection.toDateString();
+
+    if (needsUpdate) {
+      // Calculate if the last connection was yesterday
+      const isConsecutive =
+        lastConnection &&
+        Math.abs(today.getTime() - lastConnection.getTime()) <=
+          24 * 60 * 60 * 1000;
+
+      try {
+        const response = await fetch(`/api/players/${playerData.playerId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            lastConnectionDate: today,
+            consecutiveConnections: isConsecutive
+              ? playerData.consecutiveConnections + 1
+              : 1,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to update connection streak");
+        }
+      } catch (err) {
+        console.error("Error updating connection streak:", err);
+      }
+    }
+  }
 
   // Calculate if player can train today
   const canTrainToday = player?.lastTrainingDate

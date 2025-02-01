@@ -9,6 +9,7 @@ export interface IPlayerStats {
   defending: number;
   speed: number;
   positioning: number;
+  workEthic: number;
 }
 
 // Interface for investments
@@ -28,6 +29,8 @@ export interface IPlayer extends Document {
   investments: IInvestment[];
   stats: IPlayerStats;
   lastTrainingDate: Date | null;
+  lastConnectionDate: Date | null;
+  consecutiveConnections: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -77,6 +80,13 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
     default: 1,
   },
   positioning: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 20,
+    default: 1,
+  },
+  workEthic: {
     type: Number,
     required: true,
     min: 0,
@@ -139,6 +149,15 @@ const PlayerSchema = new Schema<IPlayer>(
     lastTrainingDate: {
       type: Date,
       default: null,
+    },
+    lastConnectionDate: {
+      type: Date,
+      default: null,
+    },
+    consecutiveConnections: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
   },
   {

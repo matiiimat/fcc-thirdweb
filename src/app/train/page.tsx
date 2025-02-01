@@ -13,6 +13,7 @@ import {
 } from "../lib/game";
 
 interface PlayerData {
+  playerId: string;
   playerName: string;
   stats: {
     strength: number;
@@ -22,8 +23,11 @@ interface PlayerData {
     defending: number;
     speed: number;
     positioning: number;
+    workEthic: number;
   };
   lastTrainingDate: string | null;
+  lastConnectionDate: string | null;
+  consecutiveConnections: number;
 }
 
 export default function TrainPage() {
@@ -33,6 +37,7 @@ export default function TrainPage() {
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [training, setTraining] = useState(false);
 
   useEffect(() => {
     async function fetchPlayer() {
@@ -42,9 +47,10 @@ export default function TrainPage() {
       }
 
       try {
-        const response = await fetch(
-          `/api/players/address/${wallet.toString()}`
-        );
+        const walletAddress = wallet.toString();
+        console.log("Fetching player for wallet:", walletAddress); // Debug log
+
+        const response = await fetch(`/api/players/address/${walletAddress}`);
         if (!response.ok) {
           if (response.status === 404) {
             router.push("/");
@@ -69,6 +75,34 @@ export default function TrainPage() {
     fetchPlayer();
   }, [wallet, router]);
 
+  const handleTrain = async () => {
+    if (!player || training) return;
+
+    setTraining(true);
+    try {
+      const response = await fetch("/api/game/train", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          playerId: player.playerId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Training failed");
+      }
+
+      const result = await response.json();
+      setPlayer(result.player);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Training failed");
+    } finally {
+      setTraining(false);
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -89,6 +123,13 @@ export default function TrainPage() {
 
   const playerStats = getPlayerStats(player.stats);
   const rating = calculatePlayerRating(player.stats);
+  const canTrain =
+    !player.lastTrainingDate ||
+    new Date().toDateString() !==
+      new Date(player.lastTrainingDate).toDateString();
+
+  // Filter out work ethic from visible stats
+  const visibleStats = playerStats.filter((stat) => stat.name !== "Work Ethic");
 
   return (
     <>
@@ -96,17 +137,33 @@ export default function TrainPage() {
 
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         <div className="max-w-2xl w-full">
+          {/* Training Button and Status */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">{player.playerName}</h1>
-            <div className="text-2xl">{getStarRating(rating)}</div>
+            <button
+              onClick={handleTrain}
+              className={`
+                text-white font-bold py-4 px-8 rounded-lg text-xl mb-4
+                ${
+                  canTrain && !training
+                    ? "bg-blue-500 hover:bg-blue-700"
+                    : "bg-gray-500 cursor-not-allowed"
+                }
+              `}
+              disabled={!canTrain || training}
+            >
+              {training ? "TRAINING..." : "TRAIN"}
+            </button>
+            <div className={canTrain ? "text-green-500" : "text-red-500"}>
+              {canTrain ? "Training Available" : "Already trained today"}
+            </div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            {playerStats.map(({ name, value }) => (
-              <div key={name} className="bg-white p-4 rounded-lg shadow-md">
+            {visibleStats.map(({ name, value }) => (
+              <div key={name} className="bg-gray-800 p-4 rounded-lg shadow-md">
                 <div className="flex justify-between items-center">
-                  <span className="font-semibold">{name}</span>
+                  <span className="font-semibold text-white">{name}</span>
                   <span className={getStatColor(value)}>
                     {value.toFixed(2)}
                   </span>

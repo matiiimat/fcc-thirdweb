@@ -23,10 +23,11 @@ export default function CreatePlayerPage() {
           return;
         }
 
+        const walletAddress = wallet.toString();
+        console.log("Checking wallet address:", walletAddress); // Debug log
+
         // Check if player already exists
-        const response = await fetch(
-          `/api/players/address/${wallet.toString()}`
-        );
+        const response = await fetch(`/api/players/address/${walletAddress}`);
         if (response.ok) {
           // Player exists, redirect to home
           router.push("/");
@@ -52,7 +53,8 @@ export default function CreatePlayerPage() {
     setError(null);
 
     try {
-      console.log("Creating player with wallet:", wallet.toString()); // Debug log
+      const walletAddress = wallet.toString();
+      console.log("Creating player for wallet:", walletAddress); // Debug log
 
       const response = await fetch("/api/players", {
         method: "POST",
@@ -60,19 +62,15 @@ export default function CreatePlayerPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ethAddress: wallet.toString(),
+          ethAddress: walletAddress,
           team: "Unassigned", // Default team
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        console.error("Server error response:", data); // Debug log
         throw new Error(data.error || "Failed to create player");
       }
-
-      const data = await response.json();
-      console.log("Player created successfully:", data); // Debug log
 
       // Redirect to home page after successful creation
       router.push("/");

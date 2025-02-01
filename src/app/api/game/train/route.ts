@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player from '@/app/models/Player';
+import { calculateTrainingResult } from '@/app/lib/game';
 import { ValidationError } from '@/app/lib/validation';
-import { calculateTrainingResult, canTrainToday } from '@/app/lib/game';
 
 // POST /api/game/train - Train a player's stats
 export async function POST(req: NextRequest) {
@@ -29,7 +29,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if player can train today
-    if (!canTrainToday(player.lastTrainingDate)) {
+    const today = new Date().toDateString();
+    const lastTraining = player.lastTrainingDate 
+      ? new Date(player.lastTrainingDate).toDateString()
+      : null;
+
+    if (lastTraining === today) {
       return NextResponse.json(
         { error: 'You can only train once per day' },
         { status: 400 }
@@ -40,10 +45,15 @@ export async function POST(req: NextRequest) {
       // Calculate training result
       const trainingResult = calculateTrainingResult(player.stats);
 
+      // Apply work ethic bonus based on consecutive connections
+      const workEthicBonus = Math.min(player.consecutiveConnections / 10, 1); // Max 100% bonus at 10 days
+      const finalBonus = trainingResult.bonus * (1 + workEthicBonus);
+
       // Update player stats and last training date
       const updateData = {
-        [`stats.${trainingResult.trainedStat}`]: trainingResult.newValue,
+        [`stats.${trainingResult.trainedStat}`]: Math.min(20, trainingResult.newValue + finalBonus),
         lastTrainingDate: new Date(),
+        'stats.workEthic': Math.min(20, player.consecutiveConnections * 2), // 2 points per consecutive day
       };
 
       // Update player
@@ -58,11 +68,13 @@ export async function POST(req: NextRequest) {
         training: {
           stat: trainingResult.trainedStat,
           previousValue: player.stats[trainingResult.trainedStat],
-          newValue: trainingResult.newValue,
-          improvement: trainingResult.bonus,
+          newValue: updateData[`stats.${trainingResult.trainedStat}`],
+          baseBonus: trainingResult.bonus,
+          workEthicBonus: workEthicBonus,
+          finalBonus: finalBonus,
         },
         player: updatedPlayer,
-        message: `Successfully trained ${trainingResult.trainedStat} (+${trainingResult.bonus})`,
+        message: `Successfully trained ${trainingResult.trainedStat} (+${finalBonus.toFixed(2)})`,
       });
     } catch (error) {
       if (error instanceof ValidationError) {

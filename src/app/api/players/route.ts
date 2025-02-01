@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
       defending: 1,
       speed: 1,
       positioning: 1,
+      workEthic: 1,
     };
 
     // Apply nationality bonus
@@ -96,6 +97,8 @@ export async function POST(req: NextRequest) {
         investments: [],
         stats,
         lastTrainingDate: null,
+        lastConnectionDate: new Date(),
+        consecutiveConnections: 1,
       });
 
       console.log('Attempting to save new player:', JSON.stringify(newPlayer.toJSON())); // Debug log
