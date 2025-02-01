@@ -15,9 +15,11 @@ export class ValidationError extends Error {
 }
 
 type StatKey = keyof IPlayerStats;
+type PlayerStat = typeof PLAYER_STATS[number];
 
 export const validatePlayerStats = (stats: Partial<IPlayerStats>): void => {
-  const validStatKeys = PLAYER_STATS.map(stat => stat.key) as StatKey[];
+  // Convert readonly array to regular array of stat keys
+  const validStatKeys = [...PLAYER_STATS] as StatKey[];
 
   for (const stat of Object.keys(stats)) {
     if (!validStatKeys.includes(stat as StatKey)) {
@@ -45,8 +47,8 @@ export const validatePlayerData = (data: Partial<IPlayer>): void => {
       throw new ValidationError('Player name must be a string');
     }
     if (
-      data.playerName.length < PLAYER_CONSTANTS.NAME_MIN_LENGTH ||
-      data.playerName.length > PLAYER_CONSTANTS.NAME_MAX_LENGTH
+      data.playerName.length < PLAYER_CONSTANTS.MIN_NAME_LENGTH ||
+      data.playerName.length > PLAYER_CONSTANTS.MAX_NAME_LENGTH
     ) {
       throw new ValidationError(ERROR_MESSAGES.INVALID_PLAYER_NAME);
     }
@@ -111,7 +113,8 @@ export const validateTrainingRequest = (
   statToTrain: string,
   currentValue: number
 ): void => {
-  const validStats = PLAYER_STATS.map(stat => stat.key) as StatKey[];
+  // Convert readonly array to regular array of stat keys
+  const validStats = [...PLAYER_STATS] as StatKey[];
 
   if (!validStats.includes(statToTrain as StatKey)) {
     throw new ValidationError(ERROR_MESSAGES.INVALID_STAT);
@@ -126,18 +129,16 @@ export const validateInvestment = (
   type: string,
   amount: number
 ): void => {
-  // Validate investment type
-  if (!INVESTMENT_TYPES[type as keyof typeof INVESTMENT_TYPES]) {
+  // Convert readonly array to regular array
+  const validTypes = [...INVESTMENT_TYPES];
+
+  if (!validTypes.includes(type as typeof INVESTMENT_TYPES[number])) {
     throw new ValidationError(ERROR_MESSAGES.INVALID_INVESTMENT_TYPE);
   }
 
-  const investment = INVESTMENT_TYPES[type as keyof typeof INVESTMENT_TYPES];
-
   // Validate amount
-  if (amount < investment.minAmount) {
-    throw new ValidationError(
-      `Minimum investment amount for ${investment.name} is ${investment.minAmount}`
-    );
+  if (amount <= VALIDATION.MIN_INVESTMENT_AMOUNT) {
+    throw new ValidationError(ERROR_MESSAGES.INVALID_INVESTMENT_AMOUNT);
   }
 };
 
@@ -149,7 +150,7 @@ export const isValidEthAddress = (address: string): boolean => {
 // Helper function to validate player name
 export const isValidPlayerName = (name: string): boolean => {
   return (
-    name.length >= PLAYER_CONSTANTS.NAME_MIN_LENGTH &&
-    name.length <= PLAYER_CONSTANTS.NAME_MAX_LENGTH
+    name.length >= PLAYER_CONSTANTS.MIN_NAME_LENGTH &&
+    name.length <= PLAYER_CONSTANTS.MAX_NAME_LENGTH
   );
 };
