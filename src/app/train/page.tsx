@@ -217,7 +217,7 @@ export default function TrainPage() {
     <>
       <Header pageName="Train" />
 
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 pb-20">
         <div className="max-w-2xl w-full">
           {/* Training Button and Status */}
           <div className="text-center mb-8 relative">

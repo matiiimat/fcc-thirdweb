@@ -5,6 +5,7 @@ import { client } from "../client";
 import { useRouter } from "next/navigation";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import Header from "../components/Header"; // Import the Header
+import Footer from "../components/Footer";
 import { base } from "thirdweb/chains"; // TEST CHAIN ID
 
 const wallets = [
@@ -23,11 +24,9 @@ export default function SettingsPage() {
     <>
       {/* Pass the pageName prop to the Header */}
       <Header pageName="Settings" />
-
-      <main>
-        <br></br>
-        {/* Connect Button in the Top-Right */}
-        <div className="flex flex-col items-center space-y-4">
+      <main className="flex flex-col items-center min-h-[60vh] pb-20">
+        {/* Connect Button */}
+        <div className="flex flex-col items-center space-y-8 mt-8">
           <ConnectButton
             client={client}
             chain={base} // TEST CHAIN BASE
@@ -38,10 +37,6 @@ export default function SettingsPage() {
               url: "https://example.com",
             }}
           />
-        </div>
-        <br></br>
-        {/* Centered Back Button */}
-        <div className="flex flex-col items-center space-y-4">
           <button
             onClick={() => router.back()}
             className="bg-gray-200 text-black hover:bg-gray-300 rounded px-4 py-2 font-medium"
@@ -50,6 +45,7 @@ export default function SettingsPage() {
           </button>
         </div>
       </main>
+      <Footer />
     </>
   );
 }

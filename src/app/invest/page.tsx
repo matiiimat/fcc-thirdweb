@@ -129,7 +129,7 @@ export default function InvestPage() {
   return (
     <>
       <Header pageName="Invest" />
-      <div className="flex flex-col items-center p-4">
+      <div className="flex flex-col items-center p-4 pb-20">
         <div className="w-full max-w-2xl space-y-6">
           {/* Financial Information */}
           <div className="space-y-4">
