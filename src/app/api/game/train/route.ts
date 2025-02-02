@@ -42,13 +42,21 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      // Convert player stats to plain object
-      const plainStats = player.stats.toObject();
-      console.log('Plain stats:', plainStats); // Debug log
+      // Convert player stats to plain object and filter out Mongoose fields
+      const statsObj = player.stats.toObject();
+      const plainStats = {
+        strength: statsObj.strength,
+        stamina: statsObj.stamina,
+        passing: statsObj.passing,
+        shooting: statsObj.shooting,
+        defending: statsObj.defending,
+        speed: statsObj.speed,
+        positioning: statsObj.positioning,
+        workEthic: statsObj.workEthic,
+      };
 
       // Calculate training result
       const trainingResult = calculateTrainingResult(plainStats);
-      console.log('Training result:', trainingResult); // Debug log
 
       // Apply work ethic bonus based on consecutive connections
       const workEthicBonus = Math.min(player.consecutiveConnections / 10, 1); // Max 100% bonus at 10 days

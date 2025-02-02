@@ -84,10 +84,23 @@ export default function TrainPage() {
         }
 
         const data = await response.json();
-        data.stats = Object.fromEntries(
-          Object.entries(data.stats).map(([key, value]) => [key, Number(value)])
+        // Filter and convert stats
+        const validStats = [
+          "strength",
+          "stamina",
+          "passing",
+          "shooting",
+          "defending",
+          "speed",
+          "positioning",
+          "workEthic",
+        ];
+        const cleanStats = Object.fromEntries(
+          Object.entries(data.stats)
+            .filter(([key]) => validStats.includes(key))
+            .map(([key, value]) => [key, Number(value)])
         );
-        setPlayer(data);
+        setPlayer({ ...data, stats: cleanStats });
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -124,13 +137,23 @@ export default function TrainPage() {
       console.log("Training result:", result); // Debug log
 
       if (result.success && result.training) {
-        result.player.stats = Object.fromEntries(
-          Object.entries(result.player.stats).map(([key, value]) => [
-            key,
-            Number(value),
-          ])
+        // Filter and convert stats
+        const validStats = [
+          "strength",
+          "stamina",
+          "passing",
+          "shooting",
+          "defending",
+          "speed",
+          "positioning",
+          "workEthic",
+        ];
+        const cleanStats = Object.fromEntries(
+          Object.entries(result.player.stats)
+            .filter(([key]) => validStats.includes(key))
+            .map(([key, value]) => [key, Number(value)])
         );
-        setPlayer(result.player);
+        setPlayer({ ...result.player, stats: cleanStats });
         setTrainingResult(result.training);
         setShowTrainingAnimation(true);
 
