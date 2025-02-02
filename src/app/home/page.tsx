@@ -5,7 +5,12 @@ import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
 import Footer from "../components/Footer";
 import { useEffect, useState } from "react";
-import { calculatePlayerRating, getStarRating } from "../lib/game";
+import {
+  calculatePlayerRating,
+  getStarRating,
+  calculateTotalCapital,
+  formatCurrency,
+} from "../lib/game";
 
 interface PlayerData {
   playerId: string;
@@ -22,6 +27,11 @@ interface PlayerData {
     workEthic: number;
   };
   money: number;
+  investments: Array<{
+    type: string;
+    amount: number;
+    timestamp: string;
+  }>;
   lastTrainingDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
@@ -39,57 +49,25 @@ export default function HomePage() {
     async function fetchPlayer() {
       if (!wallet) {
         setLoading(false);
-        router.push("/"); // Redirect to main page if no wallet
+        router.push("/");
         return;
       }
 
-      const walletAddress = wallet.address;
-      console.log("Connected wallet address:", walletAddress); // Debug log
-
       try {
-        console.log("Fetching player for address:", walletAddress); // Debug log
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(walletAddress)}`
+          `/api/players/address/${encodeURIComponent(wallet.address)}`
         );
-        console.log("API response status:", response.status); // Debug log
-
         if (!response.ok) {
           if (response.status === 404) {
-            console.log(
-              "No player found for wallet, redirecting to create player"
-            ); // Debug log
             router.push("/createPlayer");
             return;
-          } else {
-            const errorData = await response.json();
-            console.error("Error response:", errorData); // Debug log
-            throw new Error(errorData.error || "Failed to fetch player data");
           }
+          throw new Error("Failed to fetch player data");
         }
 
         const data = await response.json();
-        console.log("Player data fetched:", {
-          playerId: data.playerId,
-          name: data.playerName,
-          storedAddress: data.ethAddress,
-          requestedAddress: walletAddress,
-        }); // Debug log
-
-        // Verify the addresses match
-        if (data.ethAddress.toLowerCase() !== walletAddress.toLowerCase()) {
-          console.error("Address mismatch:", {
-            stored: data.ethAddress.toLowerCase(),
-            requested: walletAddress.toLowerCase(),
-          });
-          router.push("/createPlayer");
-          return;
-        }
-
         setPlayer(data);
-        // Update connection streak
-        updateConnectionStreak(data);
       } catch (err) {
-        console.error("Fetch player error:", err); // Debug log
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
@@ -98,53 +76,6 @@ export default function HomePage() {
 
     fetchPlayer();
   }, [wallet, router]);
-
-  // Update player's connection streak
-  async function updateConnectionStreak(playerData: PlayerData) {
-    const today = new Date();
-    const lastConnection = playerData.lastConnectionDate
-      ? new Date(playerData.lastConnectionDate)
-      : null;
-
-    // Check if we need to update the streak
-    const needsUpdate =
-      !lastConnection || today.toDateString() !== lastConnection.toDateString();
-
-    if (needsUpdate) {
-      // Calculate if the last connection was yesterday
-      const isConsecutive =
-        lastConnection &&
-        Math.abs(today.getTime() - lastConnection.getTime()) <=
-          24 * 60 * 60 * 1000;
-
-      try {
-        const response = await fetch(`/api/players/${playerData.playerId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            lastConnectionDate: today,
-            consecutiveConnections: isConsecutive
-              ? playerData.consecutiveConnections + 1
-              : 1,
-          }),
-        });
-
-        if (!response.ok) {
-          console.error("Failed to update connection streak");
-        }
-      } catch (err) {
-        console.error("Error updating connection streak:", err);
-      }
-    }
-  }
-
-  // Calculate if player can train today
-  const canTrainToday = player?.lastTrainingDate
-    ? new Date().toDateString() !==
-      new Date(player.lastTrainingDate).toDateString()
-    : true;
 
   if (loading) {
     return (
@@ -174,8 +105,17 @@ export default function HomePage() {
   }
 
   if (!player) {
-    return null; // Let the useEffect handle redirection
+    return null;
   }
+
+  // Calculate total capital
+  const totalCapital = calculateTotalCapital(player.money, player.investments);
+
+  // Calculate if player can train today
+  const canTrainToday = player?.lastTrainingDate
+    ? new Date().toDateString() !==
+      new Date(player.lastTrainingDate).toDateString()
+    : true;
 
   return (
     <>
@@ -185,21 +125,36 @@ export default function HomePage() {
         <div className="text-2xl mb-4">
           {getStarRating(calculatePlayerRating(player.stats))}
         </div>
-        {/* Stats */}
-        <div className="flex flex-col items-start space-y-2 mt-4">
-          <div>
-            <span className="font-semibold">TRAINING STATUS: </span>
-            <span className={canTrainToday ? "text-green-500" : "text-red-500"}>
+
+        {/* Financial Information */}
+        <div className="flex flex-col items-start space-y-4 mt-4 bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <div className="w-full">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-gray-300">Cash:</span>
+              <span className="text-xl font-semibold text-green-400">
+                {formatCurrency(player.money)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Total Capital:</span>
+              <span className="text-xl font-semibold text-yellow-400">
+                {formatCurrency(totalCapital)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Training Status */}
+        <div className="mt-6 bg-gray-800 p-6 rounded-lg w-full max-w-md">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-300">Training Status:</span>
+            <span className={canTrainToday ? "text-green-400" : "text-red-400"}>
               {canTrainToday ? "Available" : "Already trained today"}
             </span>
           </div>
-          <div>
-            <span className="font-semibold">CAPITAL: </span>
-            <span>{player.money}</span>
-          </div>
         </div>
-        <Footer />
       </div>
+      <Footer />
     </>
   );
 }

@@ -38,6 +38,17 @@ export function getPlayerStats(stats: any) {
   }));
 }
 
+// Calculate total capital (money + investments)
+export function calculateTotalCapital(money: number, investments: Array<{ amount: number }>) {
+  const investmentTotal = investments.reduce((sum, inv) => sum + inv.amount, 0);
+  return money + investmentTotal;
+}
+
+// Format currency with $ symbol
+export function formatCurrency(amount: number): string {
+  return `$${amount.toLocaleString()}`;
+}
+
 // Convert Mongoose document to plain object
 function toPlainObject(obj: any): Record<string, number> {
   const result: Record<string, number> = {};
