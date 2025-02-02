@@ -30,6 +30,7 @@ export default function InvestPage() {
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [amount, setAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
@@ -66,6 +67,7 @@ export default function InvestPage() {
   const handleTransaction = async (action: "deposit" | "withdraw") => {
     if (!player || processing || !amount) return;
 
+    setModalError(null);
     setProcessing(true);
     try {
       const response = await fetch("/api/game/invest", {
@@ -81,21 +83,27 @@ export default function InvestPage() {
         }),
       });
 
+      const result = await response.json();
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Transaction failed");
+        throw new Error(result.error || "Transaction failed");
       }
 
-      const result = await response.json();
       setPlayer(result.player);
       setAmount("");
       setShowDepositModal(false);
       setShowWithdrawModal(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Transaction failed");
+      setModalError(err instanceof Error ? err.message : "Transaction failed");
     } finally {
       setProcessing(false);
     }
+  };
+
+  const closeModal = () => {
+    setShowDepositModal(false);
+    setShowWithdrawModal(false);
+    setAmount("");
+    setModalError(null);
   };
 
   if (loading) {
@@ -186,15 +194,14 @@ export default function InvestPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="Enter amount"
-                  className="w-full p-2 mb-4 rounded bg-gray-700 text-white"
+                  className="w-full p-2 mb-2 rounded bg-gray-700 text-white"
                 />
+                {modalError && (
+                  <div className="text-red-500 text-sm mb-4">{modalError}</div>
+                )}
                 <div className="flex justify-end space-x-2">
                   <button
-                    onClick={() => {
-                      setShowDepositModal(false);
-                      setShowWithdrawModal(false);
-                      setAmount("");
-                    }}
+                    onClick={closeModal}
                     className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
                   >
                     Cancel
@@ -221,10 +228,6 @@ export default function InvestPage() {
                 </div>
               </div>
             </div>
-          )}
-
-          {error && (
-            <div className="text-red-500 text-center mt-4">{error}</div>
           )}
 
           {/* Investment Info */}
