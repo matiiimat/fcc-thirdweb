@@ -32,24 +32,38 @@ export function getPlayerStats(stats: any) {
     workEthic: 'Work Ethic',
   };
 
-  // Only include valid stat fields
-  return Object.entries(stats)
-    .filter(([key]) => key in statNames) // Only include keys that are in statNames
-    .map(([key, value]) => ({
-      name: statNames[key as keyof typeof statNames],
-      value: Number(value),
-    }));
+  return Object.entries(stats).map(([key, value]) => ({
+    name: statNames[key as keyof typeof statNames],
+    value: Number(value),
+  }));
 }
 
-// Calculate total capital (money + investments)
-export function calculateTotalCapital(money: number, investments: Array<{ amount: number }>) {
-  const investmentTotal = investments.reduce((sum, inv) => sum + inv.amount, 0);
+// Calculate investments with daily growth
+export function calculateInvestments(investments: Array<{ type: string; amount: number; timestamp: string }>) {
+  const DAILY_INTEREST_RATE = 0.01; // 1% daily interest
+
+  return investments.reduce((total, inv) => {
+    if (inv.type !== 'investment') return total;
+
+    const depositDate = new Date(inv.timestamp);
+    const today = new Date();
+    const daysDiff = Math.floor((today.getTime() - depositDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Calculate compound interest: A = P(1 + r)^t
+    const amount = inv.amount * Math.pow(1 + DAILY_INTEREST_RATE, daysDiff);
+    return total + amount;
+  }, 0);
+}
+
+// Calculate total capital (money + investments with growth)
+export function calculateTotalCapital(money: number, investments: Array<{ type: string; amount: number; timestamp: string }>) {
+  const investmentTotal = calculateInvestments(investments);
   return money + investmentTotal;
 }
 
 // Format currency with $ symbol
 export function formatCurrency(amount: number): string {
-  return `$${amount.toLocaleString()}`;
+  return `$${Math.floor(amount).toLocaleString()}`;
 }
 
 // Convert Mongoose document to plain object
@@ -86,9 +100,9 @@ export function calculateTrainingResult(stats: any) {
   }
 
   // Calculate bonus (higher bonus for lower stats)
-  const baseBonus = (20 - currentValue) / 50; // Max 0.4 bonus at stat level 0
-  const randomFactor = 0.75 + Math.random() * 0.5; // Random factor between 0.75 and 1.25
-  const bonus = Math.max(0.05, Math.min(baseBonus * randomFactor, 0.4)); // Clamp bonus between 0.05 and 0.4
+  const baseBonus = (20 - currentValue) / 10; // Max 2.0 bonus at stat level 0
+  const randomFactor = 0.5 + Math.random(); // Random factor between 0.5 and 1.5
+  const bonus = Math.max(0.1, Math.min(baseBonus * randomFactor, 2.0)); // Clamp bonus between 0.1 and 2.0
 
   return {
     trainedStat,
