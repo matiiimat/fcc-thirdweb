@@ -66,34 +66,6 @@ export function formatCurrency(amount: number): string {
   return `$${Math.floor(amount).toLocaleString()}`;
 }
 
-// Calculate total investments including growth
-export function calculateInvestments(investments: Array<{ type: string; amount: number; timestamp: string }>) {
-  const DAILY_INTEREST_RATE = 0.01; // 1% daily interest
-
-  return investments.reduce((total, inv) => {
-    if (inv.type !== 'investment') return total;
-
-    const depositDate = new Date(inv.timestamp);
-    const today = new Date();
-    const daysDiff = Math.floor((today.getTime() - depositDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Calculate compound interest: A = P(1 + r)^t
-    const amount = inv.amount * Math.pow(1 + DAILY_INTEREST_RATE, daysDiff);
-    return total + amount;
-  }, 0);
-}
-
-// Calculate total capital (money + investments with growth)
-export function calculateTotalCapital(money: number, investments: Array<{ type: string; amount: number; timestamp: string }>) {
-  const investmentTotal = calculateInvestments(investments);
-  return money + investmentTotal;
-}
-
-// Format currency with $ symbol
-export function formatCurrency(amount: number): string {
-  return `$${Math.floor(amount).toLocaleString()}`;
-}
-
 // Convert Mongoose document to plain object
 function toPlainObject(obj: any): Record<string, number> {
   const result: Record<string, number> = {};
