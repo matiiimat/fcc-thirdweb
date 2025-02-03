@@ -21,6 +21,7 @@ interface PlayerData {
     amount: number;
     timestamp: string;
   }>;
+  lastTrainingDate: string | null;
 }
 
 export default function InvestPage() {
@@ -32,9 +33,11 @@ export default function InvestPage() {
   const [error, setError] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [working, setWorking] = useState(false);
   const [amount, setAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [workSuccess, setWorkSuccess] = useState(false);
 
   useEffect(() => {
     async function fetchPlayer() {
@@ -99,6 +102,43 @@ export default function InvestPage() {
     }
   };
 
+  const handleWork = async () => {
+    if (!player || working) return;
+
+    setError(null);
+    setWorking(true);
+    setWorkSuccess(false);
+
+    try {
+      const response = await fetch("/api/game/work", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          playerId: player.playerId,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Work failed");
+      }
+
+      setPlayer(result.player);
+      setWorkSuccess(true);
+
+      // Hide success message after 2 seconds
+      setTimeout(() => {
+        setWorkSuccess(false);
+      }, 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Work failed");
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const closeModal = () => {
     setShowDepositModal(false);
     setShowWithdrawModal(false);
@@ -125,12 +165,50 @@ export default function InvestPage() {
 
   const investmentTotal = calculateInvestments(player.investments);
   const totalCapital = calculateTotalCapital(player.money, player.investments);
+  const canWorkOrTrain =
+    !player.lastTrainingDate ||
+    new Date().toDateString() !==
+      new Date(player.lastTrainingDate).toDateString();
 
   return (
     <>
       <Header pageName="Invest" />
       <div className="flex flex-col items-center p-4 pb-20">
         <div className="w-full max-w-2xl space-y-6">
+          {/* Work Button */}
+          <div className="text-center mb-8 relative">
+            <button
+              onClick={handleWork}
+              className={`
+                text-white font-bold py-4 px-8 rounded-lg text-xl mb-4
+                ${
+                  canWorkOrTrain && !working
+                    ? "bg-blue-500 hover:bg-blue-700"
+                    : "bg-gray-500 cursor-not-allowed"
+                }
+              `}
+              disabled={!canWorkOrTrain || working}
+            >
+              {working ? "WORKING..." : "WORK"}
+            </button>
+
+            {/* Work Success Animation */}
+            {workSuccess && (
+              <div
+                key={`work-animation-${Date.now()}`}
+                className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
+              >
+                <div className="animate-bounce bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+                  +200$
+                </div>
+              </div>
+            )}
+
+            <div className={canWorkOrTrain ? "text-green-500" : "text-red-500"}>
+              {canWorkOrTrain ? "Energy full" : "Recovering"}
+            </div>
+          </div>
+
           {/* Financial Information */}
           <div className="space-y-4">
             {/* Cash */}

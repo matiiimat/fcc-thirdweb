@@ -249,7 +249,7 @@ export default function TrainPage() {
             )}
 
             <div className={canTrain ? "text-green-500" : "text-red-500"}>
-              {canTrain ? "Training Available" : "Already trained today"}
+              {canTrain ? "Energy full" : "Recovering"}
             </div>
           </div>
 
