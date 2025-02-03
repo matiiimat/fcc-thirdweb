@@ -150,12 +150,12 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Training Status */}
+        {/* Status */}
         <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg">
           <div className="flex justify-between items-center">
-            <span className="text-gray-300">Training Status:</span>
+            <span className="text-gray-300">Status:</span>
             <span className={canTrainToday ? "text-green-400" : "text-red-400"}>
-              {canTrainToday ? "Available" : "Already trained today"}
+              {canTrainToday ? "Energy full" : "Recovering"}
             </span>
           </div>
         </div>
