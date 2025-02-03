@@ -11,7 +11,9 @@ export default function TeamPage() {
     <>
       {/* Pass the pageName prop to the Header */}
       <Header pageName="Team" />
-      <b>COMING SOON</b>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] pb-20">
+        <b>COMING SOON</b>
+      </div>
       <Footer />
     </>
   );
