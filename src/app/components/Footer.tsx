@@ -7,17 +7,40 @@ export default function Footer() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // If you want to hide the footer on home ("/"), uncomment this block:
-  // if (pathname === "/") {
-  //   return null;
-  // }
-
   return (
-    <footer className="fixed bottom-0 left-0 right-0 flex justify-around items-center bg-[#0d0f12] p-4 text-3xl">
-      <button onClick={() => router.push("/home")}>📋</button>
-      <button onClick={() => router.push("/train")}>👟</button>
-      <button onClick={() => router.push("/invest")}>📈</button>
-      <button onClick={() => router.push("/team")}>👥</button>
+    <footer className="fixed bottom-0 left-0 right-0 bg-[#0d0f12] p-4">
+      <div className="flex justify-around items-center flex-wrap gap-2 max-w-screen-lg mx-auto">
+        <div className="flex flex-col items-center">
+          <button onClick={() => router.push("/home")} className="text-3xl">
+            📋
+          </button>
+          <span className="text-xs mt-1">Player Info</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <button onClick={() => router.push("/invest")} className="text-3xl">
+            📈
+          </button>
+          <span className="text-xs mt-1">Finances</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <button onClick={() => router.push("/train")} className="text-3xl">
+            👟
+          </button>
+          <span className="text-xs mt-1">Train</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <button onClick={() => router.push("/store")} className="text-3xl">
+            🛒
+          </button>
+          <span className="text-xs mt-1">Store</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <button onClick={() => router.push("/team")} className="text-3xl">
+            👥
+          </button>
+          <span className="text-xs mt-1">Team</span>
+        </div>
+      </div>
     </footer>
   );
 }

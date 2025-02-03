@@ -35,7 +35,7 @@ const calculateAverages = (stats: IPlayerStats) => {
     speed: stats.speed,
     playmaking: stats.passing,
     defense: stats.defending,
-    physique: Math.round((stats.strength + stats.stamina) / 2),
+    physical: Math.round((stats.strength + stats.stamina) / 2),
     mental: Math.round((stats.workEthic + stats.positioning) / 2),
   };
 };
@@ -55,7 +55,7 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats }) => {
       "SPEED",
       "PLAYMAKING",
       "DEFENSE",
-      "PHYSIQUE",
+      "PHYSICAL",
       "MENTAL",
     ],
     datasets: [
@@ -66,7 +66,7 @@ const StatsRadarChart: React.FC<StatsRadarChartProps> = ({ stats }) => {
           averages.speed,
           averages.playmaking,
           averages.defense,
-          averages.physique,
+          averages.physical,
           averages.mental,
         ],
         backgroundColor: "rgba(34, 197, 94, 0.2)",
