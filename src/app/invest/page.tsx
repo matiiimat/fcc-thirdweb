@@ -147,7 +147,7 @@ export default function InvestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-20">
         <Header pageName="Invest" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
@@ -170,7 +170,7 @@ export default function InvestPage() {
       new Date(player.lastTrainingDate).toDateString();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20">
       <Header pageName="Invest" />
       <div className="container max-w-2xl mx-auto px-4 py-6">
         {/* Work Button */}

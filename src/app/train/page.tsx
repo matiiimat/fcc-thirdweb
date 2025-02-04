@@ -169,7 +169,7 @@ export default function TrainPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-20">
         <Header pageName="Train" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
@@ -208,7 +208,7 @@ export default function TrainPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20">
       <Header pageName="Train" />
       <div className="container max-w-2xl mx-auto px-4 py-6">
         <div className="glass-container p-6 mb-6">

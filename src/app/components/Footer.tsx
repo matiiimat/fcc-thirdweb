@@ -14,7 +14,7 @@ export default function Footer() {
           <button onClick={() => router.push("/home")} className="text-3xl">
             📋
           </button>
-          <span className="text-xs mt-1">Player Info</span>
+          <span className="text-xs mt-1">Player</span>
         </div>
         <div className="flex flex-col items-center">
           <button onClick={() => router.push("/invest")} className="text-3xl">
