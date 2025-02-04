@@ -60,7 +60,6 @@ export default function Store() {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<string>("");
 
-  // Handle navigation when no wallet or player
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
       router.push("/");
@@ -120,7 +119,6 @@ export default function Store() {
         throw new Error(data.error || "Failed to purchase item");
       }
 
-      // Update player data with new balance
       setPlayer((prev) => (prev ? { ...prev, money: data.newBalance } : null));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to purchase item");
@@ -131,14 +129,14 @@ export default function Store() {
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen">
         <Header pageName="Store" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+          <p className="mt-2 text-green-400">Loading...</p>
         </div>
         <Footer />
-      </>
+      </div>
     );
   }
 
@@ -146,7 +144,6 @@ export default function Store() {
     return null;
   }
 
-  // Group items by section
   const itemsBySection = storeItems.reduce((acc, item) => {
     if (!acc[item.section]) {
       acc[item.section] = [];
@@ -156,11 +153,11 @@ export default function Store() {
   }, {} as Record<string, StoreItem[]>);
 
   return (
-    <div className="min-h-screen bg-[#0d0f12] text-white">
+    <div className="min-h-screen">
       <Header pageName="Store" />
-      <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-8rem)]">
+      <main className="container max-w-2xl mx-auto px-4 py-6">
         {/* Player's Cash */}
-        <div className="bg-gray-800 p-4 rounded-lg mb-8">
+        <div className="glass-container p-6 mb-6">
           <div className="flex justify-between items-center">
             <span className="text-gray-300">Available Cash:</span>
             <span className="text-xl font-semibold text-green-400">
@@ -170,66 +167,68 @@ export default function Store() {
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-2 rounded-lg mb-6">
+          <div className="glass-container border-red-500/50 text-red-400 px-6 py-4 mb-6">
             {error}
           </div>
         )}
 
         {/* Bonuses Section */}
-        <div className="mb-8">
+        <div className="glass-container p-6 mb-6">
           <h2 className="text-xl font-bold text-white mb-4">Bonuses</h2>
-          <div className="bg-gray-800 rounded-lg p-4">
+          <div className="space-y-4">
             {itemsBySection["Bonuses"].map((item) => (
-              <div key={item.id} className="flex justify-between items-center">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-400">{item.description}</p>
+              <div key={item.id} className="glass-container p-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">{item.name}</h3>
+                    <p className="text-sm text-gray-400">{item.description}</p>
+                  </div>
+                  <button
+                    onClick={() => handlePurchase(item)}
+                    disabled={
+                      processing === item.id || player.money < item.price
+                    }
+                    className={`gradient-button px-4 py-2 rounded-xl ml-4 whitespace-nowrap ${
+                      (processing === item.id || player.money < item.price) &&
+                      "opacity-50 cursor-not-allowed"
+                    }`}
+                  >
+                    {processing === item.id
+                      ? "Buying..."
+                      : formatCurrency(item.price)}
+                  </button>
                 </div>
-                <button
-                  onClick={() => handlePurchase(item)}
-                  disabled={processing === item.id || player.money < item.price}
-                  className={`px-4 py-2 rounded-lg ${
-                    processing === item.id
-                      ? "bg-blue-500/50 cursor-not-allowed"
-                      : player.money < item.price
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-blue-500 hover:bg-blue-600"
-                  } transition-colors ml-4 whitespace-nowrap`}
-                >
-                  {processing === item.id
-                    ? "Buying..."
-                    : formatCurrency(item.price)}
-                </button>
               </div>
             ))}
           </div>
         </div>
 
         {/* Certifications Section */}
-        <div className="mb-8">
+        <div className="glass-container p-6">
           <h2 className="text-xl font-bold text-white mb-4">Certifications</h2>
-          <div className="bg-gray-800 rounded-lg p-4 space-y-4">
+          <div className="space-y-4">
             {itemsBySection["Certifications"].map((item) => (
-              <div key={item.id} className="flex justify-between items-center">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-400">{item.description}</p>
+              <div key={item.id} className="glass-container p-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold">{item.name}</h3>
+                    <p className="text-sm text-gray-400">{item.description}</p>
+                  </div>
+                  <button
+                    onClick={() => handlePurchase(item)}
+                    disabled={
+                      processing === item.id || player.money < item.price
+                    }
+                    className={`gradient-button px-4 py-2 rounded-xl ml-4 whitespace-nowrap ${
+                      (processing === item.id || player.money < item.price) &&
+                      "opacity-50 cursor-not-allowed"
+                    }`}
+                  >
+                    {processing === item.id
+                      ? "Buying..."
+                      : formatCurrency(item.price)}
+                  </button>
                 </div>
-                <button
-                  onClick={() => handlePurchase(item)}
-                  disabled={processing === item.id || player.money < item.price}
-                  className={`px-4 py-2 rounded-lg ${
-                    processing === item.id
-                      ? "bg-blue-500/50 cursor-not-allowed"
-                      : player.money < item.price
-                      ? "bg-gray-500 cursor-not-allowed"
-                      : "bg-blue-500 hover:bg-blue-600"
-                  } transition-colors ml-4 whitespace-nowrap`}
-                >
-                  {processing === item.id
-                    ? "Buying..."
-                    : formatCurrency(item.price)}
-                </button>
               </div>
             ))}
           </div>

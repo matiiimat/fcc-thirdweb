@@ -128,7 +128,6 @@ export default function InvestPage() {
       setPlayer(result.player);
       setWorkSuccess(true);
 
-      // Hide success message after 2 seconds
       setTimeout(() => {
         setWorkSuccess(false);
       }, 2000);
@@ -148,14 +147,14 @@ export default function InvestPage() {
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen">
         <Header pageName="Invest" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+          <p className="mt-2 text-green-400">Loading...</p>
         </div>
         <Footer />
-      </>
+      </div>
     );
   }
 
@@ -171,20 +170,20 @@ export default function InvestPage() {
       new Date(player.lastTrainingDate).toDateString();
 
   return (
-    <>
+    <div className="min-h-screen">
       <Header pageName="Invest" />
-      <div className="flex flex-col items-center p-4 pb-20">
-        <div className="w-full max-w-2xl space-y-6">
-          {/* Work Button */}
-          <div className="text-center mb-8 relative">
+      <div className="container max-w-2xl mx-auto px-4 py-6">
+        {/* Work Button */}
+        <div className="glass-container p-6 mb-6">
+          <div className="text-center relative">
             <button
               onClick={handleWork}
               className={`
-                text-white font-bold py-4 px-8 rounded-lg text-xl mb-4
+                gradient-button py-4 px-8 rounded-xl text-xl mb-4 w-full
                 ${
-                  canWorkOrTrain && !working
-                    ? "bg-blue-500 hover:bg-blue-700"
-                    : "bg-gray-500 cursor-not-allowed"
+                  !canWorkOrTrain || working
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }
               `}
               disabled={!canWorkOrTrain || working}
@@ -198,124 +197,124 @@ export default function InvestPage() {
                 key={`work-animation-${Date.now()}`}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
               >
-                <div className="animate-bounce bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+                <div className="animate-bounce glass-container bg-green-500/20 text-white px-4 py-2">
                   +200$
                 </div>
               </div>
             )}
 
-            <div className={canWorkOrTrain ? "text-green-500" : "text-red-500"}>
+            <div className={canWorkOrTrain ? "text-green-400" : "text-red-400"}>
               {canWorkOrTrain ? "Energy full" : "Recovering"}
             </div>
           </div>
+        </div>
 
-          {/* Financial Information */}
-          <div className="space-y-4">
-            {/* Cash */}
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Cash:</span>
-                <span className="text-xl font-semibold text-green-400">
-                  {formatCurrency(player.money)}
-                </span>
-              </div>
-            </div>
-
-            {/* Investments */}
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Investment:</span>
-                <span className="text-xl font-semibold text-gray-400">
-                  {formatCurrency(investmentTotal)}
-                </span>
-              </div>
-            </div>
-
-            {/* Total Capital */}
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-300">Capital:</span>
-                <span className="text-xl font-semibold text-yellow-400">
-                  {formatCurrency(totalCapital)}
-                </span>
-              </div>
+        {/* Financial Information */}
+        <div className="glass-container p-6 mb-6 space-y-4">
+          {/* Cash */}
+          <div className="glass-container p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Cash:</span>
+              <span className="text-xl font-semibold text-green-400">
+                {formatCurrency(player.money)}
+              </span>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={() => setShowDepositModal(true)}
-              disabled={processing}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg"
-            >
-              Deposit
-            </button>
-            <button
-              onClick={() => setShowWithdrawModal(true)}
-              disabled={processing}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg"
-            >
-              Withdraw
-            </button>
+          {/* Investments */}
+          <div className="glass-container p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Investment:</span>
+              <span className="text-xl font-semibold text-gray-400">
+                {formatCurrency(investmentTotal)}
+              </span>
+            </div>
           </div>
 
-          {/* Transaction Modal */}
-          {(showDepositModal || showWithdrawModal) && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-              <div className="bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
-                <h3 className="text-xl font-bold mb-4 text-white">
-                  {showDepositModal ? "Deposit" : "Withdraw"} Amount
-                </h3>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className="w-full p-2 mb-2 rounded bg-gray-700 text-white"
-                />
-                {modalError && (
-                  <div className="text-red-500 text-sm mb-4">{modalError}</div>
-                )}
-                <div className="flex justify-end space-x-2">
-                  <button
-                    onClick={closeModal}
-                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleTransaction(
-                        showDepositModal ? "deposit" : "withdraw"
-                      )
-                    }
-                    disabled={processing || !amount}
-                    className={`${
-                      showDepositModal
-                        ? "bg-green-500 hover:bg-green-700"
-                        : "bg-red-500 hover:bg-red-700"
-                    } text-white font-bold py-2 px-4 rounded`}
-                  >
-                    {processing
-                      ? "Processing..."
-                      : showDepositModal
-                      ? "Deposit"
-                      : "Withdraw"}
-                  </button>
-                </div>
+          {/* Total Capital */}
+          <div className="glass-container p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Capital:</span>
+              <span className="text-xl font-semibold text-yellow-400">
+                {formatCurrency(totalCapital)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="glass-container p-6 space-x-4 flex justify-center">
+          <button
+            onClick={() => setShowDepositModal(true)}
+            disabled={processing}
+            className="gradient-button py-3 px-6 rounded-xl"
+          >
+            Deposit
+          </button>
+          <button
+            onClick={() => setShowWithdrawModal(true)}
+            disabled={processing}
+            className="gradient-button py-3 px-6 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400"
+          >
+            Withdraw
+          </button>
+        </div>
+
+        {/* Transaction Modal */}
+        {(showDepositModal || showWithdrawModal) && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="glass-container p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold mb-4 text-white">
+                {showDepositModal ? "Deposit" : "Withdraw"} Amount
+              </h3>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full p-2 mb-2 rounded-xl bg-black/40 text-white border border-green-500/30"
+              />
+              {modalError && (
+                <div className="text-red-400 text-sm mb-4">{modalError}</div>
+              )}
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={closeModal}
+                  className="gradient-button py-2 px-4 rounded-xl bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() =>
+                    handleTransaction(showDepositModal ? "deposit" : "withdraw")
+                  }
+                  disabled={processing || !amount}
+                  className={`gradient-button py-2 px-4 rounded-xl ${
+                    processing || !amount ? "opacity-50 cursor-not-allowed" : ""
+                  } ${
+                    showDepositModal
+                      ? ""
+                      : "bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400"
+                  }`}
+                >
+                  {processing
+                    ? "Processing..."
+                    : showDepositModal
+                    ? "Deposit"
+                    : "Withdraw"}
+                </button>
               </div>
             </div>
-          )}
-
-          {/* Investment Info */}
-          <div className="text-sm text-gray-400 text-center mt-8 p-4 bg-gray-800 rounded-lg">
-            Your investments grow by 1% each day. Growth is calculated and
-            applied automatically.
           </div>
+        )}
+
+        {/* Investment Info */}
+        <div className="glass-container p-4 mt-6 text-sm text-gray-400 text-center">
+          Your investments grow by 1% each day. Growth is calculated and applied
+          automatically.
         </div>
       </div>
       <Footer />
-    </>
+    </div>
   );
 }
