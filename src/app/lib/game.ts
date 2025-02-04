@@ -55,6 +55,28 @@ export function calculateInvestments(investments: Array<{ type: string; amount: 
   }, 0);
 }
 
+// Calculate work ethic changes based on player activity
+export function calculateWorkEthicChange(lastTrainingDate: Date | null, lastConnectionDate: Date | null): number {
+  const now = new Date();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  // If no previous connection, this is first time - no change
+  if (!lastConnectionDate) return 0;
+
+  // Check if player trained or worked yesterday
+  const wasActiveYesterday = lastTrainingDate &&
+    (now.getTime() - lastTrainingDate.getTime() < 2 * oneDayMs);
+
+  if (wasActiveYesterday) {
+    // Player was active yesterday, increase work ethic
+    return 1;
+  } else {
+    // Calculate days of inactivity and subtract one point per day
+    const daysSinceLastConnection = Math.floor((now.getTime() - lastConnectionDate.getTime()) / oneDayMs);
+    return -daysSinceLastConnection; // Subtract one point per day of inactivity
+  }
+}
+
 // Calculate total capital (money + investments with growth)
 export function calculateTotalCapital(money: number, investments: Array<{ type: string; amount: number; timestamp: string }>) {
   const investmentTotal = calculateInvestments(investments);

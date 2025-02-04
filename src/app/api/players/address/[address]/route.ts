@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
-import Player from '@/app/models/Player';
+import Player, { IPlayer } from '@/app/models/Player';
+import { calculateWorkEthicChange } from '@/app/lib/game';
+import { PLAYER_CONSTANTS } from '@/app/lib/constants';
 
 interface Params {
   params: {
@@ -35,10 +37,27 @@ export async function GET(req: NextRequest, { params }: Params) {
         matches: p.ethAddress.toLowerCase() === searchAddress
       }))); // Debug log
 
-      // Exact match with case-insensitive comparison
-      const player = await Player.findOne({
-        ethAddress: searchAddress
-      }).select('-__v');
+      // First find the player
+      const player = await Player.findOne({ ethAddress: searchAddress });
+      
+      if (player) {
+        // Calculate work ethic change
+        const workEthicChange = calculateWorkEthicChange(player.lastTrainingDate, player.lastConnectionDate);
+        
+        // Calculate new work ethic within bounds
+        const newWorkEthic = Math.max(
+          PLAYER_CONSTANTS.MIN_STAT_VALUE,
+          Math.min(
+            PLAYER_CONSTANTS.MAX_STAT_VALUE,
+            player.stats.workEthic + workEthicChange
+          )
+        );
+
+        // Update the player
+        player.stats.workEthic = newWorkEthic;
+        player.lastConnectionDate = new Date();
+        await player.save();
+      }
 
       if (!player) {
         console.log('No player found for address:', searchAddress); // Debug log
