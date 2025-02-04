@@ -14,7 +14,7 @@ export default function Footer() {
         <div className="flex flex-col items-center">
           <button
             onClick={() => router.push("/home")}
-            className="flex items-center justify-center w-6 h-6 mb-[1px]"
+            className="flex items-center justify-center w-6 h-6 mb-[7px]"
           >
             <Image
               src="/icons/player-icon.png"
@@ -29,7 +29,7 @@ export default function Footer() {
         <div className="flex flex-col items-center">
           <button
             onClick={() => router.push("/invest")}
-            className="flex items-center justify-center w-6 h-6 mb-[1px]"
+            className="flex items-center justify-center w-6 h-6 mb-[7px]"
           >
             <Image
               src="/icons/finances-icon.png"
@@ -44,7 +44,7 @@ export default function Footer() {
         <div className="flex flex-col items-center">
           <button
             onClick={() => router.push("/train")}
-            className="flex items-center justify-center w-6 h-6 mb-[1px]"
+            className="flex items-center justify-center w-6 h-6 mb-[7px]"
           >
             <Image
               src="/icons/train-icon.png"
@@ -59,7 +59,7 @@ export default function Footer() {
         <div className="flex flex-col items-center">
           <button
             onClick={() => router.push("/store")}
-            className="flex items-center justify-center w-6 h-6 mb-[1px]"
+            className="flex items-center justify-center w-6 h-6 mb-[7px]"
           >
             <Image
               src="/icons/store-icon.png"
@@ -74,7 +74,7 @@ export default function Footer() {
         <div className="flex flex-col items-center">
           <button
             onClick={() => router.push("/team")}
-            className="flex items-center justify-center w-6 h-6 mb-[1px]"
+            className="flex items-center justify-center w-6 h-6 mb-[7px]"
           >
             <Image
               src="/icons/team-icon.png"

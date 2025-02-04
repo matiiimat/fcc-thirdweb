@@ -21,7 +21,7 @@ export default function Header({ pageName }: HeaderProps) {
       </h1>
       <button
         onClick={goToSettings}
-        className="absolute top-[2px] right-[2px] bg-transparent flex items-center justify-center w-6 h-6"
+        className="absolute top-[10px] right-[10px] bg-transparent flex items-center justify-center w-6 h-6"
         aria-label="Settings"
       >
         <Image
