@@ -171,7 +171,7 @@ export default function InvestPage() {
 
   return (
     <div className="min-h-screen pb-20">
-      <Header pageName="Invest" />
+      <Header pageName="Finances" />
       <div className="container max-w-2xl mx-auto px-4 py-6">
         {/* Work Button */}
         <div className="glass-container p-6 mb-6">
