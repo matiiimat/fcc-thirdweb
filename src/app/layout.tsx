@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <div className="stars" aria-hidden="true" />
         <ThirdwebProvider>
           {/* Header is now rendered by individual pages */}
           {children}
