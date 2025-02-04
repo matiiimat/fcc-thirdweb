@@ -84,7 +84,7 @@ export default function HomePage() {
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
             <p className="mt-2">Loading...</p>
           </div>
         </div>
@@ -122,20 +122,22 @@ export default function HomePage() {
     <div className="min-h-screen pb-20">
       <Header pageName="Home" />
       <div className="flex flex-col items-center mt-2 px-4">
-        <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
-        <div className="text-2xl mb-2">
-          {getStarRating(calculatePlayerRating(player.stats))}
-        </div>
+        <div className="glass-container p-6 w-full max-w-md mb-4">
+          <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
+          <div className="text-2xl mb-2 text-center">
+            {getStarRating(calculatePlayerRating(player.stats))}
+          </div>
 
-        {/* Stats Radar Chart */}
-        <div className="w-full max-w-md mb-3">
-          <StatsRadarChart stats={player.stats} />
+          {/* Stats Radar Chart */}
+          <div className="w-full mb-3">
+            <StatsRadarChart stats={player.stats} />
+          </div>
         </div>
 
         {/* Financial Information */}
-        <div className="flex flex-col items-start w-full max-w-md bg-gray-800 p-4 rounded-lg mb-2">
+        <div className="glass-container p-6 w-full max-w-md mb-4">
           <div className="w-full">
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex justify-between items-center mb-3">
               <span className="text-gray-300">Cash:</span>
               <span className="text-lg font-semibold text-green-400">
                 {formatCurrency(player.money)}
@@ -151,7 +153,7 @@ export default function HomePage() {
         </div>
 
         {/* Status */}
-        <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg">
+        <div className="glass-container p-4 w-full max-w-md">
           <div className="flex justify-between items-center">
             <span className="text-gray-300">Status:</span>
             <span className={canTrainToday ? "text-green-400" : "text-red-400"}>
