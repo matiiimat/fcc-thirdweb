@@ -80,7 +80,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-center">
@@ -95,7 +95,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
@@ -119,9 +119,9 @@ export default function HomePage() {
     : true;
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen relative">
       <Header pageName="Home" />
-      <div className="flex flex-col items-center mt-2 px-4">
+      <div className="flex flex-col items-center mt-2 px-4 pb-24">
         <div className="glass-container p-6 w-full max-w-md mb-4">
           <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
           <div className="text-2xl mb-2 text-center">
