@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import PlayerModel from "@/app/models/Player";
+import { getActionCooldown } from "@/app/lib/game";
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,23 +20,19 @@ export async function POST(req: NextRequest) {
     if (!player) {
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
     }
+// Check if player can work (8-hour cooldown)
+const { onCooldown, remainingTime } = getActionCooldown(player.lastWorkDate, false);
 
-    // Check if player can work/train today
-    const today = new Date().toDateString();
-    const lastTrainingDate = player.lastTrainingDate
-      ? new Date(player.lastTrainingDate).toDateString()
-      : null;
+if (onCooldown) {
+  return NextResponse.json(
+    { error: `Work is on cooldown. Time remaining: ${remainingTime}` },
+    { status: 400 }
+  );
+}
 
-    if (lastTrainingDate === today) {
-      return NextResponse.json(
-        { error: "Already trained or worked today" },
-        { status: 400 }
-      );
-    }
-
-    // Add work money and update last training date
-    player.money += 200;
-    player.lastTrainingDate = new Date();
+// Add work money and update last work date
+player.money += 200;
+player.lastWorkDate = new Date();
 
     await player.save();
 

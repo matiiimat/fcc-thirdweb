@@ -11,6 +11,7 @@ import {
   getStarRating,
   calculateTotalCapital,
   formatCurrency,
+  getActionCooldown,
 } from "../lib/game";
 
 interface PlayerData {
@@ -34,6 +35,7 @@ interface PlayerData {
     timestamp: string;
   }>;
   lastTrainingDate: string | null;
+  lastWorkDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
 }
@@ -112,11 +114,17 @@ export default function HomePage() {
   // Calculate total capital
   const totalCapital = calculateTotalCapital(player.money, player.investments);
 
-  // Calculate if player can train today
-  const canTrainToday = player?.lastTrainingDate
-    ? new Date().toDateString() !==
-      new Date(player.lastTrainingDate).toDateString()
-    : true;
+  // Calculate cooldowns
+  const { onCooldown: trainingOnCooldown, remainingTime: trainingTime } =
+    getActionCooldown(
+      player?.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
+      true // isTraining = true
+    );
+  const { onCooldown: workOnCooldown, remainingTime: workTime } =
+    getActionCooldown(
+      player?.lastWorkDate ? new Date(player.lastWorkDate) : null,
+      false // isTraining = false
+    );
 
   return (
     <div className="min-h-screen relative">
@@ -154,11 +162,27 @@ export default function HomePage() {
 
         {/* Status */}
         <div className="glass-container p-4 w-full max-w-md">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Status:</span>
-            <span className={canTrainToday ? "text-green-400" : "text-red-400"}>
-              {canTrainToday ? "Energy full" : "Recovering"}
-            </span>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Training:</span>
+              <span
+                className={
+                  !trainingOnCooldown ? "text-green-400" : "text-red-400"
+                }
+              >
+                {!trainingOnCooldown
+                  ? "Ready"
+                  : `Resting: ${trainingTime} left`}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Work:</span>
+              <span
+                className={!workOnCooldown ? "text-green-400" : "text-red-400"}
+              >
+                {!workOnCooldown ? "Ready" : `Resting: ${workTime} left`}
+              </span>
+            </div>
           </div>
         </div>
       </div>

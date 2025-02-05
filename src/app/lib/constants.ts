@@ -20,6 +20,8 @@ export const TRAINING_CONSTANTS = {
   WORK_ETHIC_POINTS_PER_DAY: 2, // Points gained per consecutive day
   MAX_TRAINING_BONUS: 2.0, // Maximum training bonus
   MIN_TRAINING_BONUS: 0.1, // Minimum training bonus
+  TRAINING_COOLDOWN_HOURS: 6, // Hours between training sessions
+  WORK_COOLDOWN_HOURS: 8, // Hours between work sessions
 };
 
 // Player stats

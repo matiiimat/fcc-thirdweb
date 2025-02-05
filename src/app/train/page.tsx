@@ -10,6 +10,7 @@ import {
   getStarRating,
   getPlayerStats,
   getStatColor,
+  getActionCooldown,
 } from "../lib/game";
 import { STAT_NAMES } from "../lib/constants";
 
@@ -186,10 +187,11 @@ export default function TrainPage() {
 
   const playerStats = getPlayerStats(player.stats);
   const rating = calculatePlayerRating(player.stats);
-  const canTrain =
-    !player.lastTrainingDate ||
-    new Date().toDateString() !==
-      new Date(player.lastTrainingDate).toDateString();
+  const { onCooldown, remainingTime } = getActionCooldown(
+    player.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
+    true // isTraining = true
+  );
+  const canTrain = !onCooldown;
 
   const formatStatValue = (value: any) => {
     const num = Number(value);
@@ -238,7 +240,7 @@ export default function TrainPage() {
             )}
 
             <div className={canTrain ? "text-green-400" : "text-red-400"}>
-              {canTrain ? "Energy full" : "Recovering"}
+              {canTrain ? "Ready to train" : `Resting: ${remainingTime} left`}
             </div>
           </div>
 

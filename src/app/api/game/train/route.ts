@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player from '@/app/models/Player';
-import { calculateTrainingResult } from '@/app/lib/game';
+import { calculateTrainingResult, getActionCooldown } from '@/app/lib/game';
 import { ValidationError } from '@/app/lib/validation';
+import { TRAINING_CONSTANTS } from '@/app/lib/constants';
 
 // POST /api/game/train - Train a player's stats
 export async function POST(req: NextRequest) {
@@ -28,15 +29,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if player can train today
-    const today = new Date().toDateString();
-    const lastTraining = player.lastTrainingDate 
-      ? new Date(player.lastTrainingDate).toDateString()
-      : null;
-
-    if (lastTraining === today) {
+    // Check if player can train (6-hour cooldown)
+    const { onCooldown, remainingTime } = getActionCooldown(player.lastTrainingDate, true);
+    
+    if (onCooldown) {
       return NextResponse.json(
-        { error: 'You can only train once per day' },
+        { error: `Training is on cooldown. Time remaining: ${remainingTime}` },
         { status: 400 }
       );
     }

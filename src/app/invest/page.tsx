@@ -9,6 +9,7 @@ import {
   calculateInvestments,
   calculateTotalCapital,
   formatCurrency,
+  getActionCooldown,
 } from "../lib/game";
 
 interface PlayerData {
@@ -22,6 +23,7 @@ interface PlayerData {
     timestamp: string;
   }>;
   lastTrainingDate: string | null;
+  lastWorkDate: string | null;
 }
 
 export default function InvestPage() {
@@ -164,10 +166,11 @@ export default function InvestPage() {
 
   const investmentTotal = calculateInvestments(player.investments);
   const totalCapital = calculateTotalCapital(player.money, player.investments);
-  const canWorkOrTrain =
-    !player.lastTrainingDate ||
-    new Date().toDateString() !==
-      new Date(player.lastTrainingDate).toDateString();
+  const { onCooldown: workOnCooldown, remainingTime: workTime } =
+    getActionCooldown(
+      player.lastWorkDate ? new Date(player.lastWorkDate) : null,
+      false // isTraining = false
+    );
 
   return (
     <div className="min-h-screen pb-20">
@@ -181,12 +184,12 @@ export default function InvestPage() {
               className={`
                 gradient-button py-4 px-8 rounded-xl text-xl mb-4 w-full
                 ${
-                  !canWorkOrTrain || working
+                  workOnCooldown || working
                     ? "opacity-50 cursor-not-allowed"
                     : ""
                 }
               `}
-              disabled={!canWorkOrTrain || working}
+              disabled={workOnCooldown || working}
             >
               {working ? "WORKING..." : "WORK"}
             </button>
@@ -203,8 +206,10 @@ export default function InvestPage() {
               </div>
             )}
 
-            <div className={canWorkOrTrain ? "text-green-400" : "text-red-400"}>
-              {canWorkOrTrain ? "Energy full" : "Recovering"}
+            <div
+              className={!workOnCooldown ? "text-green-400" : "text-red-400"}
+            >
+              {!workOnCooldown ? "Ready to work" : `Resting: ${workTime} left`}
             </div>
           </div>
         </div>

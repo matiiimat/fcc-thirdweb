@@ -1,3 +1,5 @@
+import { TRAINING_CONSTANTS } from './constants';
+
 // Calculate player rating based on stats
 export function calculatePlayerRating(stats: any) {
   const values = Object.values(stats).map(Number);
@@ -53,6 +55,36 @@ export function calculateInvestments(investments: Array<{ type: string; amount: 
     const amount = inv.amount * Math.pow(1 + DAILY_INTEREST_RATE, daysDiff);
     return total + amount;
   }, 0);
+}
+
+// Check if action is on cooldown and get remaining time
+export function getActionCooldown(lastActionDate: Date | null, isTraining: boolean = false): {
+  onCooldown: boolean;
+  remainingTime: string;
+} {
+  if (!lastActionDate) {
+    return { onCooldown: false, remainingTime: "00:00" };
+  }
+
+  const now = new Date();
+  const cooldownHours = isTraining ?
+    TRAINING_CONSTANTS.TRAINING_COOLDOWN_HOURS :
+    TRAINING_CONSTANTS.WORK_COOLDOWN_HOURS;
+  const cooldownMs = cooldownHours * 60 * 60 * 1000;
+  const timeSinceAction = now.getTime() - lastActionDate.getTime();
+  
+  if (timeSinceAction >= cooldownMs) {
+    return { onCooldown: false, remainingTime: "00:00" };
+  }
+
+  const remainingMs = cooldownMs - timeSinceAction;
+  const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+  const minutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+  
+  return {
+    onCooldown: true,
+    remainingTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+  };
 }
 
 // Calculate work ethic changes based on player activity

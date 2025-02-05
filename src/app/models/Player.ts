@@ -30,6 +30,7 @@ export interface IPlayer extends Document {
   investments: IInvestment[];
   stats: IPlayerStats;
   lastTrainingDate: Date | null;
+  lastWorkDate: Date | null;
   lastConnectionDate: Date | null;
   consecutiveConnections: number;
   createdAt: Date;
@@ -203,6 +204,10 @@ const PlayerSchema = new Schema<IPlayer>(
       required: true,
     },
     lastTrainingDate: {
+      type: Date,
+      default: null,
+    },
+    lastWorkDate: {
       type: Date,
       default: null,
     },
