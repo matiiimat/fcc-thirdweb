@@ -210,14 +210,14 @@ export default function TrainPage() {
   return (
     <div className="min-h-screen pb-20">
       <Header pageName="Train" />
-      <div className="container max-w-2xl mx-auto px-4 py-6">
-        <div className="glass-container p-6 mb-6">
+      <div className="container max-w-xl mx-auto px-2 py-4">
+        <div className="glass-container p-4 mb-4">
           {/* Training Button and Status */}
-          <div className="text-center mb-8 relative">
+          <div className="text-center mb-6 relative">
             <button
               onClick={handleTrain}
               className={`
-                gradient-button py-4 px-8 rounded-xl text-xl mb-4 w-full
+                gradient-button py-3 px-6 rounded-xl text-lg mb-3 w-full
                 ${!canTrain || training ? "opacity-50 cursor-not-allowed" : ""}
               `}
               disabled={!canTrain || training}
@@ -231,7 +231,7 @@ export default function TrainPage() {
                 key={`training-animation-${Date.now()}`}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
               >
-                <div className="animate-bounce glass-container bg-green-500/20 text-white px-4 py-2 shadow-lg">
+                <div className="animate-bounce glass-container bg-green-500/20 text-white px-3 py-1 shadow-lg text-sm">
                   {getTrainingMessage()}
                 </div>
               </div>
@@ -243,30 +243,30 @@ export default function TrainPage() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             {playerStats.map(({ name, value }) => (
               <div
                 key={`stat-${name}`}
-                className={`glass-container p-4 ${
+                className={`glass-container p-2 ${
                   trainingResult &&
                   STAT_NAMES[trainingResult.stat as keyof typeof STAT_NAMES] ===
                     name
-                    ? "ring-2 ring-green-500"
+                    ? "ring-1 ring-green-500"
                     : ""
                 }`}
               >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm">
                   <span className="font-semibold text-white">{name}</span>
                   <span className={getStatColor(Number(value))}>
                     {formatStatValue(value)}
                   </span>
                 </div>
                 {/* Progress bar */}
-                <div className="w-full bg-black/40 rounded-full h-2.5 mt-2">
+                <div className="w-full bg-black/40 rounded-full h-2 mt-1">
                   <div
                     className={`${getStatColor(
                       Number(value)
-                    )} h-2.5 rounded-full`}
+                    )} h-2 rounded-full`}
                     style={{ width: `${(Number(value) / 20) * 100}%` }}
                   ></div>
                 </div>
@@ -275,7 +275,7 @@ export default function TrainPage() {
           </div>
 
           {error && (
-            <div className="text-red-500 text-center mt-4">{error}</div>
+            <div className="text-red-500 text-center mt-4 text-sm">{error}</div>
           )}
         </div>
       </div>

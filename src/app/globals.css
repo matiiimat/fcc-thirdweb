@@ -13,24 +13,24 @@
   font-optical-sizing: auto;
   font-style: normal;
   font-variation-settings: 'slnt' 0;
+  --stadium-background: none;
 }
 
 @layer base {
   body {
     @apply min-h-screen text-white relative;
-    background: var(--stadium-background, url('/images/stadium.png')) center 50% / 50% no-repeat,
-      linear-gradient(to bottom,
-        #05101e 0%,      /* Darker blue sky */
-        #05101e 35%,     /* Darker blue sky continues */
-        #24152d 45%,     /* Darker purple transition */
-        #15803d 50%,     /* Tailwind green-700 start */
-        #15803d 100%     /* Tailwind green-700 continues to bottom */
-      );
+    background: linear-gradient(to bottom,
+      #05101e 0%,      /* Darker blue sky */
+      #05101e 35%,     /* Darker blue sky continues */
+      #24152d 45%,     /* Darker purple transition */
+      #15803d 50%,     /* Tailwind green-700 start */
+      #15803d 100%     /* Tailwind green-700 continues to bottom */
+    );
   }
 
-  /* Stadium toggle class */
-  .stadium-disabled {
-    --stadium-background: none;
+  /* Stadium toggle class for future use */
+  .stadium-enabled {
+    --stadium-background: url('/images/stadium.png') center 50% / 50% no-repeat;
   }
 }
 
