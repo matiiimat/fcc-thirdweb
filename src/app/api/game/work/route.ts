@@ -20,24 +20,29 @@ export async function POST(req: NextRequest) {
     if (!player) {
       return NextResponse.json({ error: "Player not found" }, { status: 404 });
     }
-// Check if player can work (8-hour cooldown)
-const { onCooldown, remainingTime } = getActionCooldown(player.lastWorkDate, false);
 
-if (onCooldown) {
-  return NextResponse.json(
-    { error: `Work is on cooldown. Time remaining: ${remainingTime}` },
-    { status: 400 }
-  );
-}
+    // Check if player can work (8-hour cooldown)
+    const { onCooldown, remainingTime } = getActionCooldown(player.lastWorkDate, false);
 
-// Add work money and update last work date
-player.money += 200;
-player.lastWorkDate = new Date();
+    if (onCooldown) {
+      return NextResponse.json(
+        { error: `Work is on cooldown. Time remaining: ${remainingTime}` },
+        { status: 400 }
+      );
+    }
+
+    // Generate random work reward between 150 and 250
+    const earnedAmount = Math.floor(Math.random() * (250 - 150 + 1)) + 150;
+
+    // Add work money and update last work date
+    player.money += earnedAmount;
+    player.lastWorkDate = new Date();
 
     await player.save();
 
     return NextResponse.json({
       success: true,
+      earnedAmount,
       player: {
         ...player.toJSON(),
         money: player.money,

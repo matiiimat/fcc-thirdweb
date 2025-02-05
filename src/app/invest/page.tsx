@@ -40,6 +40,7 @@ export default function InvestPage() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [workSuccess, setWorkSuccess] = useState(false);
+  const [earnedAmount, setEarnedAmount] = useState(0);
 
   useEffect(() => {
     async function fetchPlayer() {
@@ -128,6 +129,7 @@ export default function InvestPage() {
       }
 
       setPlayer(result.player);
+      setEarnedAmount(result.earnedAmount);
       setWorkSuccess(true);
 
       setTimeout(() => {
@@ -201,7 +203,7 @@ export default function InvestPage() {
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
               >
                 <div className="animate-bounce glass-container bg-green-500/20 text-white px-4 py-2">
-                  +200$
+                  +{earnedAmount}$
                 </div>
               </div>
             )}
