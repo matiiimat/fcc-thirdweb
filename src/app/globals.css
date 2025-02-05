@@ -3,20 +3,72 @@
 @tailwind utilities;
 
 :root {
-	line-height: 1.5;
-	font-weight: 400;
-	font-synthesis: none;
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-	font-family: 'Inter', sans-serif;
-	font-optical-sizing: auto;
-	font-style: normal;
-	font-variation-settings: 'slnt' 0;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: 'Inter', sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings: 'slnt' 0;
+  --stadium-background: none;
 }
 
 @layer base {
-	body {
-		@apply bg-zinc-950 text-neutral-200;
-	}
+  body {
+    @apply min-h-screen text-white relative;
+    background: linear-gradient(to bottom,
+      #05101e 0%,      /* Darker blue sky */
+      #05101e 35%,     /* Darker blue sky continues */
+      #24152d 45%,     /* Darker purple transition */
+      #15803d 50%,     /* Tailwind green-700 start */
+      #15803d 100%     /* Tailwind green-700 continues to bottom */
+    );
+  }
+
+  /* Stadium toggle class for future use */
+  .stadium-enabled {
+    --stadium-background: url('/images/stadium.png') center 50% / 50% no-repeat;
+  }
+}
+
+@layer components {
+  .glass-container {
+    @apply backdrop-blur-sm bg-black/60 border border-green-700/30 rounded-3xl relative z-0;
+  }
+  
+  .gradient-button {
+    @apply bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 text-white transition-all duration-200 border border-green-600/30 shadow-lg shadow-green-900/20 relative z-0;
+  }
+
+  .main-nav {
+    @apply flex justify-between items-center p-4 relative z-50;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .nav-link {
+    @apply flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-700 transition-colors relative z-50;
+    width: 80px;
+    height: 80px;
+  }
+
+  .nav-link img {
+    @apply w-8 h-8 mb-1;
+  }
+
+  .nav-link span {
+    @apply text-xs text-center;
+  }
+
+  .footer {
+    @apply fixed bottom-0 left-0 right-0 flex justify-around items-center p-4 relative z-40;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .content {
+    @apply flex-1 p-4 flex flex-col items-center justify-start relative z-0;
+    margin-bottom: 100px;
+  }
 }

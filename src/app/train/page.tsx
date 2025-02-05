@@ -10,6 +10,7 @@ import {
   getStarRating,
   getPlayerStats,
   getStatColor,
+  getActionCooldown,
 } from "../lib/game";
 import { STAT_NAMES } from "../lib/constants";
 
@@ -30,6 +31,10 @@ interface PlayerData {
   lastTrainingDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
+  privateTrainer?: {
+    selectedSkill: keyof typeof STAT_NAMES | null;
+    remainingSessions: number;
+  };
 }
 
 interface TrainingResult {
@@ -54,7 +59,6 @@ export default function TrainPage() {
   );
   const [showTrainingAnimation, setShowTrainingAnimation] = useState(false);
 
-  // Handle navigation when no wallet or player
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
       router.push("/");
@@ -84,7 +88,6 @@ export default function TrainPage() {
         }
 
         const data = await response.json();
-        // Filter and convert stats
         const validStats = [
           "strength",
           "stamina",
@@ -134,10 +137,9 @@ export default function TrainPage() {
       }
 
       const result = await response.json();
-      console.log("Training result:", result); // Debug log
+      console.log("Training result:", result);
 
       if (result.success && result.training) {
-        // Filter and convert stats
         const validStats = [
           "strength",
           "stamina",
@@ -157,7 +159,6 @@ export default function TrainPage() {
         setTrainingResult(result.training);
         setShowTrainingAnimation(true);
 
-        // Hide training animation after 2 seconds
         setTimeout(() => {
           setShowTrainingAnimation(false);
         }, 2000);
@@ -173,35 +174,34 @@ export default function TrainPage() {
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen pb-20">
         <Header pageName="Train" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+          <p className="mt-2 text-green-400">Loading...</p>
         </div>
         <Footer />
-      </>
+      </div>
     );
   }
 
-  // Early return if no wallet or player, navigation handled by effect
   if (!wallet || !player) {
     return null;
   }
 
   const playerStats = getPlayerStats(player.stats);
   const rating = calculatePlayerRating(player.stats);
-  const canTrain =
-    !player.lastTrainingDate ||
-    new Date().toDateString() !==
-      new Date(player.lastTrainingDate).toDateString();
+  const { onCooldown, remainingTime } = getActionCooldown(
+    player.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
+    true // isTraining = true
+  );
+  const canTrain = !onCooldown;
 
   const formatStatValue = (value: any) => {
     const num = Number(value);
     return Number.isFinite(num) ? num.toFixed(2) : "0.00";
   };
 
-  // Format the training result message
   const getTrainingMessage = () => {
     if (!trainingResult || typeof trainingResult.finalBonus !== "number")
       return "";
@@ -214,22 +214,17 @@ export default function TrainPage() {
   };
 
   return (
-    <>
+    <div className="min-h-screen pb-20">
       <Header pageName="Train" />
-
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 pb-20">
-        <div className="max-w-2xl w-full">
+      <div className="container max-w-xl mx-auto px-2 py-4">
+        <div className="glass-container p-4 mb-4">
           {/* Training Button and Status */}
-          <div className="text-center mb-8 relative">
+          <div className="text-center mb-6 relative">
             <button
               onClick={handleTrain}
               className={`
-                text-white font-bold py-4 px-8 rounded-lg text-xl mb-4
-                ${
-                  canTrain && !training
-                    ? "bg-blue-500 hover:bg-blue-700"
-                    : "bg-gray-500 cursor-not-allowed"
-                }
+                gradient-button py-3 px-6 rounded-xl text-lg mb-3 w-full
+                ${!canTrain || training ? "opacity-50 cursor-not-allowed" : ""}
               `}
               disabled={!canTrain || training}
             >
@@ -242,42 +237,60 @@ export default function TrainPage() {
                 key={`training-animation-${Date.now()}`}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
               >
-                <div className="animate-bounce bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg">
+                <div className="animate-bounce glass-container bg-green-500/20 text-white px-3 py-1 shadow-lg text-sm">
                   {getTrainingMessage()}
                 </div>
               </div>
             )}
 
-            <div className={canTrain ? "text-green-500" : "text-red-500"}>
-              {canTrain ? "Energy full" : "Recovering"}
+            <div className="space-y-2">
+              <div className={canTrain ? "text-green-400" : "text-red-400"}>
+                {canTrain ? "Ready to train" : `Resting: ${remainingTime} left`}
+              </div>
+              {player.privateTrainer?.selectedSkill &&
+                player.privateTrainer.remainingSessions > 0 && (
+                  <div className="glass-container bg-green-900/20 p-2 text-sm">
+                    <div className="font-semibold text-green-400">
+                      Private Trainer Active
+                    </div>
+                    <div className="text-gray-300">
+                      Focusing on:{" "}
+                      {STAT_NAMES[player.privateTrainer.selectedSkill]}
+                    </div>
+                    <div className="text-green-400">
+                      {player.privateTrainer.remainingSessions} training
+                      sessions remaining
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-2 gap-2">
             {playerStats.map(({ name, value }) => (
               <div
                 key={`stat-${name}`}
-                className={`bg-gray-800 p-4 rounded-lg shadow-md ${
+                className={`glass-container p-2 ${
                   trainingResult &&
                   STAT_NAMES[trainingResult.stat as keyof typeof STAT_NAMES] ===
                     name
-                    ? "ring-2 ring-green-500"
+                    ? "ring-1 ring-green-500"
                     : ""
                 }`}
               >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm">
                   <span className="font-semibold text-white">{name}</span>
                   <span className={getStatColor(Number(value))}>
                     {formatStatValue(value)}
                   </span>
                 </div>
                 {/* Progress bar */}
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div className="w-full bg-black/40 rounded-full h-2 mt-1">
                   <div
                     className={`${getStatColor(
                       Number(value)
-                    )} h-2.5 rounded-full`}
+                    )} h-2 rounded-full`}
                     style={{ width: `${(Number(value) / 20) * 100}%` }}
                   ></div>
                 </div>
@@ -286,11 +299,11 @@ export default function TrainPage() {
           </div>
 
           {error && (
-            <div className="text-red-500 text-center mb-4">{error}</div>
+            <div className="text-red-500 text-center mt-4 text-sm">{error}</div>
           )}
         </div>
       </div>
       <Footer />
-    </>
+    </div>
   );
 }

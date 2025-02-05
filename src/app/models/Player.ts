@@ -30,8 +30,13 @@ export interface IPlayer extends Document {
   investments: IInvestment[];
   stats: IPlayerStats;
   lastTrainingDate: Date | null;
+  lastWorkDate: Date | null;
   lastConnectionDate: Date | null;
   consecutiveConnections: number;
+  privateTrainer: {
+    selectedSkill: keyof IPlayerStats | null;
+    remainingSessions: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -206,6 +211,10 @@ const PlayerSchema = new Schema<IPlayer>(
       type: Date,
       default: null,
     },
+    lastWorkDate: {
+      type: Date,
+      default: null,
+    },
     lastConnectionDate: {
       type: Date,
       default: null,
@@ -219,6 +228,19 @@ const PlayerSchema = new Schema<IPlayer>(
         message: '{VALUE} is not a valid number',
       },
     },
+    privateTrainer: {
+      selectedSkill: {
+        type: String,
+        enum: ['strength', 'stamina', 'passing', 'shooting', 'defending', 'speed', 'positioning', null],
+        default: null
+      },
+      remainingSessions: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 7
+      }
+    }
   },
   {
     timestamps: true,

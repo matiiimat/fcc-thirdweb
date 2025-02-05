@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -8,6 +8,16 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [stadiumEnabled, setStadiumEnabled] = useState(true);
+
+  useEffect(() => {
+    // Load stadium state from localStorage
+    const savedState = localStorage.getItem("stadiumEnabled");
+    if (savedState !== null) {
+      setStadiumEnabled(savedState === "true");
+      document.body.classList.toggle("stadium-disabled", savedState !== "true");
+    }
+  }, []);
 
   const handleResetTraining = async () => {
     if (loading) return;
@@ -42,13 +52,20 @@ export default function AdminPage() {
     }
   };
 
+  const toggleStadium = () => {
+    const newState = !stadiumEnabled;
+    setStadiumEnabled(newState);
+    localStorage.setItem("stadiumEnabled", String(newState));
+    document.body.classList.toggle("stadium-disabled", !newState);
+  };
+
   return (
-    <>
+    <div className="min-h-screen pb-20">
       <Header pageName="Admin" />
 
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <div className="max-w-2xl w-full space-y-6">
-          <div className="bg-gray-800 p-6 rounded-lg shadow-md">
+      <div className="flex flex-col items-center justify-center px-4 mt-4">
+        <div className="w-full max-w-md space-y-4">
+          <div className="glass-container p-6">
             <h2 className="text-2xl font-bold mb-4 text-white">
               Admin Controls
             </h2>
@@ -59,34 +76,41 @@ export default function AdminPage() {
                   onClick={handleResetTraining}
                   disabled={loading}
                   className={`
-                    w-full text-white font-bold py-3 px-6 rounded-lg
-                    ${
-                      loading
-                        ? "bg-gray-500 cursor-not-allowed"
-                        : "bg-blue-500 hover:bg-blue-700"
-                    }
+                    w-full gradient-button py-3 px-6 rounded-lg
+                    ${loading ? "opacity-50 cursor-not-allowed" : ""}
                   `}
                 >
                   {loading ? "Resetting..." : "Reset All Training Timers"}
                 </button>
               </div>
 
+              <div>
+                <button
+                  onClick={toggleStadium}
+                  className="w-full gradient-button py-3 px-6 rounded-lg"
+                >
+                  {stadiumEnabled
+                    ? "Disable Stadium Background"
+                    : "Enable Stadium Background"}
+                </button>
+              </div>
+
               {error && (
-                <div className="text-red-500 text-center p-3 bg-red-100 rounded">
+                <div className="text-red-500 text-center p-3 bg-red-900/50 rounded-lg">
                   {error}
                 </div>
               )}
 
               {success && (
-                <div className="text-green-500 text-center p-3 bg-green-100 rounded">
+                <div className="text-green-500 text-center p-3 bg-green-900/50 rounded-lg">
                   {success}
                 </div>
               )}
             </div>
           </div>
         </div>
-        <Footer />
       </div>
-    </>
+      <Footer />
+    </div>
   );
 }

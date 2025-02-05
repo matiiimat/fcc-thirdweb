@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player from '@/app/models/Player';
-import { calculateTrainingResult } from '@/app/lib/game';
+import { calculateTrainingResult, getActionCooldown } from '@/app/lib/game';
 import { ValidationError } from '@/app/lib/validation';
+import { TRAINING_CONSTANTS } from '@/app/lib/constants';
 
 // POST /api/game/train - Train a player's stats
 export async function POST(req: NextRequest) {
@@ -28,15 +29,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if player can train today
-    const today = new Date().toDateString();
-    const lastTraining = player.lastTrainingDate 
-      ? new Date(player.lastTrainingDate).toDateString()
-      : null;
-
-    if (lastTraining === today) {
+    // Check if player can train (6-hour cooldown)
+    const { onCooldown, remainingTime } = getActionCooldown(player.lastTrainingDate, true);
+    
+    if (onCooldown) {
       return NextResponse.json(
-        { error: 'You can only train once per day' },
+        { error: `Training is on cooldown. Time remaining: ${remainingTime}` },
         { status: 400 }
       );
     }
@@ -55,8 +53,34 @@ export async function POST(req: NextRequest) {
         workEthic: statsObj.workEthic,
       };
 
-      // Calculate training result
-      const trainingResult = calculateTrainingResult(plainStats);
+      let trainingResult;
+      let updateData: any = {
+        lastTrainingDate: new Date(),
+        'stats.workEthic': Math.min(20, player.consecutiveConnections * 2), // 2 points per consecutive day
+      };
+
+      // Check if player has active private trainer
+      if (player.privateTrainer?.selectedSkill && player.privateTrainer.remainingSessions > 0) {
+        // Use the selected skill for training
+        const selectedSkill = player.privateTrainer.selectedSkill as keyof typeof plainStats;
+        const currentValue = plainStats[selectedSkill];
+        trainingResult = {
+          trainedStat: player.privateTrainer.selectedSkill,
+          currentValue,
+          bonus: 1 // Normal training bonus for focused training
+        };
+
+        // Decrease remaining sessions
+        updateData['privateTrainer.remainingSessions'] = player.privateTrainer.remainingSessions - 1;
+
+        // If this was the last session, reset the selected skill
+        if (player.privateTrainer.remainingSessions === 1) {
+          updateData['privateTrainer.selectedSkill'] = null;
+        }
+      } else {
+        // Normal random training
+        trainingResult = calculateTrainingResult(plainStats);
+      }
 
       // Apply work ethic bonus based on consecutive connections
       const workEthicBonus = Math.min(player.consecutiveConnections / 10, 1); // Max 100% bonus at 10 days
@@ -65,12 +89,8 @@ export async function POST(req: NextRequest) {
       // Calculate new stat value
       const newValue = Math.min(20, trainingResult.currentValue + finalBonus);
 
-      // Update player stats and last training date
-      const updateData = {
-        [`stats.${trainingResult.trainedStat}`]: newValue,
-        lastTrainingDate: new Date(),
-        'stats.workEthic': Math.min(20, player.consecutiveConnections * 2), // 2 points per consecutive day
-      };
+      // Add stat update to updateData
+      updateData[`stats.${trainingResult.trainedStat}`] = newValue;
 
       // Update player
       const updatedPlayer = await Player.findOneAndUpdate(

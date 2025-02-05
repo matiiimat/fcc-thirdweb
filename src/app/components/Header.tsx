@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface HeaderProps {
   pageName: string;
@@ -9,7 +10,6 @@ interface HeaderProps {
 export default function Header({ pageName }: HeaderProps) {
   const router = useRouter();
 
-  // Define the function *above* where you use it
   const goToSettings = () => {
     router.push("/settings");
   };
@@ -21,10 +21,16 @@ export default function Header({ pageName }: HeaderProps) {
       </h1>
       <button
         onClick={goToSettings}
-        className="absolute top-2 right-2 bg-transparent text-white text-xl"
+        className="absolute top-[10px] right-[10px] bg-transparent flex items-center justify-center w-6 h-6"
         aria-label="Settings"
       >
-        ⚙️
+        <Image
+          src="/icons/settings-icon.png"
+          alt="Settings"
+          width={24}
+          height={24}
+          priority
+        />
       </button>
     </header>
   );

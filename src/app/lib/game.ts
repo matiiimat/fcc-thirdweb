@@ -1,3 +1,5 @@
+import { TRAINING_CONSTANTS } from './constants';
+
 // Calculate player rating based on stats
 export function calculatePlayerRating(stats: any) {
   const values = Object.values(stats).map(Number);
@@ -53,6 +55,58 @@ export function calculateInvestments(investments: Array<{ type: string; amount: 
     const amount = inv.amount * Math.pow(1 + DAILY_INTEREST_RATE, daysDiff);
     return total + amount;
   }, 0);
+}
+
+// Check if action is on cooldown and get remaining time
+export function getActionCooldown(lastActionDate: Date | null, isTraining: boolean = false): {
+  onCooldown: boolean;
+  remainingTime: string;
+} {
+  if (!lastActionDate) {
+    return { onCooldown: false, remainingTime: "00:00" };
+  }
+
+  const now = new Date();
+  const cooldownHours = isTraining ?
+    TRAINING_CONSTANTS.TRAINING_COOLDOWN_HOURS :
+    TRAINING_CONSTANTS.WORK_COOLDOWN_HOURS;
+  const cooldownMs = cooldownHours * 60 * 60 * 1000;
+  const timeSinceAction = now.getTime() - lastActionDate.getTime();
+  
+  if (timeSinceAction >= cooldownMs) {
+    return { onCooldown: false, remainingTime: "00:00" };
+  }
+
+  const remainingMs = cooldownMs - timeSinceAction;
+  const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+  const minutes = Math.floor((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+  
+  return {
+    onCooldown: true,
+    remainingTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+  };
+}
+
+// Calculate work ethic changes based on player activity
+export function calculateWorkEthicChange(lastTrainingDate: Date | null, lastConnectionDate: Date | null): number {
+  const now = new Date();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  // If no previous connection, this is first time - no change
+  if (!lastConnectionDate) return 0;
+
+  // Check if player trained or worked yesterday
+  const wasActiveYesterday = lastTrainingDate &&
+    (now.getTime() - lastTrainingDate.getTime() < 2 * oneDayMs);
+
+  if (wasActiveYesterday) {
+    // Player was active yesterday, increase work ethic
+    return 1;
+  } else {
+    // Calculate days of inactivity and subtract one point per day
+    const daysSinceLastConnection = Math.floor((now.getTime() - lastConnectionDate.getTime()) / oneDayMs);
+    return -daysSinceLastConnection; // Subtract one point per day of inactivity
+  }
 }
 
 // Calculate total capital (money + investments with growth)

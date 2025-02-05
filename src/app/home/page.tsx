@@ -11,6 +11,7 @@ import {
   getStarRating,
   calculateTotalCapital,
   formatCurrency,
+  getActionCooldown,
 } from "../lib/game";
 
 interface PlayerData {
@@ -34,6 +35,7 @@ interface PlayerData {
     timestamp: string;
   }>;
   lastTrainingDate: string | null;
+  lastWorkDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
 }
@@ -80,11 +82,11 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
             <p className="mt-2">Loading...</p>
           </div>
         </div>
@@ -95,7 +97,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
@@ -112,30 +114,38 @@ export default function HomePage() {
   // Calculate total capital
   const totalCapital = calculateTotalCapital(player.money, player.investments);
 
-  // Calculate if player can train today
-  const canTrainToday = player?.lastTrainingDate
-    ? new Date().toDateString() !==
-      new Date(player.lastTrainingDate).toDateString()
-    : true;
+  // Calculate cooldowns
+  const { onCooldown: trainingOnCooldown, remainingTime: trainingTime } =
+    getActionCooldown(
+      player?.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
+      true // isTraining = true
+    );
+  const { onCooldown: workOnCooldown, remainingTime: workTime } =
+    getActionCooldown(
+      player?.lastWorkDate ? new Date(player.lastWorkDate) : null,
+      false // isTraining = false
+    );
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen relative">
       <Header pageName="Home" />
-      <div className="flex flex-col items-center mt-2 px-4">
-        <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
-        <div className="text-2xl mb-2">
-          {getStarRating(calculatePlayerRating(player.stats))}
-        </div>
+      <div className="flex flex-col items-center mt-2 px-4 pb-24">
+        <div className="glass-container p-6 w-full max-w-md mb-4">
+          <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
+          <div className="text-2xl mb-2 text-center">
+            {getStarRating(calculatePlayerRating(player.stats))}
+          </div>
 
-        {/* Stats Radar Chart */}
-        <div className="w-full max-w-md mb-3">
-          <StatsRadarChart stats={player.stats} />
+          {/* Stats Radar Chart */}
+          <div className="w-full mb-3">
+            <StatsRadarChart stats={player.stats} />
+          </div>
         </div>
 
         {/* Financial Information */}
-        <div className="flex flex-col items-start w-full max-w-md bg-gray-800 p-4 rounded-lg mb-2">
+        <div className="glass-container p-6 w-full max-w-md mb-4">
           <div className="w-full">
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex justify-between items-center mb-3">
               <span className="text-gray-300">Cash:</span>
               <span className="text-lg font-semibold text-green-400">
                 {formatCurrency(player.money)}
@@ -151,12 +161,28 @@ export default function HomePage() {
         </div>
 
         {/* Status */}
-        <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300">Status:</span>
-            <span className={canTrainToday ? "text-green-400" : "text-red-400"}>
-              {canTrainToday ? "Energy full" : "Recovering"}
-            </span>
+        <div className="glass-container p-4 w-full max-w-md">
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Training:</span>
+              <span
+                className={
+                  !trainingOnCooldown ? "text-green-400" : "text-red-400"
+                }
+              >
+                {!trainingOnCooldown
+                  ? "Ready"
+                  : `Resting: ${trainingTime} left`}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-300">Work:</span>
+              <span
+                className={!workOnCooldown ? "text-green-400" : "text-red-400"}
+              >
+                {!workOnCooldown ? "Ready" : `Resting: ${workTime} left`}
+              </span>
+            </div>
           </div>
         </div>
       </div>
