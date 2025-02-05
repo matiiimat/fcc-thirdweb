@@ -10,7 +10,26 @@ import { formatCurrency } from "../lib/game";
 interface PlayerData {
   playerId: string;
   money: number;
+  privateTrainer?: {
+    selectedSkill: string | null;
+    remainingSessions: number;
+  };
 }
+
+interface SkillOption {
+  value: string;
+  label: string;
+}
+
+const skillOptions: SkillOption[] = [
+  { value: "strength", label: "Strength" },
+  { value: "stamina", label: "Stamina" },
+  { value: "passing", label: "Passing" },
+  { value: "shooting", label: "Shooting" },
+  { value: "defending", label: "Defending" },
+  { value: "speed", label: "Speed" },
+  { value: "positioning", label: "Positioning" },
+];
 
 interface StoreItem {
   id: string;
@@ -25,7 +44,7 @@ const storeItems: StoreItem[] = [
     id: "private_trainer",
     name: "Private Trainer",
     description: "Allows to pick a skill to be trained for the 7 days",
-    price: 30000,
+    price: 300,
     section: "Bonuses",
   },
   {
@@ -59,6 +78,11 @@ export default function Store() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<string>("");
+  const [showSkillModal, setShowSkillModal] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [pendingPurchase, setPendingPurchase] = useState<StoreItem | null>(
+    null
+  );
 
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
@@ -100,6 +124,16 @@ export default function Store() {
   const handlePurchase = async (item: StoreItem) => {
     if (!player || processing) return;
 
+    if (item.id === "private_trainer") {
+      setPendingPurchase(item);
+      setShowSkillModal(true);
+      return;
+    }
+
+    await processPurchase(item);
+  };
+
+  const processPurchase = async (item: StoreItem, selectedSkill?: string) => {
     setError(null);
     setProcessing(item.id);
     try {
@@ -109,8 +143,9 @@ export default function Store() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          playerId: player.playerId,
+          playerId: player?.playerId,
           item,
+          selectedSkill,
         }),
       });
 
@@ -119,12 +154,30 @@ export default function Store() {
         throw new Error(data.error || "Failed to purchase item");
       }
 
-      setPlayer((prev) => (prev ? { ...prev, money: data.newBalance } : null));
+      setPlayer((prev) =>
+        prev
+          ? {
+              ...prev,
+              money: data.newBalance,
+              privateTrainer: data.privateTrainer,
+            }
+          : null
+      );
+
+      // Reset modal state
+      setShowSkillModal(false);
+      setPendingPurchase(null);
+      setSelectedSkill(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to purchase item");
     } finally {
       setProcessing("");
     }
+  };
+
+  const handleSkillSelect = async () => {
+    if (!pendingPurchase || !selectedSkill) return;
+    await processPurchase(pendingPurchase, selectedSkill);
   };
 
   if (loading) {
@@ -183,20 +236,36 @@ export default function Store() {
                     <h3 className="text-lg font-semibold">{item.name}</h3>
                     <p className="text-sm text-gray-400">{item.description}</p>
                   </div>
-                  <button
-                    onClick={() => handlePurchase(item)}
-                    disabled={
-                      processing === item.id || player.money < item.price
-                    }
-                    className={`gradient-button px-4 py-2 rounded-xl ml-4 whitespace-nowrap ${
-                      (processing === item.id || player.money < item.price) &&
-                      "opacity-50 cursor-not-allowed"
-                    }`}
-                  >
-                    {processing === item.id
-                      ? "Buying..."
-                      : formatCurrency(item.price)}
-                  </button>
+                  <div className="relative group">
+                    <button
+                      onClick={() => handlePurchase(item)}
+                      disabled={
+                        processing === item.id ||
+                        player.money < item.price ||
+                        (item.id === "private_trainer" &&
+                          (player.privateTrainer?.remainingSessions ?? 0) > 0)
+                      }
+                      className={`gradient-button px-4 py-2 rounded-xl ml-4 whitespace-nowrap ${
+                        (processing === item.id ||
+                          player.money < item.price ||
+                          (item.id === "private_trainer" &&
+                            (player.privateTrainer?.remainingSessions ?? 0) >
+                              0)) &&
+                        "opacity-50 cursor-not-allowed"
+                      }`}
+                    >
+                      {processing === item.id
+                        ? "Buying..."
+                        : formatCurrency(item.price)}
+                    </button>
+                    {item.id === "private_trainer" && player.privateTrainer && (
+                      <div className="absolute hidden group-hover:block bottom-full right-0 mb-2 w-48 p-2 bg-black/90 text-white text-xs rounded-lg">
+                        Private trainer active:{" "}
+                        {player.privateTrainer.remainingSessions} sessions
+                        remaining
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -235,6 +304,57 @@ export default function Store() {
         </div>
       </main>
       <Footer />
+
+      {/* Skill Selection Modal */}
+      {showSkillModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-container p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-white mb-4">
+              Select Skill to Train
+            </h2>
+            <p className="text-gray-300 mb-4">
+              Choose which skill you want to focus on for the next 7 training
+              sessions:
+            </p>
+            <div className="space-y-2">
+              {skillOptions.map((skill) => (
+                <button
+                  key={skill.value}
+                  onClick={() => setSelectedSkill(skill.value)}
+                  className={`w-full text-left p-3 rounded-lg transition-colors ${
+                    selectedSkill === skill.value
+                      ? "bg-green-700 text-white"
+                      : "hover:bg-green-900/50 text-gray-300"
+                  }`}
+                >
+                  {skill.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowSkillModal(false);
+                  setPendingPurchase(null);
+                  setSelectedSkill(null);
+                }}
+                className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSkillSelect}
+                disabled={!selectedSkill}
+                className={`gradient-button px-4 py-2 rounded-lg ${
+                  !selectedSkill && "opacity-50 cursor-not-allowed"
+                }`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

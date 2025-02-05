@@ -4,7 +4,7 @@ import PlayerModel from "@/app/models/Player";
 
 export async function POST(req: NextRequest) {
   try {
-    const { playerId, item } = await req.json();
+    const { playerId, item, selectedSkill } = await req.json();
 
     if (!playerId || !item) {
       return NextResponse.json(
@@ -34,8 +34,18 @@ export async function POST(req: NextRequest) {
     // Add any specific effects based on the item
     switch (item.id) {
       case "private_trainer":
-        // Set last training date to null to allow immediate training
-        player.lastTrainingDate = null;
+        if (!selectedSkill) {
+          return NextResponse.json(
+            { error: "Skill selection is required for private trainer" },
+            { status: 400 }
+          );
+        }
+        // Set private trainer details
+        player.privateTrainer = {
+          selectedSkill,
+          remainingSessions: 7
+        };
+        player.lastTrainingDate = null; // Allow immediate training
         break;
       case "management_certificate":
       case "training_certificate":
@@ -54,6 +64,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       newBalance: player.money,
+      privateTrainer: player.privateTrainer
     });
   } catch (error) {
     console.error("Store purchase error:", error);

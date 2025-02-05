@@ -31,6 +31,10 @@ interface PlayerData {
   lastTrainingDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
+  privateTrainer?: {
+    selectedSkill: keyof typeof STAT_NAMES | null;
+    remainingSessions: number;
+  };
 }
 
 interface TrainingResult {
@@ -239,8 +243,26 @@ export default function TrainPage() {
               </div>
             )}
 
-            <div className={canTrain ? "text-green-400" : "text-red-400"}>
-              {canTrain ? "Ready to train" : `Resting: ${remainingTime} left`}
+            <div className="space-y-2">
+              <div className={canTrain ? "text-green-400" : "text-red-400"}>
+                {canTrain ? "Ready to train" : `Resting: ${remainingTime} left`}
+              </div>
+              {player.privateTrainer?.selectedSkill &&
+                player.privateTrainer.remainingSessions > 0 && (
+                  <div className="glass-container bg-green-900/20 p-2 text-sm">
+                    <div className="font-semibold text-green-400">
+                      Private Trainer Active
+                    </div>
+                    <div className="text-gray-300">
+                      Focusing on:{" "}
+                      {STAT_NAMES[player.privateTrainer.selectedSkill]}
+                    </div>
+                    <div className="text-green-400">
+                      {player.privateTrainer.remainingSessions} training
+                      sessions remaining
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
 
