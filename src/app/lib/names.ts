@@ -2,20 +2,30 @@ import { createHash } from 'crypto';
 
 // List of first names by nationality
 const firstNames = {
-  english: ['Jack', 'Harry', 'James', 'William', 'George'],
-  spanish: ['Carlos', 'Juan', 'Diego', 'Luis', 'Pedro'],
-  italian: ['Marco', 'Giuseppe', 'Antonio', 'Mario', 'Luigi'],
-  brazilian: ['Lucas', 'Gabriel', 'Pedro', 'Thiago', 'Rafael'],
-  french: ['Hugo', 'Lucas', 'Thomas', 'Jules', 'Louis'],
+  english: ['Jack', 'Harry', 'James', 'William', 'George', 'Oliver', 'Thomas', 'Charlie', 'Oscar', 'Henry',
+           'Edward', 'Alexander', 'Daniel', 'Michael', 'Benjamin', 'Joseph', 'Samuel', 'David', 'Arthur', 'Frederick'],
+  spanish: ['Carlos', 'Juan', 'Diego', 'Luis', 'Pedro', 'Miguel', 'Alejandro', 'David', 'José', 'Antonio',
+           'Francisco', 'Manuel', 'Javier', 'Alberto', 'Ricardo', 'Fernando', 'Roberto', 'Rafael', 'Andrés', 'Emilio'],
+  italian: ['Marco', 'Giuseppe', 'Antonio', 'Mario', 'Luigi', 'Francesco', 'Alessandro', 'Roberto', 'Andrea', 'Paolo',
+           'Giovanni', 'Luca', 'Salvatore', 'Carlo', 'Domenico', 'Vincenzo', 'Nicola', 'Leonardo', 'Stefano', 'Massimo'],
+  brazilian: ['Lucas', 'Gabriel', 'Pedro', 'Thiago', 'Rafael', 'João', 'Matheus', 'Bruno', 'Felipe', 'Gustavo',
+             'Marcos', 'Ricardo', 'Diego', 'Eduardo', 'Vitor', 'Leonardo', 'André', 'Carlos', 'Daniel', 'Fernando'],
+  french: ['Hugo', 'Lucas', 'Thomas', 'Jules', 'Louis', 'Gabriel', 'Léo', 'Arthur', 'Nathan', 'Théo',
+          'Maxime', 'Alexandre', 'Antoine', 'Paul', 'Nicolas', 'Etienne', 'Pierre', 'Mathieu', 'Vincent', 'Romain'],
 };
 
 // List of last names by nationality
 const lastNames = {
-  english: ['Smith', 'Jones', 'Williams', 'Brown', 'Taylor'],
-  spanish: ['Garcia', 'Rodriguez', 'Martinez', 'Lopez', 'Sanchez'],
-  italian: ['Rossi', 'Ferrari', 'Esposito', 'Romano', 'Colombo'],
-  brazilian: ['Silva', 'Santos', 'Oliveira', 'Pereira', 'Costa'],
-  french: ['Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert'],
+  english: ['Smith', 'Jones', 'Williams', 'Brown', 'Taylor', 'Davies', 'Evans', 'Wilson', 'Thomas', 'Roberts',
+           'Johnson', 'Walker', 'Wright', 'Robinson', 'Thompson', 'White', 'Hughes', 'Edwards', 'Green', 'Hall'],
+  spanish: ['Garcia', 'Rodriguez', 'Martinez', 'Lopez', 'Sanchez', 'Perez', 'Gonzalez', 'Gomez', 'Fernandez', 'Torres',
+           'Diaz', 'Ruiz', 'Hernandez', 'Jimenez', 'Moreno', 'Munoz', 'Alvarez', 'Romero', 'Gutierrez', 'Navarro'],
+  italian: ['Rossi', 'Ferrari', 'Esposito', 'Romano', 'Colombo', 'Ricci', 'Marino', 'Greco', 'Bruno', 'Gallo',
+           'Conti', 'De Luca', 'Costa', 'Giordano', 'Mancini', 'Rizzo', 'Lombardi', 'Moretti', 'Barbieri', 'Fontana'],
+  brazilian: ['Silva', 'Santos', 'Oliveira', 'Pereira', 'Costa', 'Rodrigues', 'Ferreira', 'Alves', 'Lima', 'Carvalho',
+             'Gomes', 'Martins', 'Rocha', 'Sousa', 'Fernandes', 'Machado', 'Araujo', 'Ribeiro', 'Nascimento', 'Moreira'],
+  french: ['Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert', 'Petit', 'Richard', 'Durand', 'Leroy', 'Moreau',
+          'Simon', 'Laurent', 'Lefebvre', 'Michel', 'Garcia', 'David', 'Bertrand', 'Roux', 'Vincent', 'Fournier'],
 };
 
 // Nationality types
@@ -47,8 +57,12 @@ export function generatePlayerName(address: string): { name: string; nationality
   console.log('Determined nationality:', nationality); // Debug log
 
   const hash = generateHash(address);
-  const firstName = getSeededElement(firstNames[nationality], hash);
-  const lastName = getSeededElement(lastNames[nationality], hash + 1);
+  // Use different parts of the hash for first and last names
+  const firstNameSeed = hash;
+  const lastNameSeed = parseInt(createHash('sha256').update(address + 'lastname').digest('hex').slice(0, 8), 16);
+  
+  const firstName = getSeededElement(firstNames[nationality], firstNameSeed);
+  const lastName = getSeededElement(lastNames[nationality], lastNameSeed);
 
   const fullName = `${firstName} ${lastName}`;
   console.log('Generated name:', fullName); // Debug log

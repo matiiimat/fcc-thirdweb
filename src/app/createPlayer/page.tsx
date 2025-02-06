@@ -125,7 +125,7 @@ export default function CreatePlayerPage() {
 
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
         <div className="text-center max-w-2xl">
-          <h1 className="text-4xl font-bold mb-6">Welcome to Farcaster FC!</h1>
+          <h1 className="text-4xl font-bold mb-6">Welcome to fcc/FC!</h1>
 
           <p className="text-lg mb-8">
             Ready to start your football journey? Create your player and begin
@@ -150,11 +150,11 @@ export default function CreatePlayerPage() {
             {loading ? "Creating Player..." : "CREATE PLAYER"}
           </button>
 
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-white">
             Your player will be associated with this wallet address. Losing
             access to this wallet means losing access to your player.
           </div>
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-sm text-white">
             Connected Wallet: {wallet.address}
           </div>
         </div>
