@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import PlayerModel from "@/app/models/Player";
-import { getActionCooldown } from "@/app/lib/game";
+import { getActionCooldown, calculateWorkEthicChange } from "@/app/lib/game";
+import { PLAYER_CONSTANTS } from "@/app/lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,9 +35,27 @@ export async function POST(req: NextRequest) {
     // Generate random work reward between 150 and 250
     const earnedAmount = Math.floor(Math.random() * (250 - 150 + 1)) + 150;
 
-    // Add work money and update last work date
+    const now = new Date();
+    // Calculate work ethic change
+    const workEthicChange = calculateWorkEthicChange(
+      player.lastTrainingDate,
+      player.lastWorkDate,
+      player.lastConnectionDate
+    );
+    
+    // Calculate new work ethic value
+    const newWorkEthic = Math.max(
+      PLAYER_CONSTANTS.MIN_STAT_VALUE,
+      Math.min(
+        PLAYER_CONSTANTS.MAX_STAT_VALUE,
+        player.stats.workEthic + workEthicChange
+      )
+    );
+
+    // Update player
     player.money += earnedAmount;
-    player.lastWorkDate = new Date();
+    player.lastWorkDate = now;
+    player.stats.workEthic = newWorkEthic;
 
     await player.save();
 

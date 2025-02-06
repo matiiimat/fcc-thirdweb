@@ -88,24 +88,44 @@ export function getActionCooldown(lastActionDate: Date | null, isTraining: boole
 }
 
 // Calculate work ethic changes based on player activity
-export function calculateWorkEthicChange(lastTrainingDate: Date | null, lastConnectionDate: Date | null): number {
+export function calculateWorkEthicChange(
+  lastTrainingDate: Date | null,
+  lastWorkDate: Date | null,
+  lastConnectionDate: Date | null
+): number {
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const oneDayMs = 24 * 60 * 60 * 1000;
 
   // If no previous connection, this is first time - no change
   if (!lastConnectionDate) return 0;
 
-  // Check if player trained or worked yesterday
-  const wasActiveYesterday = lastTrainingDate &&
-    (now.getTime() - lastTrainingDate.getTime() < 2 * oneDayMs);
+  // Convert dates to start of their respective days
+  const lastTrainingDay = lastTrainingDate ?
+    new Date(lastTrainingDate.getFullYear(), lastTrainingDate.getMonth(), lastTrainingDate.getDate()) :
+    null;
+  const lastWorkDay = lastWorkDate ?
+    new Date(lastWorkDate.getFullYear(), lastWorkDate.getMonth(), lastWorkDate.getDate()) :
+    null;
+  const lastConnectionDay = new Date(
+    lastConnectionDate.getFullYear(),
+    lastConnectionDate.getMonth(),
+    lastConnectionDate.getDate()
+  );
 
-  if (wasActiveYesterday) {
-    // Player was active yesterday, increase work ethic
+  // Check if player was active today (trained or worked)
+  const wasActiveToday = (lastTrainingDay && lastTrainingDay.getTime() === today.getTime()) ||
+                        (lastWorkDay && lastWorkDay.getTime() === today.getTime());
+
+  if (wasActiveToday) {
+    // Player was active today, increase work ethic by 1
     return 1;
   } else {
-    // Calculate days of inactivity and subtract one point per day
-    const daysSinceLastConnection = Math.floor((now.getTime() - lastConnectionDate.getTime()) / oneDayMs);
-    return -daysSinceLastConnection; // Subtract one point per day of inactivity
+    // Calculate days since last connection
+    const daysSinceLastConnection = Math.floor((today.getTime() - lastConnectionDay.getTime()) / oneDayMs);
+    
+    // Decrease by 1 for each day of inactivity, but never more than 1 per day
+    return Math.max(-1, -daysSinceLastConnection);
   }
 }
 

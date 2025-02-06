@@ -17,7 +17,6 @@ export const PLAYER_CONSTANTS = {
 // Training constants
 export const TRAINING_CONSTANTS = {
   MAX_WORK_ETHIC_BONUS: 1, // 100% bonus at max work ethic
-  WORK_ETHIC_POINTS_PER_DAY: 2, // Points gained per consecutive day
   MAX_TRAINING_BONUS: 2.0, // Maximum training bonus
   MIN_TRAINING_BONUS: 0.1, // Minimum training bonus
   TRAINING_COOLDOWN_HOURS: 6, // Hours between training sessions
