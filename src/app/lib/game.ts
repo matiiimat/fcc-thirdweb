@@ -153,10 +153,24 @@ export function calculateTrainingResult(stats: any) {
     throw new Error(`Invalid value for stat ${trainedStat}: ${currentValue}`);
   }
 
-  // Calculate bonus (higher bonus for lower stats)
-  const baseBonus = (20 - currentValue) / 10; // Max 2.0 bonus at stat level 0
-  const randomFactor = 0.5 + Math.random(); // Random factor between 0.5 and 1.5
-  const bonus = Math.max(0.1, Math.min(baseBonus * randomFactor, 2.0)); // Clamp bonus between 0.1 and 2.0
+  // Calculate bonus based on current stat value tier
+  let bonus;
+  if (currentValue < 5) {
+    // 0-5: bonus 0.4 to 0.6
+    bonus = 0.4 + Math.random() * 0.2;
+  } else if (currentValue < 10) {
+    // 5-10: bonus 0.3 to 0.4
+    bonus = 0.3 + Math.random() * 0.1;
+  } else if (currentValue < 16) {
+    // 10-16: bonus 0.2 to 0.3
+    bonus = 0.2 + Math.random() * 0.1;
+  } else if (currentValue < 19) {
+    // 16-19: bonus 0.1 to 0.2
+    bonus = 0.1 + Math.random() * 0.1;
+  } else {
+    // 19-20: fixed 0.1
+    bonus = 0.1;
+  }
 
   return {
     trainedStat,
