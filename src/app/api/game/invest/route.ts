@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { playerId, type, action, amount } = body;
 
-    if (!playerId || !type || !action || !amount) {
+    if (!playerId || !type || !action || amount === undefined || amount === null) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -29,9 +29,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (amount <= 0) {
+    // Ensure amount is a whole number and at least 1
+    if (!Number.isInteger(amount) || amount < 1) {
       return NextResponse.json(
-        { error: 'Amount must be greater than 0' },
+        { error: 'Amount must be a whole number greater than or equal to 1' },
         { status: 400 }
       );
     }
