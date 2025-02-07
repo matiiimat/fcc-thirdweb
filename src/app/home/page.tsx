@@ -82,7 +82,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-center">
@@ -97,7 +97,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
@@ -127,12 +127,12 @@ export default function HomePage() {
     );
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Home" />
-      <div className="flex flex-col items-center mt-2 px-4 pb-24">
-        <div className="glass-container p-6 w-full max-w-md mb-4">
+      <div className="flex flex-col items-center mt-2 px-6 pb-20">
+        <div className="glass-container p-6 w-full max-w-md mb-6 rounded-2xl shadow-lg">
           <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
-          <div className="text-2xl mb-2 text-center">
+          <div className="text-2xl mb-4 text-center">
             {getStarRating(calculatePlayerRating(player.stats))}
           </div>
 
@@ -143,9 +143,9 @@ export default function HomePage() {
         </div>
 
         {/* Financial Information */}
-        <div className="glass-container p-6 w-full max-w-md mb-4">
+        <div className="glass-container p-6 w-full max-w-md mb-6 rounded-2xl shadow-lg">
           <div className="w-full">
-            <div className="flex justify-between items-center mb-3">
+            <div className="flex justify-between items-center mb-4">
               <span className="text-gray-300">Cash:</span>
               <span className="text-lg font-semibold text-green-400">
                 {formatCurrency(player.money)}
@@ -161,8 +161,8 @@ export default function HomePage() {
         </div>
 
         {/* Status */}
-        <div className="glass-container p-4 w-full max-w-md">
-          <div className="flex flex-col gap-2">
+        <div className="glass-container p-6 w-full max-w-md rounded-2xl shadow-lg">
+          <div className="flex flex-col gap-4">
             <div className="flex justify-between items-center">
               <span className="text-gray-300">Training:</span>
               <span

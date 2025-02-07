@@ -182,7 +182,7 @@ export default function Store() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Store" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
@@ -206,11 +206,11 @@ export default function Store() {
   }, {} as Record<string, StoreItem[]>);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Store" />
-      <main className="container max-w-2xl mx-auto px-4 py-6">
+      <main className="container max-w-2xl mx-auto px-6 py-6 pb-20">
         {/* Player's Cash */}
-        <div className="glass-container p-6 mb-6">
+        <div className="glass-container p-6 mb-6 rounded-2xl shadow-lg">
           <div className="flex justify-between items-center">
             <span className="text-gray-300">Available Cash:</span>
             <span className="text-xl font-semibold text-green-400">
@@ -220,17 +220,20 @@ export default function Store() {
         </div>
 
         {error && (
-          <div className="glass-container border-red-500/50 text-red-400 px-6 py-4 mb-6">
+          <div className="glass-container border-red-500/50 text-red-400 px-6 py-4 mb-6 rounded-xl">
             {error}
           </div>
         )}
 
         {/* Bonuses Section */}
-        <div className="glass-container p-6 mb-6">
+        <div className="glass-container p-6 mb-6 rounded-2xl shadow-lg">
           <h2 className="text-xl font-bold text-white mb-4">Bonuses</h2>
           <div className="space-y-4">
             {itemsBySection["Bonuses"].map((item) => (
-              <div key={item.id} className="glass-container p-4">
+              <div
+                key={item.id}
+                className="glass-container p-4 rounded-xl transition-all duration-300 hover:bg-[#1a1d21]/50"
+              >
                 <div className="flex justify-between items-center">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold">{item.name}</h3>
@@ -245,13 +248,13 @@ export default function Store() {
                         (item.id === "private_trainer" &&
                           (player.privateTrainer?.remainingSessions ?? 0) > 0)
                       }
-                      className={`gradient-button px-4 py-2 rounded-xl ml-4 whitespace-nowrap ${
-                        (processing === item.id ||
-                          player.money < item.price ||
-                          (item.id === "private_trainer" &&
-                            (player.privateTrainer?.remainingSessions ?? 0) >
-                              0)) &&
-                        "opacity-50 cursor-not-allowed"
+                      className={`gradient-button px-6 py-2 rounded-xl ml-4 whitespace-nowrap transition-all duration-300 ${
+                        processing === item.id ||
+                        player.money < item.price ||
+                        (item.id === "private_trainer" &&
+                          (player.privateTrainer?.remainingSessions ?? 0) > 0)
+                          ? "opacity-50 cursor-not-allowed"
+                          : "hover:scale-105"
                       }`}
                     >
                       {processing === item.id
@@ -259,7 +262,7 @@ export default function Store() {
                         : formatCurrency(item.price)}
                     </button>
                     {item.id === "private_trainer" && player.privateTrainer && (
-                      <div className="absolute hidden group-hover:block bottom-full right-0 mb-2 w-48 p-2 bg-black/90 text-white text-xs rounded-lg">
+                      <div className="absolute hidden group-hover:block bottom-full right-0 mb-2 w-48 p-3 bg-black/90 text-white text-xs rounded-lg shadow-lg">
                         Private trainer active:{" "}
                         {player.privateTrainer.remainingSessions} sessions
                         remaining
@@ -273,11 +276,14 @@ export default function Store() {
         </div>
 
         {/* Certifications Section */}
-        <div className="glass-container p-6">
+        <div className="glass-container p-6 rounded-2xl shadow-lg">
           <h2 className="text-xl font-bold text-white mb-4">Certifications</h2>
           <div className="space-y-4">
             {itemsBySection["Certifications"].map((item) => (
-              <div key={item.id} className="glass-container p-4">
+              <div
+                key={item.id}
+                className="glass-container p-4 rounded-xl transition-all duration-300 hover:bg-[#1a1d21]/50"
+              >
                 <div className="flex justify-between items-center">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold">{item.name}</h3>
@@ -288,9 +294,10 @@ export default function Store() {
                     disabled={
                       processing === item.id || player.money < item.price
                     }
-                    className={`gradient-button px-4 py-2 rounded-xl ml-4 whitespace-nowrap ${
-                      (processing === item.id || player.money < item.price) &&
-                      "opacity-50 cursor-not-allowed"
+                    className={`gradient-button px-6 py-2 rounded-xl ml-4 whitespace-nowrap transition-all duration-300 ${
+                      processing === item.id || player.money < item.price
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:scale-105"
                     }`}
                   >
                     {processing === item.id
@@ -307,12 +314,12 @@ export default function Store() {
 
       {/* Skill Selection Modal */}
       {showSkillModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="glass-container p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="glass-container p-6 max-w-md w-full rounded-2xl shadow-lg">
             <h2 className="text-xl font-bold text-white mb-4">
               Select Skill to Train
             </h2>
-            <p className="text-gray-300 mb-4">
+            <p className="text-gray-300 mb-6">
               Choose which skill you want to focus on for the next 7 training
               sessions:
             </p>
@@ -321,9 +328,9 @@ export default function Store() {
                 <button
                   key={skill.value}
                   onClick={() => setSelectedSkill(skill.value)}
-                  className={`w-full text-left p-3 rounded-lg transition-colors ${
+                  className={`w-full text-left p-4 rounded-xl transition-all duration-300 ${
                     selectedSkill === skill.value
-                      ? "bg-green-700 text-white"
+                      ? "bg-green-700 text-white shadow-lg"
                       : "hover:bg-green-900/50 text-gray-300"
                   }`}
                 >
@@ -331,22 +338,24 @@ export default function Store() {
                 </button>
               ))}
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-3 mt-8">
               <button
                 onClick={() => {
                   setShowSkillModal(false);
                   setPendingPurchase(null);
                   setSelectedSkill(null);
                 }}
-                className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700"
+                className="px-6 py-2 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors duration-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSkillSelect}
                 disabled={!selectedSkill}
-                className={`gradient-button px-4 py-2 rounded-lg ${
-                  !selectedSkill && "opacity-50 cursor-not-allowed"
+                className={`gradient-button px-6 py-2 rounded-xl transition-all duration-300 ${
+                  !selectedSkill
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:scale-105"
                 }`}
               >
                 Confirm

@@ -26,7 +26,7 @@ export default function Header({ pageName }: HeaderProps) {
       <div className="absolute top-[10px] right-[10px] flex gap-4">
         <button
           onClick={goToLeaderboard}
-          className="bg-transparent flex items-center justify-center w-6 h-6"
+          className="bg-[#0d0f12]/90 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.07),inset_2px_2px_5px_rgba(0,0,0,0.5)] hover:shadow-[inset_-1px_-1px_3px_rgba(255,255,255,0.1),inset_1px_1px_3px_rgba(0,0,0,0.4)] flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-105"
           aria-label="Leaderboard"
         >
           <Image
@@ -39,7 +39,7 @@ export default function Header({ pageName }: HeaderProps) {
         </button>
         <button
           onClick={goToSettings}
-          className="bg-transparent flex items-center justify-center w-6 h-6"
+          className="bg-[#0d0f12]/90 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.07),inset_2px_2px_5px_rgba(0,0,0,0.5)] hover:shadow-[inset_-1px_-1px_3px_rgba(255,255,255,0.1),inset_1px_1px_3px_rgba(0,0,0,0.4)] flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-105"
           aria-label="Settings"
         >
           <Image

@@ -50,7 +50,7 @@ export default function LeaderboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Leaderboard" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-center">
@@ -65,7 +65,7 @@ export default function LeaderboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Leaderboard" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
@@ -76,10 +76,10 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Leaderboard" />
-      <div className="flex flex-col items-center mt-2 px-4 pb-24">
-        <div className="glass-container p-6 w-full max-w-4xl mb-4">
+      <div className="flex flex-col items-center mt-2 px-6 pb-20">
+        <div className="glass-container p-6 w-full max-w-4xl mb-4 rounded-2xl shadow-lg">
           <div className="flex border-b border-gray-700 mb-4">
             <button
               className={`flex-1 py-2 text-center ${
@@ -119,7 +119,7 @@ export default function LeaderboardPage() {
                   {players.map((player, index) => (
                     <tr
                       key={player._id}
-                      className="text-gray-300 border-b border-gray-700 hover:bg-[#2a2d31]"
+                      className="text-gray-300 border-b border-gray-700 hover:bg-[#2a2d31]/50 transition-colors duration-200"
                     >
                       <td className="py-3 px-4">{index + 1}</td>
                       <td className="py-3 px-4">{player.playerName}</td>

@@ -151,7 +151,7 @@ export default function InvestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Invest" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
@@ -175,20 +175,20 @@ export default function InvestPage() {
     );
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Finances" />
-      <div className="container max-w-2xl mx-auto px-4 py-6">
+      <div className="container max-w-2xl mx-auto px-6 py-6 pb-20">
         {/* Work Button */}
-        <div className="glass-container p-6 mb-6">
+        <div className="glass-container p-6 mb-6 rounded-2xl shadow-lg">
           <div className="text-center relative">
             <button
               onClick={handleWork}
               className={`
-                gradient-button py-4 px-8 rounded-xl text-xl mb-4 w-full
+                gradient-button py-4 px-8 rounded-xl text-xl mb-4 w-full transition-all duration-300
                 ${
                   workOnCooldown || working
                     ? "opacity-50 cursor-not-allowed"
-                    : ""
+                    : "hover:scale-[1.02]"
                 }
               `}
               disabled={workOnCooldown || working}
@@ -202,7 +202,7 @@ export default function InvestPage() {
                 key={`work-animation-${Date.now()}`}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
               >
-                <div className="animate-bounce glass-container bg-green-500/20 text-white px-4 py-2">
+                <div className="animate-bounce glass-container bg-green-500/20 text-white px-4 py-2 rounded-xl shadow-lg">
                   +{earnedAmount}$
                 </div>
               </div>
@@ -217,9 +217,9 @@ export default function InvestPage() {
         </div>
 
         {/* Financial Information */}
-        <div className="glass-container p-6 mb-6 space-y-4">
+        <div className="glass-container p-6 mb-6 rounded-2xl shadow-lg space-y-4">
           {/* Cash */}
-          <div className="glass-container p-4">
+          <div className="glass-container p-4 rounded-xl">
             <div className="flex justify-between items-center">
               <span className="text-gray-300">Cash:</span>
               <span className="text-xl font-semibold text-green-400">
@@ -229,7 +229,7 @@ export default function InvestPage() {
           </div>
 
           {/* Investments */}
-          <div className="glass-container p-4">
+          <div className="glass-container p-4 rounded-xl">
             <div className="flex justify-between items-center">
               <span className="text-gray-300">Investment:</span>
               <span className="text-xl font-semibold text-gray-400">
@@ -239,7 +239,7 @@ export default function InvestPage() {
           </div>
 
           {/* Total Capital */}
-          <div className="glass-container p-4">
+          <div className="glass-container p-4 rounded-xl">
             <div className="flex justify-between items-center">
               <span className="text-gray-300">Capital:</span>
               <span className="text-xl font-semibold text-yellow-400">
@@ -250,18 +250,18 @@ export default function InvestPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="glass-container p-6 space-x-4 flex justify-center">
+        <div className="glass-container p-6 space-x-4 flex justify-center rounded-2xl shadow-lg">
           <button
             onClick={() => setShowDepositModal(true)}
             disabled={processing}
-            className="gradient-button py-3 px-6 rounded-xl"
+            className="gradient-button py-3 px-6 rounded-xl transition-all duration-300 hover:scale-105"
           >
             Deposit
           </button>
           <button
             onClick={() => setShowWithdrawModal(true)}
             disabled={processing}
-            className="gradient-button py-3 px-6 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400"
+            className="gradient-button py-3 px-6 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 transition-all duration-300 hover:scale-105"
           >
             Withdraw
           </button>
@@ -269,8 +269,8 @@ export default function InvestPage() {
 
         {/* Transaction Modal */}
         {(showDepositModal || showWithdrawModal) && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="glass-container p-6 max-w-md w-full">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+            <div className="glass-container p-6 max-w-md w-full rounded-2xl shadow-lg">
               <h3 className="text-xl font-bold mb-4 text-white">
                 {showDepositModal ? "Deposit" : "Withdraw"} Amount
               </h3>
@@ -279,15 +279,15 @@ export default function InvestPage() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Enter amount"
-                className="w-full p-2 mb-2 rounded-xl bg-black/40 text-white border border-green-500/30"
+                className="w-full p-3 mb-4 rounded-xl bg-black/40 text-white border border-green-500/30 focus:border-green-500/50 focus:outline-none transition-colors"
               />
               {modalError && (
                 <div className="text-red-400 text-sm mb-4">{modalError}</div>
               )}
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end space-x-3">
                 <button
                   onClick={closeModal}
-                  className="gradient-button py-2 px-4 rounded-xl bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400"
+                  className="gradient-button py-2 px-6 rounded-xl bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 transition-all duration-300"
                 >
                   Cancel
                 </button>
@@ -296,8 +296,10 @@ export default function InvestPage() {
                     handleTransaction(showDepositModal ? "deposit" : "withdraw")
                   }
                   disabled={processing || !amount}
-                  className={`gradient-button py-2 px-4 rounded-xl ${
-                    processing || !amount ? "opacity-50 cursor-not-allowed" : ""
+                  className={`gradient-button py-2 px-6 rounded-xl transition-all duration-300 ${
+                    processing || !amount
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:scale-105"
                   } ${
                     showDepositModal
                       ? ""
@@ -316,7 +318,7 @@ export default function InvestPage() {
         )}
 
         {/* Investment Info */}
-        <div className="glass-container p-4 mt-6 text-sm text-gray-400 text-center">
+        <div className="glass-container p-4 mt-6 text-sm text-gray-400 text-center rounded-xl">
           Your investments grow by 1% each day. Growth is calculated and applied
           automatically.
         </div>

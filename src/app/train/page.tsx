@@ -174,7 +174,7 @@ export default function TrainPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pb-20">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Train" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
@@ -214,17 +214,21 @@ export default function TrainPage() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Train" />
-      <div className="container max-w-xl mx-auto px-2 py-4">
-        <div className="glass-container p-4 mb-4">
+      <div className="container max-w-xl mx-auto px-6 py-4 pb-20">
+        <div className="glass-container p-6 rounded-2xl shadow-lg">
           {/* Training Button and Status */}
-          <div className="text-center mb-6 relative">
+          <div className="text-center mb-8 relative">
             <button
               onClick={handleTrain}
               className={`
-                gradient-button py-3 px-6 rounded-xl text-lg mb-3 w-full
-                ${!canTrain || training ? "opacity-50 cursor-not-allowed" : ""}
+                gradient-button py-4 px-8 rounded-xl text-lg mb-4 w-full transition-all duration-300
+                ${
+                  !canTrain || training
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:scale-[1.02]"
+                }
               `}
               disabled={!canTrain || training}
             >
@@ -237,23 +241,23 @@ export default function TrainPage() {
                 key={`training-animation-${Date.now()}`}
                 className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
               >
-                <div className="animate-bounce glass-container bg-green-500/20 text-white px-3 py-1 shadow-lg text-sm">
+                <div className="animate-bounce glass-container bg-green-500/20 text-white px-4 py-2 rounded-xl shadow-lg text-sm">
                   {getTrainingMessage()}
                 </div>
               </div>
             )}
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className={canTrain ? "text-green-400" : "text-red-400"}>
                 {canTrain ? "Ready to train" : `Resting: ${remainingTime} left`}
               </div>
               {player.privateTrainer?.selectedSkill &&
                 player.privateTrainer.remainingSessions > 0 && (
-                  <div className="glass-container bg-green-900/20 p-2 text-sm">
-                    <div className="font-semibold text-green-400">
+                  <div className="glass-container bg-green-900/20 p-4 rounded-xl text-sm">
+                    <div className="font-semibold text-green-400 mb-1">
                       Private Trainer Active
                     </div>
-                    <div className="text-gray-300">
+                    <div className="text-gray-300 mb-1">
                       Focusing on:{" "}
                       {STAT_NAMES[player.privateTrainer.selectedSkill]}
                     </div>
@@ -267,30 +271,30 @@ export default function TrainPage() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {playerStats.map(({ name, value }) => (
               <div
                 key={`stat-${name}`}
-                className={`glass-container p-2 ${
+                className={`glass-container p-4 rounded-xl transition-all duration-300 ${
                   trainingResult &&
                   STAT_NAMES[trainingResult.stat as keyof typeof STAT_NAMES] ===
                     name
-                    ? "ring-1 ring-green-500"
+                    ? "ring-2 ring-green-500 shadow-green-500/20"
                     : ""
                 }`}
               >
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex justify-between items-center text-sm mb-2">
                   <span className="font-semibold text-white">{name}</span>
                   <span className={getStatColor(Number(value))}>
                     {formatStatValue(value)}
                   </span>
                 </div>
                 {/* Progress bar */}
-                <div className="w-full bg-black/40 rounded-full h-2 mt-1">
+                <div className="w-full bg-black/40 rounded-full h-2">
                   <div
                     className={`${getStatColor(
                       Number(value)
-                    )} h-2 rounded-full`}
+                    )} h-2 rounded-full transition-all duration-300`}
                     style={{ width: `${(Number(value) / 20) * 100}%` }}
                   ></div>
                 </div>
@@ -299,7 +303,7 @@ export default function TrainPage() {
           </div>
 
           {error && (
-            <div className="text-red-500 text-center mt-4 text-sm">{error}</div>
+            <div className="text-red-500 text-center mt-6 text-sm">{error}</div>
           )}
         </div>
       </div>
