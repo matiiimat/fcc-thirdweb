@@ -40,7 +40,7 @@ export default function Home() {
 
           {/* Title */}
           <h1 className="text-3xl font-bold tracking-tight text-white text-center">
-            Farcaster FC
+            fcc/FC
           </h1>
 
           {/* Instructions */}
@@ -56,7 +56,7 @@ export default function Home() {
               wallets={wallets}
               connectModal={{ size: "compact" }}
               appMetadata={{
-                name: "Farcaster FC",
+                name: "fcc/FC",
                 url: "https://example.com",
               }}
             />

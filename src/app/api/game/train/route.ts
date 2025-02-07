@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player from '@/app/models/Player';
-import { calculateTrainingResult, getActionCooldown } from '@/app/lib/game';
+import { calculateTrainingResult, getActionCooldown, calculateWorkEthicChange } from '@/app/lib/game';
 import { ValidationError } from '@/app/lib/validation';
-import { TRAINING_CONSTANTS } from '@/app/lib/constants';
+import { TRAINING_CONSTANTS, PLAYER_CONSTANTS } from '@/app/lib/constants';
 
 // POST /api/game/train - Train a player's stats
 export async function POST(req: NextRequest) {
@@ -54,9 +54,26 @@ export async function POST(req: NextRequest) {
       };
 
       let trainingResult;
+      const now = new Date();
+      // Calculate work ethic change
+      const workEthicChange = calculateWorkEthicChange(
+        player.lastTrainingDate,
+        player.lastWorkDate,
+        player.lastConnectionDate
+      );
+      
+      // Calculate new work ethic value
+      const newWorkEthic = Math.max(
+        PLAYER_CONSTANTS.MIN_STAT_VALUE,
+        Math.min(
+          PLAYER_CONSTANTS.MAX_STAT_VALUE,
+          player.stats.workEthic + workEthicChange
+        )
+      );
+
       let updateData: any = {
-        lastTrainingDate: new Date(),
-        'stats.workEthic': Math.min(20, player.consecutiveConnections * 2), // 2 points per consecutive day
+        lastTrainingDate: now,
+        'stats.workEthic': newWorkEthic,
       };
 
       // Check if player has active private trainer

@@ -88,24 +88,44 @@ export function getActionCooldown(lastActionDate: Date | null, isTraining: boole
 }
 
 // Calculate work ethic changes based on player activity
-export function calculateWorkEthicChange(lastTrainingDate: Date | null, lastConnectionDate: Date | null): number {
+export function calculateWorkEthicChange(
+  lastTrainingDate: Date | null,
+  lastWorkDate: Date | null,
+  lastConnectionDate: Date | null
+): number {
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const oneDayMs = 24 * 60 * 60 * 1000;
 
   // If no previous connection, this is first time - no change
   if (!lastConnectionDate) return 0;
 
-  // Check if player trained or worked yesterday
-  const wasActiveYesterday = lastTrainingDate &&
-    (now.getTime() - lastTrainingDate.getTime() < 2 * oneDayMs);
+  // Convert dates to start of their respective days
+  const lastTrainingDay = lastTrainingDate ?
+    new Date(lastTrainingDate.getFullYear(), lastTrainingDate.getMonth(), lastTrainingDate.getDate()) :
+    null;
+  const lastWorkDay = lastWorkDate ?
+    new Date(lastWorkDate.getFullYear(), lastWorkDate.getMonth(), lastWorkDate.getDate()) :
+    null;
+  const lastConnectionDay = new Date(
+    lastConnectionDate.getFullYear(),
+    lastConnectionDate.getMonth(),
+    lastConnectionDate.getDate()
+  );
 
-  if (wasActiveYesterday) {
-    // Player was active yesterday, increase work ethic
+  // Check if player was active today (trained or worked)
+  const wasActiveToday = (lastTrainingDay && lastTrainingDay.getTime() === today.getTime()) ||
+                        (lastWorkDay && lastWorkDay.getTime() === today.getTime());
+
+  if (wasActiveToday) {
+    // Player was active today, increase work ethic by 1
     return 1;
   } else {
-    // Calculate days of inactivity and subtract one point per day
-    const daysSinceLastConnection = Math.floor((now.getTime() - lastConnectionDate.getTime()) / oneDayMs);
-    return -daysSinceLastConnection; // Subtract one point per day of inactivity
+    // Calculate days since last connection
+    const daysSinceLastConnection = Math.floor((today.getTime() - lastConnectionDay.getTime()) / oneDayMs);
+    
+    // Decrease by 1 for each day of inactivity, but never more than 1 per day
+    return Math.max(-1, -daysSinceLastConnection);
   }
 }
 
@@ -153,10 +173,24 @@ export function calculateTrainingResult(stats: any) {
     throw new Error(`Invalid value for stat ${trainedStat}: ${currentValue}`);
   }
 
-  // Calculate bonus (higher bonus for lower stats)
-  const baseBonus = (20 - currentValue) / 10; // Max 2.0 bonus at stat level 0
-  const randomFactor = 0.5 + Math.random(); // Random factor between 0.5 and 1.5
-  const bonus = Math.max(0.1, Math.min(baseBonus * randomFactor, 2.0)); // Clamp bonus between 0.1 and 2.0
+  // Calculate bonus based on current stat value tier
+  let bonus;
+  if (currentValue < 5) {
+    // 0-5: bonus 0.4 to 0.6
+    bonus = 0.4 + Math.random() * 0.2;
+  } else if (currentValue < 10) {
+    // 5-10: bonus 0.3 to 0.4
+    bonus = 0.3 + Math.random() * 0.1;
+  } else if (currentValue < 16) {
+    // 10-16: bonus 0.2 to 0.3
+    bonus = 0.2 + Math.random() * 0.1;
+  } else if (currentValue < 19) {
+    // 16-19: bonus 0.1 to 0.2
+    bonus = 0.1 + Math.random() * 0.1;
+  } else {
+    // 19-20: fixed 0.1
+    bonus = 0.1;
+  }
 
   return {
     trainedStat,
