@@ -2,36 +2,44 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player from '@/app/models/Player';
 import { calculateTrainingResult, getActionCooldown, calculateWorkEthicChange } from '@/app/lib/game';
-import { ValidationError } from '@/app/lib/validation';
 import { TRAINING_CONSTANTS, PLAYER_CONSTANTS } from '@/app/lib/constants';
+import { authenticatePlayer } from '@/app/middleware/auth';
+import { rateLimits } from '@/app/middleware/rateLimit';
+import { validateSchema, trainSchema } from '@/app/lib/schemas';
+import { runTransaction } from '@/app/lib/transactions';
 
-// POST /api/game/train - Train a player's stats
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { playerId } = body;
+    // 1. Rate limiting
+    const rateLimitResult = await rateLimits.train();
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
+    }
 
-    if (!playerId) {
+    // 2. Input validation
+    const body = await req.json();
+    const validationResult = validateSchema(trainSchema, body);
+    if (validationResult.error) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Validation failed', details: validationResult.error },
         { status: 400 }
       );
     }
 
+    const { playerId } = validationResult.data;
+
     await connectDB();
 
-    // Get player
-    const player = await Player.findOne({ playerId });
-    if (!player) {
-      return NextResponse.json(
-        { error: 'Player not found' },
-        { status: 404 }
-      );
+    // 3. Authentication
+    const authResult = await authenticatePlayer(playerId);
+    if (authResult.error) {
+      return authResult.error;
     }
 
-    // Check if player can train (6-hour cooldown)
+    const player = authResult.player;
+
+    // 4. Check cooldown
     const { onCooldown, remainingTime } = getActionCooldown(player.lastTrainingDate, true);
-    
     if (onCooldown) {
       return NextResponse.json(
         { error: `Training is on cooldown. Time remaining: ${remainingTime}` },
@@ -39,7 +47,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    try {
+    // 5. Run training logic in transaction
+    const result = await runTransaction(async (session) => {
       // Convert player stats to plain object and filter out Mongoose fields
       const statsObj = player.stats.toObject();
       const plainStats = {
@@ -55,6 +64,7 @@ export async function POST(req: NextRequest) {
 
       let trainingResult;
       const now = new Date();
+      
       // Calculate work ethic change
       const workEthicChange = calculateWorkEthicChange(
         player.lastTrainingDate,
@@ -109,18 +119,18 @@ export async function POST(req: NextRequest) {
       // Add stat update to updateData
       updateData[`stats.${trainingResult.trainedStat}`] = newValue;
 
-      // Update player
+      // Update player within transaction
       const updatedPlayer = await Player.findOneAndUpdate(
         { playerId },
         { $set: updateData },
-        { new: true, runValidators: true }
+        { new: true, runValidators: true, session }
       ).select('-__v');
 
       if (!updatedPlayer) {
         throw new Error('Failed to update player');
       }
 
-      return NextResponse.json({
+      return {
         success: true,
         training: {
           stat: trainingResult.trainedStat,
@@ -131,17 +141,14 @@ export async function POST(req: NextRequest) {
           finalBonus: finalBonus,
         },
         player: updatedPlayer,
-      });
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 400 }
-        );
-      }
-      console.error('Training calculation error:', error);
-      throw error;
+      };
+    });
+
+    if (result.error) {
+      return result.error;
     }
+
+    return NextResponse.json(result.data);
   } catch (error) {
     console.error('Training error:', error);
     return NextResponse.json(

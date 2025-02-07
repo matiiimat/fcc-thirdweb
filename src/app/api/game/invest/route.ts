@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player from '@/app/models/Player';
 import { calculateInvestments } from '@/app/lib/game';
+import { authenticatePlayer } from '@/app/middleware/auth';
+import { rateLimits } from '@/app/middleware/rateLimit';
+import { validateSchema, investSchema } from '@/app/lib/schemas';
+import { runTransaction } from '@/app/lib/transactions';
 
 interface Investment {
   type: string;
@@ -12,15 +16,23 @@ interface Investment {
 // POST /api/game/invest - Handle investment deposits and withdrawals
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { playerId, type, action, amount } = body;
+    // 1. Rate limiting
+    const rateLimitResult = await rateLimits.invest();
+    if (rateLimitResult.error) {
+      return rateLimitResult.error;
+    }
 
-    if (!playerId || !type || !action || amount === undefined || amount === null) {
+    // 2. Input validation
+    const body = await req.json();
+    const validationResult = validateSchema(investSchema, body);
+    if (validationResult.error) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Validation failed', details: validationResult.error },
         { status: 400 }
       );
     }
+
+    const { playerId, type, action, amount } = validationResult.data;
 
     if (!['deposit', 'withdraw'].includes(action)) {
       return NextResponse.json(
@@ -29,37 +41,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure amount is a whole number and at least 1
-    if (!Number.isInteger(amount) || amount < 1) {
-      return NextResponse.json(
-        { error: 'Amount must be a whole number greater than or equal to 1' },
-        { status: 400 }
-      );
-    }
-
     await connectDB();
 
-    // Get player
-    const player = await Player.findOne({ playerId });
-    if (!player) {
-      return NextResponse.json(
-        { error: 'Player not found' },
-        { status: 404 }
-      );
+    // 3. Authentication
+    const authResult = await authenticatePlayer(playerId);
+    if (authResult.error) {
+      return authResult.error;
     }
+
+    const player = authResult.player;
 
     // Calculate current investment value including growth
     const currentInvestmentValue = calculateInvestments(player.investments);
 
-    try {
+    // 4. Run investment logic in transaction
+    const result = await runTransaction(async (session) => {
       let updateData;
       if (action === 'deposit') {
         // Check if player has enough money
         if (player.money < amount) {
-          return NextResponse.json(
-            { error: 'Insufficient funds' },
-            { status: 400 }
-          );
+          return {
+            error: NextResponse.json(
+              { error: 'Insufficient funds' },
+              { status: 400 }
+            )
+          };
         }
 
         // Add investment and deduct from money
@@ -76,10 +82,12 @@ export async function POST(req: NextRequest) {
       } else {
         // Check if investment account has enough balance
         if (currentInvestmentValue < amount) {
-          return NextResponse.json(
-            { error: 'Insufficient investment balance' },
-            { status: 400 }
-          );
+          return {
+            error: NextResponse.json(
+              { error: 'Insufficient investment balance' },
+              { status: 400 }
+            )
+          };
         }
 
         // Calculate the proportion of each investment to withdraw
@@ -108,26 +116,31 @@ export async function POST(req: NextRequest) {
         };
       }
 
-      // Update player
+      // Update player within transaction
       const updatedPlayer = await Player.findOneAndUpdate(
         { playerId },
         updateData,
-        { new: true, runValidators: true }
+        { new: true, runValidators: true, session }
       ).select('-__v');
 
       if (!updatedPlayer) {
         throw new Error('Failed to update player');
       }
 
-      return NextResponse.json({
-        success: true,
-        message: `Successfully ${action}ed ${amount}`,
-        player: updatedPlayer,
-      });
-    } catch (error) {
-      console.error('Investment update error:', error);
-      throw error;
+      return {
+        data: {
+          success: true,
+          message: `Successfully ${action}ed ${amount}`,
+          player: updatedPlayer,
+        }
+      };
+    });
+
+    if (result.error) {
+      return result.error;
     }
+
+    return NextResponse.json(result.data);
   } catch (error) {
     console.error('Investment error:', error);
     return NextResponse.json(

@@ -71,7 +71,7 @@ export default function InvestPage() {
   }, [wallet, router]);
 
   const handleTransaction = async (action: "deposit" | "withdraw") => {
-    if (!player || processing || !amount) return;
+    if (!player || !wallet || processing || !amount) return;
 
     setModalError(null);
     setProcessing(true);
@@ -80,6 +80,7 @@ export default function InvestPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-wallet-address": wallet.address,
         },
         body: JSON.stringify({
           playerId: player.playerId,
@@ -106,7 +107,7 @@ export default function InvestPage() {
   };
 
   const handleWork = async () => {
-    if (!player || working) return;
+    if (!player || !wallet || working) return;
 
     setError(null);
     setWorking(true);
@@ -117,6 +118,7 @@ export default function InvestPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-wallet-address": wallet.address,
         },
         body: JSON.stringify({
           playerId: player.playerId,

@@ -115,7 +115,7 @@ export default function TrainPage() {
   }, [wallet]);
 
   const handleTrain = async () => {
-    if (!player || training) return;
+    if (!player || !wallet || training) return;
 
     setTraining(true);
     setTrainingResult(null);
@@ -126,6 +126,7 @@ export default function TrainPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-wallet-address": wallet.address, // Add wallet address to headers
         },
         body: JSON.stringify({
           playerId: player.playerId,
@@ -133,7 +134,8 @@ export default function TrainPage() {
       });
 
       if (!response.ok) {
-        throw new Error("Training failed");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Training failed");
       }
 
       const result = await response.json();

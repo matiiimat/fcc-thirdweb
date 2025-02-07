@@ -134,6 +134,8 @@ export default function Store() {
   };
 
   const processPurchase = async (item: StoreItem, selectedSkill?: string) => {
+    if (!wallet) return;
+
     setError(null);
     setProcessing(item.id);
     try {
@@ -141,6 +143,7 @@ export default function Store() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-wallet-address": wallet.address,
         },
         body: JSON.stringify({
           playerId: player?.playerId,
