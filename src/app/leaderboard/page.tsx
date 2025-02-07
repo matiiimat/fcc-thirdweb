@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { PLAYER_CONSTANTS } from "@/app/lib/constants";
 
 interface Player {
   _id: string;
@@ -37,8 +38,9 @@ export default function LeaderboardPage() {
   }, []);
 
   const calculateStarRating = (totalPoints: number) => {
-    // Max possible points: 8 stats * 100 points = 800
-    const percentage = (totalPoints / 800) * 100;
+    // Max possible points: 8 stats * 20 points = 160
+    const percentage =
+      (totalPoints / (8 * PLAYER_CONSTANTS.MAX_STAT_VALUE)) * 100;
     if (percentage >= 90) return "⭐⭐⭐⭐⭐";
     if (percentage >= 70) return "⭐⭐⭐⭐";
     if (percentage >= 50) return "⭐⭐⭐";
