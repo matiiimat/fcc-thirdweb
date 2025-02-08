@@ -112,7 +112,7 @@ export default function HomePage() {
   const { onCooldown: trainingOnCooldown, remainingTime: trainingTime } =
     getActionCooldown(
       player?.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
-      false // isPlaying = false
+      true // isTraining = true
     );
   const { onCooldown: matchOnCooldown, remainingTime: matchTime } =
     getActionCooldown(
