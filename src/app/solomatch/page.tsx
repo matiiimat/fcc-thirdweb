@@ -128,7 +128,7 @@ export default function SoloMatchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Solo Match" />
+      <Header pageName="Match" />
       <div className="container max-w-xl mx-auto px-6 py-4 pb-20">
         {/* Next Game Section */}
         <div className="mb-8">
