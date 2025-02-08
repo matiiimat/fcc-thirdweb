@@ -70,10 +70,12 @@ export async function POST(req: NextRequest) {
       // TODO: Implement actual game logic here
       // For now, just update lastGameDate and add a placeholder result
       const gameResult = {
-        score: Math.floor(Math.random() * 5),
-        opponent: "AI Opponent",
-        result: Math.random() > 0.5 ? "win" : "loss",
-        position // Include the selected position in the game result
+        position, // Include the selected position in the game result
+        note: "XX", // Placeholder for now
+        successfulPasses: "XX", // Placeholder for now
+        successfulTackles: "XX", // Placeholder for now
+        shotsOnTarget: "XX", // Placeholder for now
+        distanceCovered: "XX", // Placeholder for now
       };
 
       // Update player with game result

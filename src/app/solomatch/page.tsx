@@ -26,10 +26,12 @@ interface PlayerData {
   };
   lastGameDate: string | null;
   lastGameResult?: {
-    score: number;
-    opponent: string;
-    result: "win" | "loss" | "draw";
     position: Position;
+    note: number;
+    successfulPasses: number;
+    successfulTackles: number;
+    shotsOnTarget: number;
+    distanceCovered: number;
   };
 }
 
@@ -215,39 +217,29 @@ export default function SoloMatchPage() {
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Opponent</span>
-                  <span className="text-white">
-                    {player.lastGameResult.opponent}
-                  </span>
+                  <span className="text-gray-300">Note</span>
+                  <span className="text-white">XX</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Score</span>
-                  <span className="text-white">
-                    {player.lastGameResult.score}
-                  </span>
+                  <span className="text-gray-300">Successful Passes</span>
+                  <span className="text-white">XX</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Result</span>
-                  <span
-                    className={`
-                    ${
-                      player.lastGameResult.result === "win"
-                        ? "text-green-400"
-                        : ""
-                    }
-                    ${
-                      player.lastGameResult.result === "loss"
-                        ? "text-red-400"
-                        : ""
-                    }
-                    ${
-                      player.lastGameResult.result === "draw"
-                        ? "text-yellow-400"
-                        : ""
-                    }
-                  `}
-                  >
-                    {player.lastGameResult.result.toUpperCase()}
+                  <span className="text-gray-300">Successful Tackles</span>
+                  <span className="text-white">XX</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-300">Shots on Target</span>
+                  <span className="text-white">XX</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-300">Distance Covered</span>
+                  <span className="text-white">XX</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-300">XP Gained</span>
+                  <span className="text-white">
+                    +{player.lastGameResult.note * -10} XP
                   </span>
                 </div>
               </div>
