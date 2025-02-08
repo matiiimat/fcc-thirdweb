@@ -68,7 +68,6 @@ export async function POST(req: NextRequest) {
       // Calculate work ethic change
       const workEthicChange = calculateWorkEthicChange(
         player.lastTrainingDate,
-        player.lastWorkDate,
         player.lastConnectionDate
       );
       
