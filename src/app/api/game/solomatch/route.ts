@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
-import Player from '@/app/models/Player';
+import Player, { Position } from '@/app/models/Player';
 import { authenticatePlayer } from '@/app/middleware/auth';
 import { rateLimits } from '@/app/middleware/rateLimit';
-import { validateSchema, playerIdSchema } from '@/app/lib/schemas';
+import { validateSchema } from '@/app/lib/schemas';
 import { runTransaction } from '@/app/lib/transactions';
 import { TRAINING_CONSTANTS } from '@/app/lib/constants';
+import { z } from 'zod';
+
+const solomatchSchema = z.object({
+  playerId: z.string(),
+  position: z.enum(['GK', 'D', 'M', 'F'])
+});
+
+type GameRequest = {
+  playerId: string;
+  position: Position;
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Input validation
     const body = await req.json();
-    const validationResult = validateSchema(playerIdSchema, body);
+    const validationResult = validateSchema(solomatchSchema, body);
     if (validationResult.error) {
       return NextResponse.json(
         { error: 'Validation failed', details: validationResult.error },
@@ -25,7 +36,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { playerId } = validationResult.data;
+    const { playerId, position } = validationResult.data as GameRequest;
 
     await connectDB();
 
@@ -61,7 +72,8 @@ export async function POST(req: NextRequest) {
       const gameResult = {
         score: Math.floor(Math.random() * 5),
         opponent: "AI Opponent",
-        result: Math.random() > 0.5 ? "win" : "loss"
+        result: Math.random() > 0.5 ? "win" : "loss",
+        position // Include the selected position in the game result
       };
 
       // Update player with game result
@@ -73,7 +85,12 @@ export async function POST(req: NextRequest) {
             lastGameResult: gameResult
           }
         },
-        { new: true, runValidators: true, session }
+        { 
+          new: true, 
+          runValidators: true, 
+          session,
+          lean: true // Use lean to get a plain JavaScript object
+        }
       ).select('-__v');
 
       if (!updatedPlayer) {

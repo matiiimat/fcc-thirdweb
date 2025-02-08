@@ -13,11 +13,14 @@ export interface IPlayerStats {
   workEthic: number;
 }
 
+export type Position = 'GK' | 'D' | 'M' | 'F';
+
 // Interface for game result
 export interface IGameResult {
   score: number;
   opponent: string;
   result: 'win' | 'loss' | 'draw';
+  position?: Position; // Make position optional for backward compatibility
 }
 
 // Interface for the player document
@@ -151,6 +154,11 @@ const GameResultSchema = new Schema<IGameResult>({
     type: String,
     required: true,
     enum: ['win', 'loss', 'draw'],
+  },
+  position: {
+    type: String,
+    required: false, // Make position optional
+    enum: ['GK', 'D', 'M', 'F'],
   },
 });
 

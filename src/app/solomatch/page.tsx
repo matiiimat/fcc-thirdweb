@@ -7,6 +7,8 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getActionCooldown } from "../lib/game";
 import PositionRecommendationChart from "../components/PositionRecommendationChart";
+import PositionSelector from "../components/PositionSelector";
+import { Position } from "../models/Player";
 
 interface PlayerData {
   playerId: string;
@@ -27,6 +29,7 @@ interface PlayerData {
     score: number;
     opponent: string;
     result: "win" | "loss" | "draw";
+    position: Position;
   };
 }
 
@@ -38,6 +41,9 @@ export default function SoloMatchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(
+    null
+  );
 
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
@@ -78,7 +84,7 @@ export default function SoloMatchPage() {
   }, [wallet]);
 
   const handlePlay = async () => {
-    if (!player || !wallet || playing) return;
+    if (!player || !wallet || playing || !selectedPosition) return;
 
     setPlaying(true);
     setError(null);
@@ -92,6 +98,7 @@ export default function SoloMatchPage() {
         },
         body: JSON.stringify({
           playerId: player.playerId,
+          position: selectedPosition,
         }),
       });
 
@@ -134,7 +141,7 @@ export default function SoloMatchPage() {
     player.lastGameDate ? new Date(player.lastGameDate) : null,
     true
   );
-  const canPlay = !onCooldown;
+  const canPlay = !onCooldown && selectedPosition !== null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
@@ -146,9 +153,13 @@ export default function SoloMatchPage() {
           <div className="glass-container p-6 rounded-2xl shadow-lg">
             {/* Two columns container */}
             <div className="flex flex-col md:flex-row gap-6 mb-6">
-              {/* Left column - Empty for now */}
+              {/* Left column - Position Selection */}
               <div className="w-full md:w-1/2">
-                {/* Content will be added later */}
+                <PositionSelector
+                  onSelect={setSelectedPosition}
+                  selectedPosition={selectedPosition}
+                  disabled={playing || onCooldown}
+                />
               </div>
 
               {/* Right column - Coach Recommendation */}
@@ -174,12 +185,18 @@ export default function SoloMatchPage() {
                 `}
                 disabled={!canPlay || playing}
               >
-                {playing ? "PLAYING..." : "PLAY"}
+                {playing
+                  ? "PLAYING..."
+                  : selectedPosition
+                  ? "PLAY"
+                  : "SELECT POSITION TO PLAY"}
               </button>
               <div className={canPlay ? "text-green-400" : "text-red-400"}>
-                {canPlay
+                {onCooldown
+                  ? `Next game available in: ${remainingTime}`
+                  : selectedPosition
                   ? "Ready to play"
-                  : `Next game available in: ${remainingTime}`}
+                  : "Select a position to play"}
               </div>
             </div>
           </div>
@@ -191,6 +208,12 @@ export default function SoloMatchPage() {
           <div className="glass-container p-6 rounded-2xl shadow-lg">
             {player.lastGameResult ? (
               <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-300">Position</span>
+                  <span className="text-white">
+                    {player.lastGameResult.position}
+                  </span>
+                </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-300">Opponent</span>
                   <span className="text-white">
