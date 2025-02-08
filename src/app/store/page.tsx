@@ -5,7 +5,6 @@ import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { formatCurrency } from "../lib/game";
 
 interface PlayerData {
   playerId: string;
@@ -217,7 +216,7 @@ export default function Store() {
           <div className="flex justify-between items-center">
             <span className="text-gray-300">Available Cash:</span>
             <span className="text-xl font-semibold text-green-400">
-              {formatCurrency(player.money)}
+              {player.money.toLocaleString()}
             </span>
           </div>
         </div>
@@ -262,7 +261,7 @@ export default function Store() {
                     >
                       {processing === item.id
                         ? "Buying..."
-                        : formatCurrency(item.price)}
+                        : item.price.toLocaleString()}
                     </button>
                     {item.id === "private_trainer" && player.privateTrainer && (
                       <div className="absolute hidden group-hover:block bottom-full right-0 mb-2 w-48 p-3 bg-black/90 text-white text-xs rounded-lg shadow-lg">
@@ -305,7 +304,7 @@ export default function Store() {
                   >
                     {processing === item.id
                       ? "Buying..."
-                      : formatCurrency(item.price)}
+                      : item.price.toLocaleString()}
                   </button>
                 </div>
               </div>
