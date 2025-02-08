@@ -9,8 +9,6 @@ import { useEffect, useState } from "react";
 import {
   calculatePlayerRating,
   getStarRating,
-  calculateTotalCapital,
-  formatCurrency,
   getActionCooldown,
 } from "../lib/game";
 
@@ -28,16 +26,15 @@ interface PlayerData {
     positioning: number;
     workEthic: number;
   };
-  money: number;
-  investments: Array<{
-    type: string;
-    amount: number;
-    timestamp: string;
-  }>;
   lastTrainingDate: string | null;
-  lastWorkDate: string | null;
+  lastGameDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
+  lastGameResult?: {
+    score: number;
+    opponent: string;
+    result: "win" | "loss" | "draw";
+  };
 }
 
 export default function HomePage() {
@@ -111,19 +108,16 @@ export default function HomePage() {
     return null;
   }
 
-  // Calculate total capital
-  const totalCapital = calculateTotalCapital(player.money, player.investments);
-
   // Calculate cooldowns
   const { onCooldown: trainingOnCooldown, remainingTime: trainingTime } =
     getActionCooldown(
       player?.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
-      true // isTraining = true
+      false // isPlaying = false
     );
-  const { onCooldown: workOnCooldown, remainingTime: workTime } =
+  const { onCooldown: matchOnCooldown, remainingTime: matchTime } =
     getActionCooldown(
-      player?.lastWorkDate ? new Date(player.lastWorkDate) : null,
-      false // isTraining = false
+      player?.lastGameDate ? new Date(player.lastGameDate) : null,
+      true // isPlaying = true
     );
 
   return (
@@ -139,24 +133,6 @@ export default function HomePage() {
           {/* Stats Radar Chart */}
           <div className="w-full mb-3">
             <StatsRadarChart stats={player.stats} />
-          </div>
-        </div>
-
-        {/* Financial Information */}
-        <div className="glass-container p-6 w-full max-w-md mb-6 rounded-2xl shadow-lg">
-          <div className="w-full">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-300">Cash:</span>
-              <span className="text-lg font-semibold text-green-400">
-                {formatCurrency(player.money)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Total Capital:</span>
-              <span className="text-lg font-semibold text-yellow-400">
-                {formatCurrency(totalCapital)}
-              </span>
-            </div>
           </div>
         </div>
 
@@ -176,11 +152,11 @@ export default function HomePage() {
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-300">Work:</span>
+              <span className="text-gray-300">Solo Match:</span>
               <span
-                className={!workOnCooldown ? "text-green-400" : "text-red-400"}
+                className={!matchOnCooldown ? "text-green-400" : "text-red-400"}
               >
-                {!workOnCooldown ? "Ready" : `Resting: ${workTime} left`}
+                {!matchOnCooldown ? "Ready" : `Available in: ${matchTime}`}
               </span>
             </div>
           </div>

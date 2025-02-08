@@ -21,6 +21,7 @@ export const TRAINING_CONSTANTS = {
   MIN_TRAINING_BONUS: 0.1, // Minimum training bonus
   TRAINING_COOLDOWN_HOURS: 6, // Hours between training sessions
   WORK_COOLDOWN_HOURS: 8, // Hours between work sessions
+  GAME_COOLDOWN_HOURS: 24, // Hours between solo matches
 };
 
 // Player stats

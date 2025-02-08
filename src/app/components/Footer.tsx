@@ -52,19 +52,19 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/invest")}
-            className={getButtonClass("/invest")}
+            onClick={() => router.push("/solomatch")}
+            className={getButtonClass("/solomatch")}
           >
             <Image
-              src="/icons/finances-icon.png"
-              alt="Finances"
+              src="/icons/solomatch-icon.png"
+              alt="Solo Match"
               width={20}
               height={20}
               priority
               className="transition-transform group-hover:scale-110"
             />
           </button>
-          <span className={getTextClass("/invest")}>Finances</span>
+          <span className={getTextClass("/solomatch")}>Solo Match</span>
         </div>
         <div className="flex flex-col items-center">
           <button

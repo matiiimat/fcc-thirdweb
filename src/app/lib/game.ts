@@ -58,7 +58,7 @@ export function calculateInvestments(investments: Array<{ type: string; amount: 
 }
 
 // Check if action is on cooldown and get remaining time
-export function getActionCooldown(lastActionDate: Date | null, isTraining: boolean = false): {
+export function getActionCooldown(lastActionDate: Date | null, isPlaying: boolean = false): {
   onCooldown: boolean;
   remainingTime: string;
 } {
@@ -67,9 +67,9 @@ export function getActionCooldown(lastActionDate: Date | null, isTraining: boole
   }
 
   const now = new Date();
-  const cooldownHours = isTraining ?
-    TRAINING_CONSTANTS.TRAINING_COOLDOWN_HOURS :
-    TRAINING_CONSTANTS.WORK_COOLDOWN_HOURS;
+  const cooldownHours = isPlaying ?
+    TRAINING_CONSTANTS.GAME_COOLDOWN_HOURS :
+    TRAINING_CONSTANTS.TRAINING_COOLDOWN_HOURS;
   const cooldownMs = cooldownHours * 60 * 60 * 1000;
   const timeSinceAction = now.getTime() - lastActionDate.getTime();
   

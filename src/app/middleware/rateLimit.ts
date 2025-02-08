@@ -70,4 +70,5 @@ export const rateLimits = {
   store: () => rateLimit(60000, 20), // 20 requests per minute
   invest: () => rateLimit(60000, 20), // 20 requests per minute
   leaderboard: () => rateLimit(60000, 60), // 60 requests per minute
+  solomatch: () => rateLimit(60000, 30), // 30 requests per minute
 };

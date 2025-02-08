@@ -13,11 +13,11 @@ export interface IPlayerStats {
   workEthic: number;
 }
 
-// Interface for investments
-export interface IInvestment {
-  type: string;
-  amount: number;
-  timestamp: Date;
+// Interface for game result
+export interface IGameResult {
+  score: number;
+  opponent: string;
+  result: 'win' | 'loss' | 'draw';
 }
 
 // Interface for the player document
@@ -26,11 +26,10 @@ export interface IPlayer extends Document {
   playerName: string;
   ethAddress: string;
   team: string;
-  money: number;
-  investments: IInvestment[];
   stats: IPlayerStats;
   lastTrainingDate: Date | null;
-  lastWorkDate: Date | null;
+  lastGameDate: Date | null;
+  lastGameResult: IGameResult | null;
   lastConnectionDate: Date | null;
   consecutiveConnections: number;
   privateTrainer: {
@@ -133,25 +132,25 @@ const PlayerStatsSchema = new Schema<IPlayerStats>({
   },
 });
 
-// Schema for investments
-const InvestmentSchema = new Schema<IInvestment>({
-  type: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  amount: {
+// Schema for game result
+const GameResultSchema = new Schema<IGameResult>({
+  score: {
     type: Number,
     required: true,
-    min: 0,
     validate: {
       validator: Number.isFinite,
       message: '{VALUE} is not a valid number',
     },
   },
-  timestamp: {
-    type: Date,
-    default: Date.now,
+  opponent: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  result: {
+    type: String,
+    required: true,
+    enum: ['win', 'loss', 'draw'],
   },
 });
 
@@ -192,17 +191,6 @@ const PlayerSchema = new Schema<IPlayer>(
       trim: true,
       default: PLAYER_CONSTANTS.DEFAULT_TEAM,
     },
-    money: {
-      type: Number,
-      required: true,
-      default: PLAYER_CONSTANTS.DEFAULT_MONEY,
-      min: 0,
-      validate: {
-        validator: Number.isFinite,
-        message: '{VALUE} is not a valid number',
-      },
-    },
-    investments: [InvestmentSchema],
     stats: {
       type: PlayerStatsSchema,
       required: true,
@@ -211,8 +199,12 @@ const PlayerSchema = new Schema<IPlayer>(
       type: Date,
       default: null,
     },
-    lastWorkDate: {
+    lastGameDate: {
       type: Date,
+      default: null,
+    },
+    lastGameResult: {
+      type: GameResultSchema,
       default: null,
     },
     lastConnectionDate: {
