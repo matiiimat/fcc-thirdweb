@@ -20,7 +20,7 @@ export const statsSchema = z.object({
 // Action-specific schemas
 export const trainSchema = playerIdSchema;
 
-export const workSchema = playerIdSchema;
+export const solomatchSchema = playerIdSchema;
 
 export const storeSchema = z.object({
   ...playerIdSchema.shape,
@@ -37,13 +37,6 @@ export const storeSchema = z.object({
     'speed',
     'positioning'
   ]).optional(),
-});
-
-export const investSchema = z.object({
-  ...playerIdSchema.shape,
-  type: z.literal('investment'),
-  action: z.enum(['deposit', 'withdraw']),
-  amount: z.number().int().positive(),
 });
 
 // Validation helper

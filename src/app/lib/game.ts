@@ -40,23 +40,6 @@ export function getPlayerStats(stats: any) {
   }));
 }
 
-// Calculate investments with daily growth
-export function calculateInvestments(investments: Array<{ type: string; amount: number; timestamp: string }>) {
-  const DAILY_INTEREST_RATE = 0.01; // 1% daily interest
-
-  return investments.reduce((total, inv) => {
-    if (inv.type !== 'investment') return total;
-
-    const depositDate = new Date(inv.timestamp);
-    const today = new Date();
-    const daysDiff = Math.floor((today.getTime() - depositDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Calculate compound interest: A = P(1 + r)^t
-    const amount = inv.amount * Math.pow(1 + DAILY_INTEREST_RATE, daysDiff);
-    return total + amount;
-  }, 0);
-}
-
 // Check if action is on cooldown and get remaining time
 export function getActionCooldown(lastActionDate: Date | null, isPlaying: boolean = false): {
   onCooldown: boolean;
@@ -90,7 +73,6 @@ export function getActionCooldown(lastActionDate: Date | null, isPlaying: boolea
 // Calculate work ethic changes based on player activity
 export function calculateWorkEthicChange(
   lastTrainingDate: Date | null,
-  lastWorkDate: Date | null,
   lastConnectionDate: Date | null
 ): number {
   const now = new Date();
@@ -104,18 +86,14 @@ export function calculateWorkEthicChange(
   const lastTrainingDay = lastTrainingDate ?
     new Date(lastTrainingDate.getFullYear(), lastTrainingDate.getMonth(), lastTrainingDate.getDate()) :
     null;
-  const lastWorkDay = lastWorkDate ?
-    new Date(lastWorkDate.getFullYear(), lastWorkDate.getMonth(), lastWorkDate.getDate()) :
-    null;
   const lastConnectionDay = new Date(
     lastConnectionDate.getFullYear(),
     lastConnectionDate.getMonth(),
     lastConnectionDate.getDate()
   );
 
-  // Check if player was active today (trained or worked)
-  const wasActiveToday = (lastTrainingDay && lastTrainingDay.getTime() === today.getTime()) ||
-                        (lastWorkDay && lastWorkDay.getTime() === today.getTime());
+  // Check if player was active today (trained)
+  const wasActiveToday = lastTrainingDay && lastTrainingDay.getTime() === today.getTime();
 
   if (wasActiveToday) {
     // Player was active today, increase work ethic by 1
@@ -127,17 +105,6 @@ export function calculateWorkEthicChange(
     // Decrease by 1 for each day of inactivity, but never more than 1 per day
     return Math.max(-1, -daysSinceLastConnection);
   }
-}
-
-// Calculate total capital (money + investments with growth)
-export function calculateTotalCapital(money: number, investments: Array<{ type: string; amount: number; timestamp: string }>) {
-  const investmentTotal = calculateInvestments(investments);
-  return money + investmentTotal;
-}
-
-// Format currency with $ symbol
-export function formatCurrency(amount: number): string {
-  return `$${Math.floor(amount).toLocaleString()}`;
 }
 
 // Convert Mongoose document to plain object
