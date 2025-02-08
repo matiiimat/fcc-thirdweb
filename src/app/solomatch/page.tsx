@@ -6,12 +6,22 @@ import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { getActionCooldown } from "../lib/game";
-import { TRAINING_CONSTANTS } from "../lib/constants";
+import PositionRecommendationChart from "../components/PositionRecommendationChart";
 
 interface PlayerData {
   playerId: string;
   playerName: string;
   ethAddress: string;
+  stats: {
+    strength: number;
+    stamina: number;
+    passing: number;
+    shooting: number;
+    defending: number;
+    speed: number;
+    positioning: number;
+    workEthic: number;
+  };
   lastGameDate: string | null;
   lastGameResult?: {
     score: number;
@@ -134,6 +144,23 @@ export default function SoloMatchPage() {
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-white mb-4">Next Game</h2>
           <div className="glass-container p-6 rounded-2xl shadow-lg">
+            {/* Two columns container */}
+            <div className="flex flex-col md:flex-row gap-6 mb-6">
+              {/* Left column - Empty for now */}
+              <div className="w-full md:w-1/2">
+                {/* Content will be added later */}
+              </div>
+
+              {/* Right column - Coach Recommendation */}
+              <div className="w-full md:w-1/2">
+                <h3 className="text-lg font-medium text-white mb-3">
+                  Coach Recommendation
+                </h3>
+                <PositionRecommendationChart stats={player.stats} />
+              </div>
+            </div>
+
+            {/* Play button below the columns */}
             <div className="text-center">
               <button
                 onClick={handlePlay}

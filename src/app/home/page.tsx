@@ -152,7 +152,7 @@ export default function HomePage() {
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-300">Solo Match:</span>
+              <span className="text-gray-300">Match:</span>
               <span
                 className={!matchOnCooldown ? "text-green-400" : "text-red-400"}
               >
