@@ -195,7 +195,7 @@ export default function TrainPage() {
   const rating = calculatePlayerRating(player.stats);
   const { onCooldown, remainingTime } = getActionCooldown(
     player.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
-    true // isTraining = true
+    false // isTraining = false for 6-hour cooldown
   );
   const canTrain = !onCooldown;
 

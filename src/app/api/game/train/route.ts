@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const player = authResult.player;
 
     // 4. Check cooldown
-    const { onCooldown, remainingTime } = getActionCooldown(player.lastTrainingDate, true);
+    const { onCooldown, remainingTime } = getActionCooldown(player.lastTrainingDate, false);
     if (onCooldown) {
       return NextResponse.json(
         { error: `Training is on cooldown. Time remaining: ${remainingTime}` },
@@ -90,11 +90,9 @@ export async function POST(req: NextRequest) {
         // Use the selected skill for training
         const selectedSkill = player.privateTrainer.selectedSkill as keyof typeof plainStats;
         const currentValue = plainStats[selectedSkill];
-        trainingResult = {
-          trainedStat: player.privateTrainer.selectedSkill,
-          currentValue,
-          bonus: 1 // Normal training bonus for focused training
-        };
+        // Calculate bonus using same tiered system, just for the selected skill
+        const currentStats = { [selectedSkill]: currentValue };
+        trainingResult = calculateTrainingResult(currentStats, selectedSkill);
 
         // Decrease remaining sessions
         updateData['privateTrainer.remainingSessions'] = player.privateTrainer.remainingSessions - 1;

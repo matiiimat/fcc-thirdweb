@@ -119,7 +119,7 @@ function toPlainObject(obj: any): Record<string, number> {
 }
 
 // Calculate training result
-export function calculateTrainingResult(stats: any) {
+export function calculateTrainingResult(stats: any, forcedStat?: string) {
   // Convert stats to plain object and ensure they're numbers
   const currentStats = toPlainObject(stats);
 
@@ -132,12 +132,17 @@ export function calculateTrainingResult(stats: any) {
     throw new Error('No valid stats found for training');
   }
 
-  // Randomly select a stat to train
-  const trainedStat = trainableStats[Math.floor(Math.random() * trainableStats.length)];
+  // Use forced stat or randomly select one
+  const trainedStat = forcedStat || trainableStats[Math.floor(Math.random() * trainableStats.length)];
   const currentValue = currentStats[trainedStat];
 
   if (typeof currentValue !== 'number' || isNaN(currentValue)) {
     throw new Error(`Invalid value for stat ${trainedStat}: ${currentValue}`);
+  }
+
+  // Validate forced stat is trainable
+  if (forcedStat && !trainableStats.includes(forcedStat)) {
+    throw new Error(`Invalid stat for training: ${forcedStat}`);
   }
 
   // Calculate bonus based on current stat value tier
