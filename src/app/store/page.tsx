@@ -42,28 +42,28 @@ const storeItems: StoreItem[] = [
   {
     id: "private_trainer",
     name: "Private Trainer",
-    description: "Allows to pick a skill to be trained for the next 7 sessions",
+    description: "Train skill for 7 sessions",
     price: 300,
     section: "Bonuses",
   },
   {
     id: "management_certificate",
-    name: "Management Certificate",
-    description: "Required to manage a team",
+    name: "Management Cert.",
+    description: "Team management license",
     price: 40000,
     section: "Certifications",
   },
   {
     id: "training_certificate",
-    name: "Training Certificate",
-    description: "Required to manage a team",
+    name: "Training Cert.",
+    description: "Team training license",
     price: 20000,
     section: "Certifications",
   },
   {
     id: "finance_certificate",
-    name: "Finance Certificate",
-    description: "Required to manage a team",
+    name: "Finance Cert.",
+    description: "Team finance license",
     price: 20000,
     section: "Certifications",
   },
@@ -210,105 +210,120 @@ export default function Store() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Store" />
-      <main className="container max-w-2xl mx-auto px-6 py-6 pb-20">
+      <main className="container max-w-2xl mx-auto px-3 sm:px-6 py-2 sm:py-6 pb-16">
         {/* Player's Cash */}
-        <div className="glass-container p-6 mb-6 rounded-2xl shadow-lg">
+        <div className="glass-container p-2 sm:p-6 mb-2 sm:mb-6 rounded-lg sm:rounded-2xl shadow-lg">
           <div className="flex justify-between items-center">
-            <span className="text-gray-300">Available Cash:</span>
-            <span className="text-xl font-semibold text-green-400">
+            <span className="text-gray-300 text-sm sm:text-base">Cash</span>
+            <span className="text-base sm:text-xl font-semibold text-green-400">
               {player.money.toLocaleString()}
             </span>
           </div>
         </div>
 
         {error && (
-          <div className="glass-container border-red-500/50 text-red-400 px-6 py-4 mb-6 rounded-xl">
+          <div className="glass-container border-red-500/50 text-red-400 px-3 py-2 mb-2 rounded-lg text-sm">
             {error}
           </div>
         )}
 
-        {/* Bonuses Section */}
-        <div className="glass-container p-6 mb-6 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-bold text-white mb-4">Bonuses</h2>
-          <div className="space-y-4">
-            {itemsBySection["Bonuses"].map((item) => (
-              <div
-                key={item.id}
-                className="glass-container p-4 rounded-xl transition-all duration-300 hover:bg-[#1a1d21]/50"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold">{item.name}</h3>
-                    <p className="text-sm text-gray-400">{item.description}</p>
-                  </div>
-                  <div className="relative group">
-                    <button
-                      onClick={() => handlePurchase(item)}
-                      disabled={
-                        processing === item.id ||
-                        player.money < item.price ||
-                        (item.id === "private_trainer" &&
-                          (player.privateTrainer?.remainingSessions ?? 0) > 0)
-                      }
-                      className={`gradient-button px-6 py-2 rounded-xl ml-4 whitespace-nowrap transition-all duration-300 ${
-                        processing === item.id ||
-                        player.money < item.price ||
-                        (item.id === "private_trainer" &&
-                          (player.privateTrainer?.remainingSessions ?? 0) > 0)
-                          ? "opacity-50 cursor-not-allowed"
-                          : "hover:scale-105"
-                      }`}
-                    >
-                      {processing === item.id
-                        ? "Buying..."
-                        : item.price.toLocaleString()}
-                    </button>
+        {/* Store Items */}
+        <div className="glass-container p-2 sm:p-6 rounded-lg sm:rounded-2xl shadow-lg">
+          <div className="grid grid-cols-1 gap-2">
+            {/* Bonuses Section */}
+            <div>
+              <h2 className="text-base font-bold text-white mb-2">Bonuses</h2>
+              <div className="space-y-2">
+                {itemsBySection["Bonuses"].map((item) => (
+                  <div
+                    key={item.id}
+                    className="glass-container p-2 rounded-lg transition-all duration-300 active:bg-[#1a1d21]/50 sm:hover:bg-[#1a1d21]/50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold truncate">
+                          {item.name}
+                        </h3>
+                        <p className="text-xs text-gray-400 truncate">
+                          {item.description}
+                        </p>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <button
+                          onClick={() => handlePurchase(item)}
+                          disabled={
+                            processing === item.id ||
+                            player.money < item.price ||
+                            (item.id === "private_trainer" &&
+                              (player.privateTrainer?.remainingSessions ?? 0) >
+                                0)
+                          }
+                          className={`gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs ${
+                            processing === item.id ||
+                            player.money < item.price ||
+                            (item.id === "private_trainer" &&
+                              (player.privateTrainer?.remainingSessions ?? 0) >
+                                0)
+                              ? "opacity-50 cursor-not-allowed"
+                              : "active:scale-95"
+                          }`}
+                        >
+                          {processing === item.id
+                            ? "..."
+                            : item.price.toLocaleString()}
+                        </button>
+                      </div>
+                    </div>
                     {item.id === "private_trainer" && player.privateTrainer && (
-                      <div className="absolute hidden group-hover:block bottom-full right-0 mb-2 w-48 p-3 bg-black/90 text-white text-xs rounded-lg shadow-lg">
-                        Private trainer active:{" "}
-                        {player.privateTrainer.remainingSessions} sessions
-                        remaining
+                      <div className="mt-1 text-xs text-center text-gray-400">
+                        {player.privateTrainer.remainingSessions} sessions left
                       </div>
                     )}
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Certifications Section */}
-        <div className="glass-container p-6 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-bold text-white mb-4">Certifications</h2>
-          <div className="space-y-4">
-            {itemsBySection["Certifications"].map((item) => (
-              <div
-                key={item.id}
-                className="glass-container p-4 rounded-xl transition-all duration-300 hover:bg-[#1a1d21]/50"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold">{item.name}</h3>
-                    <p className="text-sm text-gray-400">{item.description}</p>
-                  </div>
-                  <button
-                    onClick={() => handlePurchase(item)}
-                    disabled={
-                      processing === item.id || player.money < item.price
-                    }
-                    className={`gradient-button px-6 py-2 rounded-xl ml-4 whitespace-nowrap transition-all duration-300 ${
-                      processing === item.id || player.money < item.price
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:scale-105"
-                    }`}
+            {/* Certifications Section */}
+            <div className="mt-3">
+              <h2 className="text-base font-bold text-white mb-2">
+                Certifications
+              </h2>
+              <div className="space-y-2">
+                {itemsBySection["Certifications"].map((item) => (
+                  <div
+                    key={item.id}
+                    className="glass-container p-2 rounded-lg transition-all duration-300 active:bg-[#1a1d21]/50 sm:hover:bg-[#1a1d21]/50"
                   >
-                    {processing === item.id
-                      ? "Buying..."
-                      : item.price.toLocaleString()}
-                  </button>
-                </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold truncate">
+                          {item.name}
+                        </h3>
+                        <p className="text-xs text-gray-400 truncate">
+                          {item.description}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handlePurchase(item)}
+                        disabled={
+                          processing === item.id || player.money < item.price
+                        }
+                        className={`gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs ${
+                          processing === item.id || player.money < item.price
+                            ? "opacity-50 cursor-not-allowed"
+                            : "active:scale-95"
+                        }`}
+                      >
+                        {processing === item.id
+                          ? "..."
+                          : item.price.toLocaleString()}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </main>
@@ -316,48 +331,44 @@ export default function Store() {
 
       {/* Skill Selection Modal */}
       {showSkillModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="glass-container p-6 max-w-md w-full rounded-2xl shadow-lg">
-            <h2 className="text-xl font-bold text-white mb-4">
-              Select Skill to Train
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="glass-container p-3 w-full max-h-[80vh] sm:max-w-md rounded-t-xl sm:rounded-xl shadow-lg overflow-y-auto">
+            <h2 className="text-base font-bold text-white mb-2">
+              Select Training Skill
             </h2>
-            <p className="text-gray-300 mb-6">
-              Choose which skill you want to focus on for the next 7 training
-              sessions:
-            </p>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2 mb-3">
               {skillOptions.map((skill) => (
                 <button
                   key={skill.value}
                   onClick={() => setSelectedSkill(skill.value)}
-                  className={`w-full text-left p-4 rounded-xl transition-all duration-300 ${
+                  className={`text-center p-2 rounded-lg transition-all duration-300 text-sm ${
                     selectedSkill === skill.value
                       ? "bg-green-700 text-white shadow-lg"
-                      : "hover:bg-green-900/50 text-gray-300"
+                      : "active:bg-green-900/50 text-gray-300"
                   }`}
                 >
                   {skill.label}
                 </button>
               ))}
             </div>
-            <div className="flex justify-end gap-3 mt-8">
+            <div className="flex gap-2">
               <button
                 onClick={() => {
                   setShowSkillModal(false);
                   setPendingPurchase(null);
                   setSelectedSkill(null);
                 }}
-                className="px-6 py-2 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors duration-300"
+                className="flex-1 px-4 py-2 rounded-lg bg-gray-800 text-gray-300 active:bg-gray-700 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSkillSelect}
                 disabled={!selectedSkill}
-                className={`gradient-button px-6 py-2 rounded-xl transition-all duration-300 ${
+                className={`flex-1 gradient-button px-4 py-2 rounded-lg text-sm ${
                   !selectedSkill
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:scale-105"
+                    : "active:scale-95"
                 }`}
               >
                 Confirm
