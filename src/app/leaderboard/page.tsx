@@ -50,14 +50,14 @@ export default function LeaderboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Leaderboard" />
-        <div className="flex flex-col items-center mt-4">
+        <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
-            <p className="mt-2">Loading...</p>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-2 text-sm text-green-400">Loading...</p>
           </div>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -65,68 +65,80 @@ export default function LeaderboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Leaderboard" />
-        <div className="flex flex-col items-center mt-4">
-          <div className="text-red-500 text-center">{error}</div>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-red-500 text-center text-sm px-4">{error}</div>
+        </main>
         <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Leaderboard" />
-      <div className="flex flex-col items-center mt-2 pb-20">
-        <div className="glass-container p-6 w-full max-w-4xl mb-4 rounded-2xl shadow-lg">
-          <div className="flex border-b border-gray-700 mb-4">
+      <main className="flex-1 container mx-auto px-2 sm:px-4 py-2 sm:py-4">
+        <div className="glass-container p-2 sm:p-6 w-full max-w-4xl mx-auto rounded-lg sm:rounded-2xl shadow-lg">
+          <div className="flex border-b border-gray-700 mb-2 sm:mb-4">
             <button
-              className={`flex-1 py-2 text-center ${
+              className={`flex-1 py-1.5 sm:py-2 text-center text-sm sm:text-base ${
                 activeTab === "players"
                   ? "text-white border-b-2 border-green-500"
-                  : "text-gray-400 hover:text-gray-300"
+                  : "text-gray-400"
               }`}
               onClick={() => setActiveTab("players")}
             >
               Players
             </button>
             <button
-              className={`flex-1 py-2 text-center ${
+              className={`flex-1 py-1.5 sm:py-2 text-center text-sm sm:text-base ${
                 activeTab === "teams"
                   ? "text-white border-b-2 border-green-500"
-                  : "text-gray-400 hover:text-gray-300"
+                  : "text-gray-400"
               }`}
               onClick={() => setActiveTab("teams")}
               disabled
             >
-              Teams (Coming Soon)
+              Teams
             </button>
           </div>
 
           {activeTab === "players" ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto -mx-2 sm:mx-0">
               <table className="w-full">
                 <thead>
                   <tr className="text-gray-400 border-b border-gray-700">
-                    <th className="py-3 px-2 text-center w-16">Rank</th>
-                    <th className="py-3 px-4 text-left">Player</th>
-                    <th className="py-3 px-4 text-left">Rating</th>
-                    <th className="py-3 px-4 text-right">Total Points</th>
+                    <th className="py-2 sm:py-3 px-2 text-center w-10 sm:w-16 text-xs sm:text-sm">
+                      #
+                    </th>
+                    <th className="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs sm:text-sm">
+                      Player
+                    </th>
+                    <th className="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs sm:text-sm">
+                      Rating
+                    </th>
+                    <th className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm">
+                      Points
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {players.map((player, index) => (
                     <tr
                       key={player._id}
-                      className="text-gray-300 border-b border-gray-700 hover:bg-[#2a2d31]/50 transition-colors duration-200"
+                      className="text-gray-300 border-b border-gray-700 active:bg-[#2a2d31]/50 sm:hover:bg-[#2a2d31]/50 transition-colors duration-200"
                     >
-                      <td className="py-3 px-2 text-center">{index + 1}</td>
-                      <td className="py-3 px-4">{player.playerName}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-2 sm:py-3 px-2 text-center text-xs sm:text-sm">
+                        {index + 1}
+                      </td>
+                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
+                        {player.playerName}
+                      </td>
+                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
                         {calculateStarRating(player.totalPoints)}
                       </td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm">
                         {Math.floor(player.totalPoints)}
                       </td>
                     </tr>
@@ -135,12 +147,12 @@ export default function LeaderboardPage() {
               </table>
             </div>
           ) : (
-            <div className="text-center text-gray-400 py-8">
-              Teams leaderboard coming soon!
+            <div className="text-center text-gray-400 py-4 text-sm">
+              Coming soon
             </div>
           )}
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );
