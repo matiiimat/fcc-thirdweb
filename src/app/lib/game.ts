@@ -40,25 +40,8 @@ export function getPlayerStats(stats: any) {
   }));
 }
 
-// Calculate investments with daily growth
-export function calculateInvestments(investments: Array<{ type: string; amount: number; timestamp: string }>) {
-  const DAILY_INTEREST_RATE = 0.01; // 1% daily interest
-
-  return investments.reduce((total, inv) => {
-    if (inv.type !== 'investment') return total;
-
-    const depositDate = new Date(inv.timestamp);
-    const today = new Date();
-    const daysDiff = Math.floor((today.getTime() - depositDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Calculate compound interest: A = P(1 + r)^t
-    const amount = inv.amount * Math.pow(1 + DAILY_INTEREST_RATE, daysDiff);
-    return total + amount;
-  }, 0);
-}
-
 // Check if action is on cooldown and get remaining time
-export function getActionCooldown(lastActionDate: Date | null, isTraining: boolean = false): {
+export function getActionCooldown(lastActionDate: Date | null, isPlaying: boolean = false): {
   onCooldown: boolean;
   remainingTime: string;
 } {
@@ -67,9 +50,9 @@ export function getActionCooldown(lastActionDate: Date | null, isTraining: boole
   }
 
   const now = new Date();
-  const cooldownHours = isTraining ?
-    TRAINING_CONSTANTS.TRAINING_COOLDOWN_HOURS :
-    TRAINING_CONSTANTS.WORK_COOLDOWN_HOURS;
+  const cooldownHours = isPlaying ?
+    TRAINING_CONSTANTS.GAME_COOLDOWN_HOURS :
+    TRAINING_CONSTANTS.TRAINING_COOLDOWN_HOURS;
   const cooldownMs = cooldownHours * 60 * 60 * 1000;
   const timeSinceAction = now.getTime() - lastActionDate.getTime();
   
@@ -90,7 +73,6 @@ export function getActionCooldown(lastActionDate: Date | null, isTraining: boole
 // Calculate work ethic changes based on player activity
 export function calculateWorkEthicChange(
   lastTrainingDate: Date | null,
-  lastWorkDate: Date | null,
   lastConnectionDate: Date | null
 ): number {
   const now = new Date();
@@ -104,18 +86,14 @@ export function calculateWorkEthicChange(
   const lastTrainingDay = lastTrainingDate ?
     new Date(lastTrainingDate.getFullYear(), lastTrainingDate.getMonth(), lastTrainingDate.getDate()) :
     null;
-  const lastWorkDay = lastWorkDate ?
-    new Date(lastWorkDate.getFullYear(), lastWorkDate.getMonth(), lastWorkDate.getDate()) :
-    null;
   const lastConnectionDay = new Date(
     lastConnectionDate.getFullYear(),
     lastConnectionDate.getMonth(),
     lastConnectionDate.getDate()
   );
 
-  // Check if player was active today (trained or worked)
-  const wasActiveToday = (lastTrainingDay && lastTrainingDay.getTime() === today.getTime()) ||
-                        (lastWorkDay && lastWorkDay.getTime() === today.getTime());
+  // Check if player was active today (trained)
+  const wasActiveToday = lastTrainingDay && lastTrainingDay.getTime() === today.getTime();
 
   if (wasActiveToday) {
     // Player was active today, increase work ethic by 1
@@ -127,17 +105,6 @@ export function calculateWorkEthicChange(
     // Decrease by 1 for each day of inactivity, but never more than 1 per day
     return Math.max(-1, -daysSinceLastConnection);
   }
-}
-
-// Calculate total capital (money + investments with growth)
-export function calculateTotalCapital(money: number, investments: Array<{ type: string; amount: number; timestamp: string }>) {
-  const investmentTotal = calculateInvestments(investments);
-  return money + investmentTotal;
-}
-
-// Format currency with $ symbol
-export function formatCurrency(amount: number): string {
-  return `$${Math.floor(amount).toLocaleString()}`;
 }
 
 // Convert Mongoose document to plain object
@@ -152,7 +119,7 @@ function toPlainObject(obj: any): Record<string, number> {
 }
 
 // Calculate training result
-export function calculateTrainingResult(stats: any) {
+export function calculateTrainingResult(stats: any, forcedStat?: string) {
   // Convert stats to plain object and ensure they're numbers
   const currentStats = toPlainObject(stats);
 
@@ -165,12 +132,17 @@ export function calculateTrainingResult(stats: any) {
     throw new Error('No valid stats found for training');
   }
 
-  // Randomly select a stat to train
-  const trainedStat = trainableStats[Math.floor(Math.random() * trainableStats.length)];
+  // Use forced stat or randomly select one
+  const trainedStat = forcedStat || trainableStats[Math.floor(Math.random() * trainableStats.length)];
   const currentValue = currentStats[trainedStat];
 
   if (typeof currentValue !== 'number' || isNaN(currentValue)) {
     throw new Error(`Invalid value for stat ${trainedStat}: ${currentValue}`);
+  }
+
+  // Validate forced stat is trainable
+  if (forcedStat && !trainableStats.includes(forcedStat)) {
+    throw new Error(`Invalid stat for training: ${forcedStat}`);
   }
 
   // Calculate bonus based on current stat value tier

@@ -9,8 +9,6 @@ import { useEffect, useState } from "react";
 import {
   calculatePlayerRating,
   getStarRating,
-  calculateTotalCapital,
-  formatCurrency,
   getActionCooldown,
 } from "../lib/game";
 
@@ -28,16 +26,15 @@ interface PlayerData {
     positioning: number;
     workEthic: number;
   };
-  money: number;
-  investments: Array<{
-    type: string;
-    amount: number;
-    timestamp: string;
-  }>;
   lastTrainingDate: string | null;
-  lastWorkDate: string | null;
+  lastGameDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
+  lastGameResult?: {
+    score: number;
+    opponent: string;
+    result: "win" | "loss" | "draw";
+  };
 }
 
 export default function HomePage() {
@@ -82,7 +79,7 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-center">
@@ -97,7 +94,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Home" />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
@@ -111,81 +108,68 @@ export default function HomePage() {
     return null;
   }
 
-  // Calculate total capital
-  const totalCapital = calculateTotalCapital(player.money, player.investments);
-
   // Calculate cooldowns
   const { onCooldown: trainingOnCooldown, remainingTime: trainingTime } =
     getActionCooldown(
       player?.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
-      true // isTraining = true
+      false // isTraining = false for 6-hour cooldown
     );
-  const { onCooldown: workOnCooldown, remainingTime: workTime } =
+  const { onCooldown: matchOnCooldown, remainingTime: matchTime } =
     getActionCooldown(
-      player?.lastWorkDate ? new Date(player.lastWorkDate) : null,
-      false // isTraining = false
+      player?.lastGameDate ? new Date(player.lastGameDate) : null,
+      true // isPlaying = true
     );
 
   return (
-    <div className="min-h-screen relative">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Home" />
-      <div className="flex flex-col items-center mt-2 px-4 pb-24">
-        <div className="glass-container p-6 w-full max-w-md mb-4">
-          <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
-          <div className="text-2xl mb-2 text-center">
-            {getStarRating(calculatePlayerRating(player.stats))}
-          </div>
-
-          {/* Stats Radar Chart */}
-          <div className="w-full mb-3">
-            <StatsRadarChart stats={player.stats} />
-          </div>
-        </div>
-
-        {/* Financial Information */}
-        <div className="glass-container p-6 w-full max-w-md mb-4">
-          <div className="w-full">
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-gray-300">Cash:</span>
-              <span className="text-lg font-semibold text-green-400">
-                {formatCurrency(player.money)}
-              </span>
+      <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+        <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
+          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
+            <h2 className="text-center text-xl sm:text-2xl mb-1">
+              {player.playerName}
+            </h2>
+            <div className="text-lg sm:text-2xl mb-3 text-center">
+              {getStarRating(calculatePlayerRating(player.stats))}
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Total Capital:</span>
-              <span className="text-lg font-semibold text-yellow-400">
-                {formatCurrency(totalCapital)}
-              </span>
+
+            {/* Stats Radar Chart */}
+            <div className="w-full">
+              <StatsRadarChart stats={player.stats} />
             </div>
           </div>
-        </div>
 
-        {/* Status */}
-        <div className="glass-container p-4 w-full max-w-md">
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Training:</span>
-              <span
-                className={
-                  !trainingOnCooldown ? "text-green-400" : "text-red-400"
-                }
-              >
-                {!trainingOnCooldown
-                  ? "Ready"
-                  : `Resting: ${trainingTime} left`}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Work:</span>
-              <span
-                className={!workOnCooldown ? "text-green-400" : "text-red-400"}
-              >
-                {!workOnCooldown ? "Ready" : `Resting: ${workTime} left`}
-              </span>
+          {/* Status */}
+          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 flex justify-between items-center">
+                <span className="text-sm sm:text-base text-gray-300">
+                  Training
+                </span>
+                <span
+                  className={`text-sm sm:text-base ${
+                    !trainingOnCooldown ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {!trainingOnCooldown ? "Ready" : trainingTime}
+                </span>
+              </div>
+              <div className="col-span-2 flex justify-between items-center">
+                <span className="text-sm sm:text-base text-gray-300">
+                  Match
+                </span>
+                <span
+                  className={`text-sm sm:text-base ${
+                    !matchOnCooldown ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {!matchOnCooldown ? "Ready" : matchTime}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

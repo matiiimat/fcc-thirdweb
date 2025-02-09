@@ -68,6 +68,7 @@ export default function CreatePlayerPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-wallet-address": walletAddress,
         },
         body: JSON.stringify({
           ethAddress: walletAddress,

@@ -4,7 +4,6 @@ import {
   PLAYER_STATS,
   ERROR_MESSAGES,
   VALIDATION,
-  INVESTMENT_TYPES,
 } from './constants';
 
 export class ValidationError extends Error {
@@ -74,38 +73,9 @@ export const validatePlayerData = (data: Partial<IPlayer>): void => {
     }
   }
 
-  // Validate money
-  if (data.money !== undefined) {
-    if (typeof data.money !== 'number') {
-      throw new ValidationError('Money must be a number');
-    }
-    if (data.money < 0) {
-      throw new ValidationError('Money cannot be negative');
-    }
-  }
-
   // Validate stats if present
   if (data.stats) {
     validatePlayerStats(data.stats);
-  }
-
-  // Validate investments if present
-  if (data.investments) {
-    if (!Array.isArray(data.investments)) {
-      throw new ValidationError('Investments must be an array');
-    }
-
-    data.investments.forEach((investment, index) => {
-      if (typeof investment.type !== 'string') {
-        throw new ValidationError(`Investment ${index} type must be a string`);
-      }
-      if (typeof investment.amount !== 'number') {
-        throw new ValidationError(`Investment ${index} amount must be a number`);
-      }
-      if (investment.amount < 0) {
-        throw new ValidationError(`Investment ${index} amount cannot be negative`);
-      }
-    });
   }
 };
 
@@ -122,23 +92,6 @@ export const validateTrainingRequest = (
 
   if (currentValue >= PLAYER_CONSTANTS.MAX_STAT_VALUE) {
     throw new ValidationError(ERROR_MESSAGES.STAT_MAX_LEVEL);
-  }
-};
-
-export const validateInvestment = (
-  type: string,
-  amount: number
-): void => {
-  // Convert readonly array to regular array
-  const validTypes = [...INVESTMENT_TYPES];
-
-  if (!validTypes.includes(type as typeof INVESTMENT_TYPES[number])) {
-    throw new ValidationError(ERROR_MESSAGES.INVALID_INVESTMENT_TYPE);
-  }
-
-  // Validate amount
-  if (amount <= VALIDATION.MIN_INVESTMENT_AMOUNT) {
-    throw new ValidationError(ERROR_MESSAGES.INVALID_INVESTMENT_AMOUNT);
   }
 };
 
