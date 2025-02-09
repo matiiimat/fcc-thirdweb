@@ -30,18 +30,16 @@ interface PositionRecommendationChartProps {
 const calculatePositionScores = (stats: IPlayerStats) => {
   // Calculate raw scores
   const rawScores = {
-    GK: (stats.defending + stats.positioning) / 2,
     D: (stats.strength + stats.defending + stats.positioning) / 3,
     M: (stats.stamina + stats.passing + stats.positioning) / 3,
     F: (stats.shooting + stats.speed + stats.positioning) / 3,
   };
 
   // Calculate total of raw scores
-  const total = rawScores.GK + rawScores.D + rawScores.M + rawScores.F;
+  const total = rawScores.D + rawScores.M + rawScores.F;
 
   // Convert to percentages that sum to 100
   return {
-    GK: Math.round((rawScores.GK / total) * 100),
     D: Math.round((rawScores.D / total) * 100),
     M: Math.round((rawScores.M / total) * 100),
     F: Math.round((rawScores.F / total) * 100),
@@ -60,11 +58,11 @@ const PositionRecommendationChart: React.FC<
   const scores = calculatePositionScores(stats);
 
   const data = {
-    labels: ["GK", "D", "M", "F"],
+    labels: ["D", "M", "F"],
     datasets: [
       {
         label: "Position Score",
-        data: [scores.GK, scores.D, scores.M, scores.F],
+        data: [scores.D, scores.M, scores.F],
         backgroundColor: "rgb(34, 197, 94)", // Solid green
         borderColor: "rgb(34, 197, 94)",
         borderWidth: 1,

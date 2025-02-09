@@ -15,16 +15,15 @@ const PositionSelector: React.FC<PositionSelectorProps> = ({
   disabled = false,
 }) => {
   const positions: { value: Position; label: string; description: string }[] = [
-    { value: "GK", label: "Goalkeeper", description: "" },
-    { value: "D", label: "Defender", description: "" },
-    { value: "M", label: "Midfielder", description: "" },
-    { value: "F", label: "Forward", description: "" },
+    { value: "D", label: "Defender", description: "Protect the goal" },
+    { value: "M", label: "Midfielder", description: "Control the game" },
+    { value: "F", label: "Forward", description: "Score goals" },
   ];
 
   return (
     <div className="space-y-3">
       <h3 className="text-lg font-medium text-white mb-3">Select Position</h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {positions.map(({ value, label, description }) => (
           <button
             key={value}

@@ -10,7 +10,7 @@ import { z } from 'zod';
 
 const solomatchSchema = z.object({
   playerId: z.string(),
-  position: z.enum(['GK', 'D', 'M', 'F'])
+  position: z.enum(['D', 'M', 'F'])
 });
 
 type GameRequest = {
