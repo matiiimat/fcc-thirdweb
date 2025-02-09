@@ -121,47 +121,55 @@ export default function HomePage() {
     );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Home" />
-      <div className="flex flex-col items-center mt-2 px-6 pb-20">
-        <div className="glass-container p-6 w-full max-w-md mb-6 rounded-2xl shadow-lg">
-          <h2 className="text-center text-[26px] mb-1">{player.playerName}</h2>
-          <div className="text-2xl mb-4 text-center">
-            {getStarRating(calculatePlayerRating(player.stats))}
-          </div>
-
-          {/* Stats Radar Chart */}
-          <div className="w-full mb-3">
-            <StatsRadarChart stats={player.stats} />
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="glass-container p-6 w-full max-w-md rounded-2xl shadow-lg">
-          <div className="flex flex-col gap-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Training:</span>
-              <span
-                className={
-                  !trainingOnCooldown ? "text-green-400" : "text-red-400"
-                }
-              >
-                {!trainingOnCooldown
-                  ? "Ready"
-                  : `Resting: ${trainingTime} left`}
-              </span>
+      <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+        <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
+          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
+            <h2 className="text-center text-xl sm:text-2xl mb-1">
+              {player.playerName}
+            </h2>
+            <div className="text-lg sm:text-2xl mb-3 text-center">
+              {getStarRating(calculatePlayerRating(player.stats))}
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-300">Match:</span>
-              <span
-                className={!matchOnCooldown ? "text-green-400" : "text-red-400"}
-              >
-                {!matchOnCooldown ? "Ready" : `Available in: ${matchTime}`}
-              </span>
+
+            {/* Stats Radar Chart */}
+            <div className="w-full">
+              <StatsRadarChart stats={player.stats} />
             </div>
           </div>
+
+          {/* Status */}
+          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 flex justify-between items-center">
+                <span className="text-sm sm:text-base text-gray-300">
+                  Training
+                </span>
+                <span
+                  className={`text-sm sm:text-base ${
+                    !trainingOnCooldown ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {!trainingOnCooldown ? "Ready" : trainingTime}
+                </span>
+              </div>
+              <div className="col-span-2 flex justify-between items-center">
+                <span className="text-sm sm:text-base text-gray-300">
+                  Match
+                </span>
+                <span
+                  className={`text-sm sm:text-base ${
+                    !matchOnCooldown ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {!matchOnCooldown ? "Ready" : matchTime}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );

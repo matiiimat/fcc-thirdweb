@@ -52,22 +52,6 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/solomatch")}
-            className={getButtonClass("/solomatch")}
-          >
-            <Image
-              src="/icons/solomatch-icon.png"
-              alt="Match"
-              width={20}
-              height={20}
-              priority
-              className="transition-transform group-hover:scale-110"
-            />
-          </button>
-          <span className={getTextClass("/solomatch")}>Match</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <button
             onClick={() => router.push("/train")}
             className={getButtonClass("/train")}
           >
@@ -81,6 +65,22 @@ export default function Footer() {
             />
           </button>
           <span className={getTextClass("/train")}>Train</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <button
+            onClick={() => router.push("/solomatch")}
+            className={getButtonClass("/solomatch")}
+          >
+            <Image
+              src="/icons/solomatch-icon.png"
+              alt="Match"
+              width={20}
+              height={20}
+              priority
+              className="transition-transform group-hover:scale-110"
+            />
+          </button>
+          <span className={getTextClass("/solomatch")}>Match</span>
         </div>
         <div className="flex flex-col items-center">
           <button
