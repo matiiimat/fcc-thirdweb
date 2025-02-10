@@ -41,6 +41,13 @@ export default function SoloMatchPage() {
     null
   );
   const [showMatchPopup, setShowMatchPopup] = useState(false);
+  const [matchResult, setMatchResult] = useState<
+    | {
+        rating: number;
+        xpGained: number;
+      }
+    | undefined
+  >(undefined);
 
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
@@ -109,6 +116,7 @@ export default function SoloMatchPage() {
       if (result.success) {
         setPlayer(result.player);
         setShowMatchPopup(true);
+        setMatchResult(result.matchResult);
       } else {
         throw new Error(result.error || "Failed to start game");
       }
@@ -121,6 +129,7 @@ export default function SoloMatchPage() {
   const handleMatchEnd = () => {
     setShowMatchPopup(false);
     setPlaying(false);
+    setMatchResult(undefined);
   };
 
   if (loading) {
@@ -225,6 +234,7 @@ export default function SoloMatchPage() {
           selectedPosition={selectedPosition}
           playerName={player.playerName}
           onClose={handleMatchEnd}
+          matchResult={matchResult}
         />
       )}
     </div>

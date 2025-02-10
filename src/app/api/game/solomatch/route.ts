@@ -7,6 +7,7 @@ import { validateSchema } from '@/app/lib/schemas';
 import { runTransaction } from '@/app/lib/transactions';
 import { TRAINING_CONSTANTS } from '@/app/lib/constants';
 import { z } from 'zod';
+import { generateMatchEvents } from '@/app/components/MatchEvents';
 
 const solomatchSchema = z.object({
   playerId: z.string(),
@@ -65,19 +66,53 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 5. Run game logic in transaction
+    // 5. Generate match events and calculate rating
+    const events = generateMatchEvents(position, player.playerName);
+    
+    // Count player name mentions and goals
+    let playerNameMentions = 0;
+    let playerScored = false;
+    
+    events.forEach(event => {
+      if (event.text.includes(player.playerName)) {
+        playerNameMentions++;
+      }
+      if (event.type === 'goal' && event.team === 'player' && event.text.includes(player.playerName)) {
+        playerScored = true;
+      }
+    });
+
+    // Calculate base rating (5.0-8.0 or 8.0-10.0 if scored)
+    const minRating = playerScored ? 8.0 : 5.0;
+    const maxRating = playerScored ? 10.0 : 8.0;
+    const ratingRange = maxRating - minRating;
+    
+    // Calculate rating based on player involvement (mentions)
+    // More mentions = higher rating within the range
+    const maxPossibleMentions = 15; // Based on match event generation logic
+    const ratingFromMentions = Math.min(playerNameMentions / maxPossibleMentions, 1);
+    const rating = minRating + (ratingRange * ratingFromMentions);
+    const finalRating = Math.round(rating * 10) / 10; // Round to 1 decimal
+
+    // Calculate XP gained (rating * 10)
+    const xpGained = Math.round(finalRating * 10);
+
+    // 6. Run game logic in transaction
     const result = await runTransaction(async (session) => {
-      // Update player with new game date
+      // Update player with new game date and XP
       const updatedPlayer = await Player.findOneAndUpdate(
         { playerId },
         {
           $set: {
             lastGameDate: now
+          },
+          $inc: {
+            xp: xpGained
           }
         },
-        { 
-          new: true, 
-          runValidators: true, 
+        {
+          new: true,
+          runValidators: true,
           session,
           lean: true // Use lean to get a plain JavaScript object
         }
@@ -89,7 +124,12 @@ export async function POST(req: NextRequest) {
 
       return {
         success: true,
-        player: updatedPlayer
+        player: updatedPlayer,
+        matchResult: {
+          events,
+          rating: finalRating,
+          xpGained
+        }
       };
     });
 

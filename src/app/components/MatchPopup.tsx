@@ -8,12 +8,17 @@ interface MatchPopupProps {
   selectedPosition: Position;
   playerName: string;
   onClose: () => void;
+  matchResult?: {
+    rating: number;
+    xpGained: number;
+  };
 }
 
 const MatchPopup: React.FC<MatchPopupProps> = ({
   selectedPosition,
   playerName,
   onClose,
+  matchResult,
 }) => {
   const [currentMinute, setCurrentMinute] = useState(0);
   const [events, setEvents] = useState<MatchEvent[]>([]);
@@ -105,6 +110,18 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
               <span>{event.text}</span>
             </div>
           ))}
+
+          {/* Show rating and XP gained after final whistle */}
+          {currentMinute === 90 && matchResult && (
+            <div className="mt-4 pt-4 border-t border-gray-700">
+              <div className="text-yellow-400 font-bold text-sm mb-1">
+                Rating: {matchResult.rating.toFixed(1)}
+              </div>
+              <div className="text-green-400 font-bold text-sm">
+                XP gained: {matchResult.xpGained}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Back Button */}
