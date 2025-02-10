@@ -95,7 +95,18 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
 
         {/* Match Events */}
         <div className="h-96 overflow-y-auto mb-4 space-y-2 custom-scrollbar">
-          {currentEvents.map((event, index) => (
+          {/* Show rating and XP gained after final whistle */}
+          {currentMinute === 90 && matchResult && (
+            <div className="mb-4 pb-4 border-b border-gray-700">
+              <div className="text-yellow-400 font-bold text-sm mb-1">
+                Rating: {matchResult.rating.toFixed(1)}
+              </div>
+              <div className="text-green-400 font-bold text-sm">
+                XP gained: {matchResult.xpGained}
+              </div>
+            </div>
+          )}
+          {[...currentEvents].reverse().map((event, index) => (
             <div
               key={index}
               className={`flex items-start space-x-2 text-sm animate-fade-in ${
@@ -110,18 +121,6 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
               <span>{event.text}</span>
             </div>
           ))}
-
-          {/* Show rating and XP gained after final whistle */}
-          {currentMinute === 90 && matchResult && (
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <div className="text-yellow-400 font-bold text-sm mb-1">
-                Rating: {matchResult.rating.toFixed(1)}
-              </div>
-              <div className="text-green-400 font-bold text-sm">
-                XP gained: {matchResult.xpGained}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Back Button */}
