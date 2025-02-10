@@ -8,6 +8,7 @@ import Footer from "../components/Footer";
 import { getActionCooldown } from "../lib/game";
 import PositionRecommendationChart from "../components/PositionRecommendationChart";
 import PositionSelector from "../components/PositionSelector";
+import MatchPopup from "../components/MatchPopup";
 import { Position } from "../models/Player";
 
 interface PlayerData {
@@ -25,14 +26,6 @@ interface PlayerData {
     workEthic: number;
   };
   lastGameDate: string | null;
-  lastGameResult?: {
-    position: Position;
-    note: number;
-    successfulPasses: number;
-    successfulTackles: number;
-    shotsOnTarget: number;
-    distanceCovered: number;
-  };
 }
 
 export default function SoloMatchPage() {
@@ -46,6 +39,7 @@ export default function SoloMatchPage() {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(
     null
   );
+  const [showMatchPopup, setShowMatchPopup] = useState(false);
 
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
@@ -92,6 +86,7 @@ export default function SoloMatchPage() {
     setError(null);
 
     try {
+      // Start the cooldown immediately
       const response = await fetch("/api/game/solomatch", {
         method: "POST",
         headers: {
@@ -112,14 +107,19 @@ export default function SoloMatchPage() {
       const result = await response.json();
       if (result.success) {
         setPlayer(result.player);
+        setShowMatchPopup(true);
       } else {
         throw new Error(result.error || "Failed to start game");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start game");
-    } finally {
       setPlaying(false);
     }
+  };
+
+  const handleMatchEnd = () => {
+    setShowMatchPopup(false);
+    setPlaying(false);
   };
 
   if (loading) {
@@ -212,60 +212,19 @@ export default function SoloMatchPage() {
           </div>
         </div>
 
-        {/* Last Game Section */}
-        <div>
-          <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-4">
-            Last Game
-          </h2>
-          <div className="glass-container p-3 sm:p-6 rounded-lg sm:rounded-2xl shadow-lg">
-            {player.lastGameResult ? (
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="col-span-2 flex justify-between items-center py-1">
-                  <span className="text-gray-300">Position</span>
-                  <span className="text-white">
-                    {player.lastGameResult.position}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-300">Note</span>
-                  <span className="text-white">XX</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-300">Passes</span>
-                  <span className="text-white">XX</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-300">Tackles</span>
-                  <span className="text-white">XX</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-300">Shots</span>
-                  <span className="text-white">XX</span>
-                </div>
-                <div className="flex justify-between items-center py-1">
-                  <span className="text-gray-300">Distance</span>
-                  <span className="text-white">XX</span>
-                </div>
-                <div className="col-span-2 flex justify-between items-center py-1 mt-1 border-t border-gray-700">
-                  <span className="text-gray-300">XP Gained</span>
-                  <span className="text-white">
-                    +{player.lastGameResult.note * -10} XP
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-400 text-sm py-2">
-                No previous games
-              </div>
-            )}
-          </div>
-        </div>
-
         {error && (
           <div className="text-red-500 text-center mt-2 text-xs">{error}</div>
         )}
       </main>
       <Footer />
+
+      {/* Match Popup */}
+      {showMatchPopup && selectedPosition && (
+        <MatchPopup
+          selectedPosition={selectedPosition}
+          onClose={handleMatchEnd}
+        />
+      )}
     </div>
   );
 }

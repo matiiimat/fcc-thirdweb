@@ -67,24 +67,12 @@ export async function POST(req: NextRequest) {
 
     // 5. Run game logic in transaction
     const result = await runTransaction(async (session) => {
-      // TODO: Implement actual game logic here
-      // For now, just update lastGameDate and add a placeholder result
-      const gameResult = {
-        position, // Include the selected position in the game result
-        note: "XX", // Placeholder for now
-        successfulPasses: "XX", // Placeholder for now
-        successfulTackles: "XX", // Placeholder for now
-        shotsOnTarget: "XX", // Placeholder for now
-        distanceCovered: "XX", // Placeholder for now
-      };
-
-      // Update player with game result
+      // Update player with new game date
       const updatedPlayer = await Player.findOneAndUpdate(
         { playerId },
         {
           $set: {
-            lastGameDate: now,
-            lastGameResult: gameResult
+            lastGameDate: now
           }
         },
         { 
