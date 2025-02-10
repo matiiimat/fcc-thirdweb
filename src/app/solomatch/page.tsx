@@ -222,6 +222,7 @@ export default function SoloMatchPage() {
       {showMatchPopup && selectedPosition && (
         <MatchPopup
           selectedPosition={selectedPosition}
+          playerName={player.playerName}
           onClose={handleMatchEnd}
         />
       )}
