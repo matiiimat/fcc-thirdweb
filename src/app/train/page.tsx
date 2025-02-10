@@ -28,6 +28,7 @@ interface PlayerData {
     positioning: number;
     workEthic: number;
   };
+  xp: number;
   lastTrainingDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
@@ -177,7 +178,7 @@ export default function TrainPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Train" />
+        <Header pageName="Train" xp={0} />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
@@ -219,7 +220,7 @@ export default function TrainPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Train" />
+      <Header pageName="Train" xp={player.xp} />
       <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4">
         <div className="glass-container p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg">
           {/* Training Button and Status */}

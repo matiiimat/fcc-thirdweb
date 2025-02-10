@@ -9,6 +9,7 @@ import Footer from "../components/Footer";
 interface PlayerData {
   playerId: string;
   money: number;
+  xp: number;
   privateTrainer?: {
     selectedSkill: string | null;
     remainingSessions: number;
@@ -185,7 +186,7 @@ export default function Store() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Store" />
+        <Header pageName="Store" xp={0} />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
           <p className="mt-2 text-green-400">Loading...</p>
@@ -209,18 +210,8 @@ export default function Store() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Store" />
+      <Header pageName="Store" xp={player.xp} />
       <main className="container max-w-2xl mx-auto px-3 sm:px-6 py-2 sm:py-6 pb-16">
-        {/* Player's Cash */}
-        <div className="glass-container p-2 sm:p-6 mb-2 sm:mb-6 rounded-lg sm:rounded-2xl shadow-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-300 text-sm sm:text-base">Cash</span>
-            <span className="text-base sm:text-xl font-semibold text-green-400">
-              {player.money.toLocaleString()}
-            </span>
-          </div>
-        </div>
-
         {error && (
           <div className="glass-container border-red-500/50 text-red-400 px-3 py-2 mb-2 rounded-lg text-sm">
             {error}

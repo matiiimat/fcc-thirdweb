@@ -25,6 +25,7 @@ interface PlayerData {
     positioning: number;
     workEthic: number;
   };
+  xp: number;
   lastGameDate: string | null;
 }
 
@@ -149,7 +150,7 @@ export default function SoloMatchPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Match" />
+      <Header pageName="Match" xp={player.xp} />
       <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
         {/* Next Game Section */}
         <div className="mb-4 sm:mb-6">

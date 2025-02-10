@@ -30,6 +30,7 @@ export interface IPlayer extends Document {
   ethAddress: string;
   team: string;
   stats: IPlayerStats;
+  xp: number;
   lastTrainingDate: Date | null;
   lastGameDate: Date | null;
   lastGameResult: IGameResult | null;
@@ -171,6 +172,16 @@ const PlayerSchema = new Schema<IPlayer>(
       unique: true,
       trim: true,
       index: true,
+    },
+    xp: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+      validate: {
+        validator: Number.isFinite,
+        message: '{VALUE} is not a valid number',
+      },
     },
     playerName: {
       type: String,

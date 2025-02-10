@@ -26,6 +26,7 @@ interface PlayerData {
     positioning: number;
     workEthic: number;
   };
+  xp: number;
   lastTrainingDate: string | null;
   lastGameDate: string | null;
   lastConnectionDate: string | null;
@@ -80,7 +81,7 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Home" />
+        <Header pageName="Home" xp={0} />
         <div className="flex flex-col items-center mt-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
@@ -95,7 +96,7 @@ export default function HomePage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Home" />
+        <Header pageName="Home" xp={0} />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
         </div>
@@ -122,7 +123,7 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Home" />
+      <Header pageName="Home" xp={player.xp} />
       <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
         <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
