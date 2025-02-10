@@ -249,7 +249,7 @@ const PlayerSchema = new Schema<IPlayer>(
         type: Number,
         default: 0,
         min: 0,
-        max: 7
+        max: 5
       }
     }
   },

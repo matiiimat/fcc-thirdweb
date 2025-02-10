@@ -43,29 +43,29 @@ const storeItems: StoreItem[] = [
   {
     id: "private_trainer",
     name: "Private Trainer",
-    description: "Train skill for 7 sessions",
-    price: 300,
+    description: "Train skill for 5 sessions",
+    price: 10,
     section: "Bonuses",
   },
   {
     id: "management_certificate",
     name: "Management Cert.",
     description: "Team management license",
-    price: 40000,
+    price: 10000,
     section: "Certifications",
   },
   {
     id: "training_certificate",
     name: "Training Cert.",
     description: "Team training license",
-    price: 20000,
+    price: 10000,
     section: "Certifications",
   },
   {
     id: "finance_certificate",
     name: "Finance Cert.",
     description: "Team finance license",
-    price: 20000,
+    price: 10000,
     section: "Certifications",
   },
 ];
@@ -355,9 +355,9 @@ export default function Store() {
               </button>
               <button
                 onClick={handleSkillSelect}
-                disabled={!selectedSkill}
+                disabled={!selectedSkill || processing !== ""}
                 className={`flex-1 gradient-button px-4 py-2 rounded-lg text-sm ${
-                  !selectedSkill
+                  !selectedSkill || processing
                     ? "opacity-50 cursor-not-allowed"
                     : "active:scale-95"
                 }`}
