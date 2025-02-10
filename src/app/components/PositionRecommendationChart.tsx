@@ -25,6 +25,7 @@ ChartJS.register(
 
 interface PositionRecommendationChartProps {
   stats: IPlayerStats;
+  onScoresCalculated?: (scores: { D: number; M: number; F: number }) => void;
 }
 
 const calculatePositionScores = (stats: IPlayerStats) => {
@@ -48,7 +49,7 @@ const calculatePositionScores = (stats: IPlayerStats) => {
 
 const PositionRecommendationChart: React.FC<
   PositionRecommendationChartProps
-> = ({ stats }) => {
+> = ({ stats, onScoresCalculated }) => {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -56,6 +57,12 @@ const PositionRecommendationChart: React.FC<
   }, []);
 
   const scores = calculatePositionScores(stats);
+
+  useEffect(() => {
+    if (onScoresCalculated) {
+      onScoresCalculated(scores);
+    }
+  }, [scores, onScoresCalculated]);
 
   const data = {
     labels: ["D", "M", "F"],

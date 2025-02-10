@@ -143,8 +143,8 @@ export default function CreatePlayerPage() {
             onClick={handleCreatePlayer}
             disabled={loading}
             className={`
-              bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg
-              text-lg transition-colors duration-200
+              backdrop-blur-sm bg-black/60 hover:bg-black/80 text-white font-bold py-3 px-6 rounded-lg
+              text-lg transition-all duration-200 border border-green-700/30
               ${loading ? "opacity-50 cursor-not-allowed" : ""}
             `}
           >

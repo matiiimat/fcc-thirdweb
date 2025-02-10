@@ -5,9 +5,10 @@ import Image from "next/image";
 
 interface HeaderProps {
   pageName: string;
+  xp?: number;
 }
 
-export default function Header({ pageName }: HeaderProps) {
+export default function Header({ pageName, xp = 0 }: HeaderProps) {
   const router = useRouter();
 
   const goToSettings = () => {
@@ -23,6 +24,18 @@ export default function Header({ pageName }: HeaderProps) {
       <h1 className="absolute top-2 left-2 font-bold text-[32px]">
         {pageName}
       </h1>
+      {xp !== undefined && (
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+          <Image
+            src="/icons/xp-icon.png"
+            alt="XP"
+            width={16}
+            height={16}
+            priority
+          />
+          <span className="text-lg font-semibold">{xp.toLocaleString()}</span>
+        </div>
+      )}
       <div className="absolute top-[10px] right-[10px] flex gap-4">
         <button
           onClick={goToLeaderboard}
