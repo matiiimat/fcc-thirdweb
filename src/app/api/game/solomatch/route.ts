@@ -126,7 +126,6 @@ export async function POST(req: NextRequest) {
         success: true,
         player: updatedPlayer,
         matchResult: {
-          events,
           rating: finalRating,
           xpGained
         }
