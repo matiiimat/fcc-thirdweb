@@ -19,13 +19,7 @@
 @layer base {
   body {
     @apply min-h-screen text-white relative;
-    background: linear-gradient(to bottom,
-      #05101e 0%,      /* Darker blue sky */
-      #05101e 35%,     /* Darker blue sky continues */
-      #24152d 45%,     /* Darker purple transition */
-      #15803d 50%,     /* Tailwind green-700 start */
-      #15803d 100%     /* Tailwind green-700 continues to bottom */
-    );
+    background: linear-gradient(to bottom, #0d0f12, #1a1d21);
   }
 
   /* Stadium toggle class for future use */

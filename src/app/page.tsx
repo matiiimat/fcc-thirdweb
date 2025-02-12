@@ -23,9 +23,9 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-[100vh] bg-gradient-to-b from-black via-black to-green-900 flex items-center justify-center">
-      <div className="w-full max-w-md mx-auto p-6">
-        <div className="backdrop-blur-sm bg-black/20 border border-green-500/30 rounded-3xl p-8 space-y-8">
+    <main className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21] flex items-center justify-center">
+      <div className="w-full max-w-md mx-auto p-4 sm:p-6">
+        <div className="glass-container p-6 sm:p-8 rounded-xl sm:rounded-2xl space-y-6 sm:space-y-8">
           {/* Logo (centered) */}
           <div className="flex justify-center">
             <Image
@@ -39,12 +39,12 @@ export default function Home() {
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold tracking-tight text-white text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
             fcc/FC
           </h1>
 
           {/* Instructions */}
-          <div className="text-gray-300 text-center text-sm">
+          <div className="text-gray-300 text-center text-sm sm:text-base">
             Connect to your web3 wallet and click on the play button to get
             started.
           </div>
@@ -65,7 +65,7 @@ export default function Home() {
           {/* PLAY Button */}
           <button
             onClick={goToHome}
-            className="w-full px-6 py-3 text-white bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 rounded-xl font-semibold transition-all duration-200 border border-green-400/30 shadow-lg shadow-green-900/20"
+            className="w-full gradient-button py-2.5 px-6 rounded-lg text-base transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
           >
             PLAY
           </button>

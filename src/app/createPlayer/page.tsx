@@ -17,29 +17,26 @@ export default function CreatePlayerPage() {
   useEffect(() => {
     async function checkWalletAndPlayer() {
       try {
-        // If no wallet is connected, redirect to home
         if (!wallet) {
           router.push("/");
           return;
         }
 
         const walletAddress = wallet.address;
-        console.log("Checking wallet address:", walletAddress); // Debug log
+        console.log("Checking wallet address:", walletAddress);
 
-        // Check if player already exists
         const response = await fetch(
           `/api/players/address/${encodeURIComponent(walletAddress)}`
         );
-        console.log("Check player response status:", response.status); // Debug log
+        console.log("Check player response status:", response.status);
 
         if (response.ok) {
-          console.log("Player already exists, redirecting to home"); // Debug log
+          console.log("Player already exists, redirecting to home");
           router.push("/home");
           return;
         } else if (response.status !== 404) {
-          // If error is not 404 (not found), log it
           const errorData = await response.json();
-          console.error("Unexpected error checking player:", errorData); // Debug log
+          console.error("Unexpected error checking player:", errorData);
         }
       } catch (err) {
         console.error("Error checking player:", err);
@@ -62,7 +59,7 @@ export default function CreatePlayerPage() {
 
     try {
       const walletAddress = wallet.address;
-      console.log("Creating player for wallet:", walletAddress); // Debug log
+      console.log("Creating player for wallet:", walletAddress);
 
       const response = await fetch("/api/players", {
         method: "POST",
@@ -72,15 +69,15 @@ export default function CreatePlayerPage() {
         },
         body: JSON.stringify({
           ethAddress: walletAddress,
-          team: "Unassigned", // Default team
+          team: "Unassigned",
         }),
       });
 
-      console.log("Create player response status:", response.status); // Debug log
+      console.log("Create player response status:", response.status);
 
       if (!response.ok) {
         const data = await response.json();
-        console.error("Create player error response:", data); // Debug log
+        console.error("Create player error response:", data);
         throw new Error(data.error || "Failed to create player");
       }
 
@@ -89,9 +86,8 @@ export default function CreatePlayerPage() {
         playerId: data.playerId,
         name: data.playerName,
         address: data.ethAddress,
-      }); // Debug log
+      });
 
-      // Redirect to home page after successful creation
       router.push("/home");
     } catch (err) {
       console.error("Create player error:", err);
@@ -101,67 +97,74 @@ export default function CreatePlayerPage() {
     }
   };
 
-  // Show loading state while checking wallet and player status
   if (isChecking) {
     return (
-      <>
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Create Player" />
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          <p className="mt-2">Loading...</p>
-        </div>
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
+            <p className="mt-2 text-green-400 text-sm">Loading...</p>
+          </div>
+        </main>
         <Footer />
-      </>
+      </div>
     );
   }
 
-  // If no wallet is connected, this will redirect in useEffect
   if (!wallet) {
     return null;
   }
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Create Player" />
+      <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4">
+        <div className="glass-container p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg">
+          <div className="text-center space-y-4 sm:space-y-6">
+            <h1 className="text-2xl sm:text-4xl font-bold text-white">
+              Welcome to fcc/FC!
+            </h1>
 
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-        <div className="text-center max-w-2xl">
-          <h1 className="text-4xl font-bold mb-6">Welcome to fcc/FC!</h1>
+            <p className="text-base sm:text-lg text-gray-300">
+              Ready to start your football journey? Create your player and begin
+              your path to becoming a legend on the field!
+            </p>
 
-          <p className="text-lg mb-8">
-            Ready to start your football journey? Create your player and begin
-            your path to becoming a legend on the field!
-          </p>
+            {error && (
+              <div className="text-red-500 p-3 glass-container bg-red-900/20 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
 
-          {error && (
-            <div className="text-red-500 mb-4 p-3 bg-red-100 rounded">
-              {error}
+            <button
+              onClick={handleCreatePlayer}
+              disabled={loading}
+              className={`
+                gradient-button py-2.5 px-6 rounded-lg text-base w-full transition-all duration-300
+                ${
+                  loading
+                    ? "opacity-50 cursor-not-allowed"
+                    : "active:scale-95 sm:hover:scale-[1.02]"
+                }
+              `}
+            >
+              {loading ? "Creating Player..." : "CREATE PLAYER"}
+            </button>
+
+            <div className="space-y-2">
+              <div className="text-sm text-gray-400">
+                Your player will be associated with this wallet address. Losing
+                access to this wallet means losing access to your player.
+              </div>
+              <div className="text-xs text-gray-500 break-all">
+                Connected Wallet: {wallet.address}
+              </div>
             </div>
-          )}
-
-          <button
-            onClick={handleCreatePlayer}
-            disabled={loading}
-            className={`
-              backdrop-blur-sm bg-black/60 hover:bg-black/80 text-white font-bold py-3 px-6 rounded-lg
-              text-lg transition-all duration-200 border border-green-700/30
-              ${loading ? "opacity-50 cursor-not-allowed" : ""}
-            `}
-          >
-            {loading ? "Creating Player..." : "CREATE PLAYER"}
-          </button>
-
-          <div className="mt-4 text-sm text-white">
-            Your player will be associated with this wallet address. Losing
-            access to this wallet means losing access to your player.
-          </div>
-          <div className="mt-4 text-sm text-white">
-            Connected Wallet: {wallet.address}
           </div>
         </div>
-      </div>
-
+      </main>
       <Footer />
-    </>
+    </div>
   );
 }
