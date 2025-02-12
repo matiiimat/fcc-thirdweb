@@ -4,18 +4,57 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { PLAYER_CONSTANTS } from "@/app/lib/constants";
+import { useActiveWallet } from "thirdweb/react";
+import { useRouter } from "next/navigation";
 
-interface Player {
+interface LeaderboardPlayer {
   _id: string;
   playerName: string;
   totalPoints: number;
 }
 
+interface PlayerData {
+  xp: number;
+}
+
 export default function LeaderboardPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("players");
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const activeWallet = useActiveWallet();
+  const wallet = activeWallet?.getAccount();
+  const [player, setPlayer] = useState<PlayerData | null>(null);
+
+  // Fetch player data for XP
+  useEffect(() => {
+    async function fetchPlayer() {
+      if (!wallet) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/players/address/${encodeURIComponent(wallet.address)}`
+        );
+        if (!response.ok) {
+          if (response.status === 404) {
+            router.push("/createPlayer");
+            return;
+          }
+          throw new Error("Failed to fetch player data");
+        }
+
+        const data = await response.json();
+        setPlayer(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchPlayer();
+  }, [wallet, router]);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
@@ -51,7 +90,7 @@ export default function LeaderboardPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Leaderboard" />
+        <Header pageName="Leaderboard" xp={player?.xp || 0} />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
@@ -66,7 +105,7 @@ export default function LeaderboardPage() {
   if (error) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Leaderboard" />
+        <Header pageName="Leaderboard" xp={player?.xp || 0} />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-red-500 text-center text-sm px-4">{error}</div>
         </main>
@@ -77,7 +116,7 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Leaderboard" />
+      <Header pageName="Leaderboard" xp={player?.xp || 0} />
       <main className="flex-1 container mx-auto px-2 sm:px-4 py-2 sm:py-4">
         <div className="glass-container p-2 sm:p-6 w-full max-w-4xl mx-auto rounded-lg sm:rounded-2xl shadow-lg">
           <div className="flex border-b border-gray-700 mb-2 sm:mb-4">
