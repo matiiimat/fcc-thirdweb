@@ -322,8 +322,8 @@ export default function Store() {
 
       {/* Skill Selection Modal */}
       {showSkillModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="glass-container p-3 w-full max-h-[80vh] sm:max-w-md rounded-t-xl sm:rounded-xl shadow-lg overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="glass-container p-3 w-[90%] max-h-[80vh] sm:max-w-md rounded-xl shadow-lg overflow-y-auto">
             <h2 className="text-base font-bold text-white mb-2">
               Select Training Skill
             </h2>

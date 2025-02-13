@@ -32,7 +32,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-[#0d0f12]/85 backdrop-blur-md px-4 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
+    <footer className="fixed bottom-0 left-0 right-0 bg-[#0d0f12]/85 backdrop-blur-md px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
       <div className="flex justify-around items-center max-w-screen-lg mx-auto">
         <div className="flex flex-col items-center">
           <button
