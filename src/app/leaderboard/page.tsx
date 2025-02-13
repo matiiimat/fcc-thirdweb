@@ -4,18 +4,57 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { PLAYER_CONSTANTS } from "@/app/lib/constants";
+import { useActiveWallet } from "thirdweb/react";
+import { useRouter } from "next/navigation";
 
-interface Player {
+interface LeaderboardPlayer {
   _id: string;
   playerName: string;
   totalPoints: number;
 }
 
+interface PlayerData {
+  xp: number;
+}
+
 export default function LeaderboardPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("players");
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const activeWallet = useActiveWallet();
+  const wallet = activeWallet?.getAccount();
+  const [player, setPlayer] = useState<PlayerData | null>(null);
+
+  // Fetch player data for XP
+  useEffect(() => {
+    async function fetchPlayer() {
+      if (!wallet) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/players/address/${encodeURIComponent(wallet.address)}`
+        );
+        if (!response.ok) {
+          if (response.status === 404) {
+            router.push("/createPlayer");
+            return;
+          }
+          throw new Error("Failed to fetch player data");
+        }
+
+        const data = await response.json();
+        setPlayer(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchPlayer();
+  }, [wallet, router]);
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
