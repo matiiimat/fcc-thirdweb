@@ -81,17 +81,14 @@ export default function TeamPage() {
       if (team) {
         setCurrentTeam(team);
       } else {
-        // If team not found, reset player's team to "No Team"
-        await fetch(`/api/players/${player.ethAddress}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ team: "No Team" }),
-        });
-        setPlayer({ ...player, team: "No Team" });
+        // If team not found, just treat the player as having no team
+        // We'll let the backend handle team status updates
+        setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
+        fetchTeams(); // Show available teams
       }
     } catch (error) {
       console.error("Error fetching current team:", error);
-      // Don't set error state here as it's handled by resetting team status
+      // Don't set error state here as we're handling it gracefully
     }
   };
 
