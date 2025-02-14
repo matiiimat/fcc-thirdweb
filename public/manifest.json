@@ -1,12 +1,13 @@
 {
   "name": "fcc/FC",
-  "short_name": "fcc/FC ",
+  "short_name": "fcc/FC",
   "description": "Online football management game",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait",
+  "version": "1.0.1",
   "icons": [
     {
       "src": "/icons/pwa-icon.png",
