@@ -7,8 +7,10 @@ import { TEAM_CONSTANTS } from "../../../lib/constants";
 export async function POST(req: NextRequest) {
   try {
     const { teamName, playerAddress } = await req.json();
+    console.log('Received request:', { teamName, playerAddress });
 
     if (!teamName || !playerAddress) {
+      console.log('Missing required fields:', { teamName, playerAddress });
       return NextResponse.json(
         { error: "Team name and player address are required" },
         { status: 400 }
@@ -19,6 +21,7 @@ export async function POST(req: NextRequest) {
 
     // Check if team exists
     const team = await TeamModel.findOne({ teamName });
+    console.log('Found team:', team);
     if (!team) {
       return NextResponse.json(
         { error: "Team not found" },
@@ -35,7 +38,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if player is already in a team
-    const player = await PlayerModel.findOne({ ethAddress: playerAddress });
+    const player = await PlayerModel.findOne({ ethAddress: playerAddress.toLowerCase() });
+    console.log('Found player:', player);
     if (!player) {
       return NextResponse.json(
         { error: "Player not found" },
@@ -43,7 +47,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (player.team !== "No Team") {
+    if (player.team !== "No Team" && player.team !== "Unassigned") {
       return NextResponse.json(
         { error: "Player is already in a team" },
         { status: 400 }
