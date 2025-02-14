@@ -13,6 +13,11 @@ export const PLAYER_CONSTANTS = {
   DEFAULT_TEAM: 'Unassigned',
 };
 
+// Team constants
+export const TEAM_CONSTANTS = {
+  MAX_PLAYERS: 23,
+};
+
 // Training constants
 export const TRAINING_CONSTANTS = {
   MAX_WORK_ETHIC_BONUS: 1, // 100% bonus at max work ethic

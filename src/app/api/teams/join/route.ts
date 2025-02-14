@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../lib/mongodb";
 import TeamModel from "../../../models/Team";
 import PlayerModel from "../../../models/Player";
+import { TEAM_CONSTANTS } from "../../../lib/constants";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +23,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Team not found" },
         { status: 404 }
+      );
+    }
+
+    // Check if team is full
+    if (team.players.length >= TEAM_CONSTANTS.MAX_PLAYERS) {
+      return NextResponse.json(
+        { error: `Team is full (maximum ${TEAM_CONSTANTS.MAX_PLAYERS} players)` },
+        { status: 400 }
       );
     }
 

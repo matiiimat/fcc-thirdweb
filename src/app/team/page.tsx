@@ -6,6 +6,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { useActiveWallet } from "thirdweb/react";
 import TeamOverview from "../components/TeamOverview";
+import { TEAM_CONSTANTS } from "../lib/constants";
 
 interface Team {
   teamName: string;
@@ -81,14 +82,11 @@ export default function TeamPage() {
       if (team) {
         setCurrentTeam(team);
       } else {
-        // If team not found, just treat the player as having no team
-        // We'll let the backend handle team status updates
         setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
-        fetchTeams(); // Show available teams
+        fetchTeams();
       }
     } catch (error) {
       console.error("Error fetching current team:", error);
-      // Don't set error state here as we're handling it gracefully
     }
   };
 
@@ -98,10 +96,9 @@ export default function TeamPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setTeams(data);
-      setError(""); // Clear any existing errors
+      setError("");
     } catch (error) {
       console.error("Error fetching teams:", error);
-      // Only set error if it's not a "no teams" situation
       if (error instanceof Error && error.message !== "No teams found") {
         setError("Failed to fetch teams");
       }
@@ -138,7 +135,6 @@ export default function TeamPage() {
 
       setSuccess("Team created successfully!");
       setNewTeamName("");
-      // Refresh player data to show team overview
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to create team");
@@ -171,7 +167,6 @@ export default function TeamPage() {
       if (!response.ok) throw new Error(data.error);
 
       setSuccess("Successfully joined team!");
-      // Refresh player data to show team overview
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to join team");
@@ -264,31 +259,44 @@ export default function TeamPage() {
                   <p className="text-gray-400">No teams available</p>
                 ) : (
                   <div className="space-y-4">
-                    {teams.map((team) => (
-                      <div
-                        key={team.teamName}
-                        className="p-4 rounded-lg bg-gray-800 border border-gray-700"
-                      >
-                        <h4 className="text-lg font-medium text-gray-200 mb-2">
-                          {team.teamName}
-                        </h4>
-                        <p className="text-sm text-gray-400 mb-3">
-                          Players: {team.players.length}
-                        </p>
-                        <button
-                          onClick={() => handleJoinTeam(team.teamName)}
-                          disabled={
-                            loading ||
-                            team.players.includes(wallet.address.toLowerCase())
-                          }
-                          className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    {teams.map((team) => {
+                      const isFull =
+                        team.players.length >= TEAM_CONSTANTS.MAX_PLAYERS;
+                      const isPlayerInTeam = team.players.includes(
+                        wallet.address.toLowerCase()
+                      );
+
+                      return (
+                        <div
+                          key={team.teamName}
+                          className="p-4 rounded-lg bg-gray-800 border border-gray-700"
                         >
-                          {team.players.includes(wallet.address.toLowerCase())
-                            ? "Already Joined"
-                            : "Join Team"}
-                        </button>
-                      </div>
-                    ))}
+                          <h4 className="text-lg font-medium text-gray-200 mb-2">
+                            {team.teamName}
+                          </h4>
+                          <p className="text-sm text-gray-400 mb-1">
+                            Players: {team.players.length}/
+                            {TEAM_CONSTANTS.MAX_PLAYERS}
+                          </p>
+                          {isFull && (
+                            <p className="text-sm text-yellow-400 mb-3">
+                              Team is full
+                            </p>
+                          )}
+                          <button
+                            onClick={() => handleJoinTeam(team.teamName)}
+                            disabled={loading || isPlayerInTeam || isFull}
+                            className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isPlayerInTeam
+                              ? "Already Joined"
+                              : isFull
+                              ? "Team Full"
+                              : "Join Team"}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

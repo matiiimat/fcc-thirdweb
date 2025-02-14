@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { PLAYER_CONSTANTS } from '../lib/constants';
+import { PLAYER_CONSTANTS, TEAM_CONSTANTS } from '../lib/constants';
 
 // Interface for team document
 export interface ITeam extends Document {
@@ -47,6 +47,15 @@ TeamSchema.pre('save', function(next) {
   }
   if (this.players) {
     this.players = this.players.map(player => player.toLowerCase());
+  }
+  next();
+});
+
+// Pre-save middleware to validate team size
+TeamSchema.pre('save', function(next) {
+  if (this.players && this.players.length > TEAM_CONSTANTS.MAX_PLAYERS) {
+    next(new Error(`Team cannot have more than ${TEAM_CONSTANTS.MAX_PLAYERS} players`));
+    return;
   }
   next();
 });
