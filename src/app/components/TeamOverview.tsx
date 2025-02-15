@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { calculatePlayerRating, getStarRating } from "../lib/game";
 
 interface TeamMember {
@@ -46,6 +47,7 @@ export default function TeamOverview({
   playerAddress,
   onLeaveTeam,
 }: TeamOverviewProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -145,15 +147,26 @@ export default function TeamOverview({
         </div>
       </div>
 
-      {!isTeamCaptain && (
-        <button
-          onClick={handleLeaveTeam}
-          disabled={loading}
-          className="w-full px-4 py-2 rounded bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
-        >
-          {loading ? "Leaving..." : "Leave Team"}
-        </button>
-      )}
+      <div className="space-y-2">
+        {isTeamCaptain && (
+          <button
+            onClick={() => router.push("/teammanagement")}
+            className="w-full px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+          >
+            Manage Team
+          </button>
+        )}
+
+        {!isTeamCaptain && (
+          <button
+            onClick={handleLeaveTeam}
+            disabled={loading}
+            className="w-full px-4 py-2 rounded bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Leaving..." : "Leave Team"}
+          </button>
+        )}
+      </div>
 
       {error && (
         <div className="mt-2 text-red-400 text-center text-sm">{error}</div>
