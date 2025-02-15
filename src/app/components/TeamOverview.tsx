@@ -85,12 +85,7 @@ export default function TeamOverview({
   return (
     <div className="space-y">
       <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-200 mb-2">
-          {team.teamName}
-        </h3>
-        <p className="text-sm text-gray-400">
-          {isTeamCaptain ? "Team Captain" : "Team Member"}
-        </p>
+        <h3 className="text-xl font-semibold text-gray-200">{team.teamName}</h3>
       </div>
 
       <div className="space-y-4">
