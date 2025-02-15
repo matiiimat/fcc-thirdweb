@@ -2,10 +2,35 @@
 
 import { useEffect, useRef } from "react";
 
+import { calculatePlayerRating, getStarRating } from "../lib/game";
+
 interface Player {
   ethAddress: string;
   playerName: string;
+  stats?: {
+    strength: number;
+    stamina: number;
+    passing: number;
+    shooting: number;
+    defending: number;
+    speed: number;
+    positioning: number;
+    workEthic: number;
+  };
 }
+
+const getPositionName = (pos: string): string => {
+  switch (pos) {
+    case "D":
+      return "DEFENDER";
+    case "M":
+      return "MIDFIELDER";
+    case "F":
+      return "FORWARD";
+    default:
+      return pos;
+  }
+};
 
 interface PlayerSelectionModalProps {
   isOpen: boolean;
@@ -56,7 +81,7 @@ const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
         className="bg-[#1a1d21] rounded-xl p-4 w-full max-w-md mx-4"
       >
         <h3 className="text-lg font-bold text-white mb-2">
-          Select Player for {position} Position
+          Select Player for {getPositionName(position)} Position
         </h3>
         <div className="max-h-[60vh] overflow-y-auto">
           {players.filter(
@@ -91,10 +116,13 @@ const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
                     }
                   `}
                   >
-                    <div className="font-medium">{player.playerName}</div>
-                    <div className="text-xs text-gray-400">
-                      {player.ethAddress.slice(0, 6)}...
-                      {player.ethAddress.slice(-4)}
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium">{player.playerName}</div>
+                      <div className="text-[0.7rem] leading-none">
+                        {player.stats
+                          ? getStarRating(calculatePlayerRating(player.stats))
+                          : "⭐"}
+                      </div>
                     </div>
                   </button>
                 ))}

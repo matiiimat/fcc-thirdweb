@@ -81,6 +81,7 @@ export default function TeamManagementPage() {
               playerData.map((p: any) => ({
                 ethAddress: p.ethAddress,
                 playerName: p.playerName,
+                stats: p.stats,
               }))
             );
 
