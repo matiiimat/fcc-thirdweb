@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { calculatePlayerRating, getStarRating } from "../lib/game";
 
 interface TeamMember {
   address: string;
@@ -121,21 +122,23 @@ export default function TeamOverview({
               key={member.address}
               className="flex items-center justify-between py-2"
             >
-              <div className="flex items-center">
-                <span className="text-white">
-                  {member.name}
-                  {member.address.toLowerCase() ===
-                    team.captainAddress.toLowerCase() && (
-                    <span className="ml-1 text-yellow-400 font-medium">
-                      (C)
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-center">
-                <span className="text-sm px-2 py-1 bg-gray-700 rounded text-green-400 font-medium">
-                  {calculateOverallRating(member.stats)}
-                </span>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center min-w-0">
+                  <span className="text-white truncate">
+                    {member.name}
+                    {member.address.toLowerCase() ===
+                      team.captainAddress.toLowerCase() && (
+                      <span className="ml-1 text-yellow-400 font-medium">
+                        (C)
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <div className="flex items-center ml-2">
+                  <span className="text-[0.7rem] leading-none">
+                    {getStarRating(calculatePlayerRating(member.stats))}
+                  </span>
+                </div>
               </div>
             </div>
           ))}
