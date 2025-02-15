@@ -13,6 +13,10 @@ import {
   getActionCooldown,
 } from "../lib/game";
 import { STAT_NAMES } from "../lib/constants";
+import PositionRecommendationChart from "../components/PositionRecommendationChart";
+import PositionSelector from "../components/PositionSelector";
+import MatchPopup from "../components/MatchPopup";
+import { Position } from "../models/Player";
 
 interface PlayerData {
   playerId: string;
@@ -30,6 +34,7 @@ interface PlayerData {
   };
   xp: number;
   lastTrainingDate: string | null;
+  lastGameDate: string | null;
   lastConnectionDate: string | null;
   consecutiveConnections: number;
   privateTrainer?: {
@@ -55,10 +60,18 @@ export default function TrainPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [training, setTraining] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [trainingResult, setTrainingResult] = useState<TrainingResult | null>(
     null
   );
   const [showTrainingAnimation, setShowTrainingAnimation] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(
+    null
+  );
+  const [showMatchPopup, setShowMatchPopup] = useState(false);
+  const [matchResult, setMatchResult] = useState<
+    { rating: number; xpGained: number } | undefined
+  >();
 
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
@@ -75,8 +88,6 @@ export default function TrainPage() {
 
       try {
         const walletAddress = wallet.address;
-        console.log("Fetching player for wallet:", walletAddress);
-
         const response = await fetch(
           `/api/players/address/${encodeURIComponent(walletAddress)}`
         );
@@ -101,7 +112,12 @@ export default function TrainPage() {
         ];
         const cleanStats = Object.fromEntries(
           Object.entries(data.stats)
-            .filter(([key]) => validStats.includes(key))
+            .filter(
+              ([key]) =>
+                validStats.includes(key) &&
+                !key.startsWith("$") &&
+                !key.startsWith("_")
+            )
             .map(([key, value]) => [key, Number(value)])
         );
         setPlayer({ ...data, stats: cleanStats });
@@ -127,11 +143,9 @@ export default function TrainPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": wallet.address, // Add wallet address to headers
+          "x-wallet-address": wallet.address,
         },
-        body: JSON.stringify({
-          playerId: player.playerId,
-        }),
+        body: JSON.stringify({ playerId: player.playerId }),
       });
 
       if (!response.ok) {
@@ -140,8 +154,6 @@ export default function TrainPage() {
       }
 
       const result = await response.json();
-      console.log("Training result:", result);
-
       if (result.success && result.training) {
         const validStats = [
           "strength",
@@ -155,16 +167,18 @@ export default function TrainPage() {
         ];
         const cleanStats = Object.fromEntries(
           Object.entries(result.player.stats)
-            .filter(([key]) => validStats.includes(key))
+            .filter(
+              ([key]) =>
+                validStats.includes(key) &&
+                !key.startsWith("$") &&
+                !key.startsWith("_")
+            )
             .map(([key, value]) => [key, Number(value)])
         );
         setPlayer({ ...result.player, stats: cleanStats });
         setTrainingResult(result.training);
         setShowTrainingAnimation(true);
-
-        setTimeout(() => {
-          setShowTrainingAnimation(false);
-        }, 2000);
+        setTimeout(() => setShowTrainingAnimation(false), 2000);
       } else {
         throw new Error(result.error || "Training failed");
       }
@@ -173,6 +187,51 @@ export default function TrainPage() {
     } finally {
       setTraining(false);
     }
+  };
+
+  const handlePlay = async () => {
+    if (!player || !wallet || playing || !selectedPosition) return;
+
+    setPlaying(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/game/solomatch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-wallet-address": wallet.address,
+        },
+        body: JSON.stringify({
+          playerId: player.playerId,
+          position: selectedPosition,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to start game");
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setPlayer(result.player);
+        setShowMatchPopup(true);
+        setMatchResult(result.matchResult);
+      } else {
+        throw new Error(result.error || "Failed to start game");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start game");
+    } finally {
+      setPlaying(false);
+    }
+  };
+
+  const handleMatchEnd = () => {
+    setShowMatchPopup(false);
+    setPlaying(false);
+    setMatchResult(undefined);
   };
 
   if (loading) {
@@ -196,11 +255,16 @@ export default function TrainPage() {
 
   const playerStats = getPlayerStats(player.stats);
   const rating = calculatePlayerRating(player.stats);
-  const { onCooldown, remainingTime } = getActionCooldown(
+  const trainCooldown = getActionCooldown(
     player.lastTrainingDate ? new Date(player.lastTrainingDate) : null,
-    false // isTraining = false for 6-hour cooldown
+    false
   );
-  const canTrain = !onCooldown;
+  const matchCooldown = getActionCooldown(
+    player.lastGameDate ? new Date(player.lastGameDate) : null,
+    true
+  );
+  const canTrain = !trainCooldown.onCooldown;
+  const canPlay = !matchCooldown.onCooldown && selectedPosition !== null;
 
   const formatStatValue = (value: any) => {
     const num = Number(value);
@@ -210,7 +274,6 @@ export default function TrainPage() {
   const getTrainingMessage = () => {
     if (!trainingResult || typeof trainingResult.finalBonus !== "number")
       return "";
-
     const bonus = trainingResult.finalBonus;
     const statName =
       STAT_NAMES[trainingResult.stat as keyof typeof STAT_NAMES] ||
@@ -221,48 +284,103 @@ export default function TrainPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Train" xp={player.xp} />
-      <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4">
-        <div className="glass-container p-3 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg">
-          {/* Training Button and Status */}
-          <div className="text-center mb-3 relative">
-            <button
-              onClick={handleTrain}
-              className={`
-                gradient-button py-2.5 px-6 rounded-lg text-base mb-2 w-full transition-all duration-300
-                ${
-                  !canTrain || training
-                    ? "opacity-50 cursor-not-allowed"
-                    : "active:scale-95 sm:hover:scale-[1.02]"
-                }
-              `}
-              disabled={!canTrain || training}
-            >
-              {training ? "TRAINING..." : "TRAIN"}
-            </button>
-
-            {/* Training Animation */}
-            {showTrainingAnimation && trainingResult && (
-              <div
-                key={`training-animation-${Date.now()}`}
-                className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
-              >
-                <div className="animate-bounce glass-container bg-green-500/20 text-white px-2 py-1 rounded-lg shadow-lg text-xs">
-                  {getTrainingMessage()}
-                </div>
+      <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
+        <div className="grid grid-cols-1 gap-4">
+          {/* Drop In Match Section */}
+          <div className="glass-container p-3 sm:p-4 rounded-xl shadow-lg">
+            <h2 className="text-base font-semibold text-white mb-2">
+              Drop In Match
+            </h2>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="col-span-1">
+                <PositionSelector
+                  onSelect={setSelectedPosition}
+                  selectedPosition={selectedPosition}
+                  disabled={playing || matchCooldown.onCooldown}
+                  compact={true}
+                />
               </div>
-            )}
+              <div className="col-span-1">
+                <h3 className="text-xs font-medium text-white mb-1">
+                  Coach Suggestion
+                </h3>
+                <PositionRecommendationChart
+                  stats={player.stats}
+                  compact={true}
+                />
+              </div>
+            </div>
+            <div className="text-center">
+              <button
+                onClick={handlePlay}
+                className={`gradient-button py-2 px-4 rounded-lg text-sm w-full mb-1 transition-all duration-300
+                  ${
+                    !canPlay || playing
+                      ? "opacity-50 cursor-not-allowed"
+                      : "active:scale-95"
+                  }`}
+                disabled={!canPlay || playing}
+              >
+                {playing
+                  ? "PLAYING..."
+                  : selectedPosition
+                  ? "PLAY"
+                  : "SELECT POSITION"}
+              </button>
+              <div
+                className={`text-xs ${
+                  canPlay ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {matchCooldown.onCooldown
+                  ? matchCooldown.remainingTime
+                  : selectedPosition
+                  ? "Ready"
+                  : "Select position"}
+              </div>
+            </div>
+          </div>
 
-            <div className="space-y-2">
+          {/* Training Section */}
+          <div className="glass-container p-3 sm:p-4 rounded-xl shadow-lg">
+            <h2 className="text-base font-semibold text-white mb-2">
+              Training
+            </h2>
+            <div className="text-center mb-3 relative">
+              <button
+                onClick={handleTrain}
+                className={`gradient-button py-2 px-4 rounded-lg text-sm w-full mb-1 transition-all duration-300
+                  ${
+                    !canTrain || training
+                      ? "opacity-50 cursor-not-allowed"
+                      : "active:scale-95"
+                  }`}
+                disabled={!canTrain || training}
+              >
+                {training ? "TRAINING..." : "TRAIN"}
+              </button>
+
+              {showTrainingAnimation && trainingResult && (
+                <div
+                  key={`training-animation-${Date.now()}`}
+                  className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full"
+                >
+                  <div className="animate-bounce glass-container bg-green-500/20 text-white px-2 py-1 rounded-lg shadow-lg text-xs">
+                    {getTrainingMessage()}
+                  </div>
+                </div>
+              )}
+
               <div
                 className={`text-xs ${
                   canTrain ? "text-green-400" : "text-red-400"
                 }`}
               >
-                {canTrain ? "Ready" : remainingTime}
+                {canTrain ? "Ready" : trainCooldown.remainingTime}
               </div>
               {player.privateTrainer?.selectedSkill &&
                 player.privateTrainer.remainingSessions > 0 && (
-                  <div className="glass-container bg-green-900/20 p-2 rounded-lg text-xs">
+                  <div className="glass-container bg-green-900/20 p-2 rounded-lg text-xs mt-1">
                     <div className="font-semibold text-green-400">
                       {STAT_NAMES[player.privateTrainer.selectedSkill]} Training
                       • {player.privateTrainer.remainingSessions} left
@@ -270,46 +388,56 @@ export default function TrainPage() {
                   </div>
                 )}
             </div>
-          </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-2">
-            {playerStats.map(({ name, value }) => (
-              <div
-                key={`stat-${name}`}
-                className={`glass-container p-2 rounded-lg transition-all duration-300 ${
-                  trainingResult &&
-                  STAT_NAMES[trainingResult.stat as keyof typeof STAT_NAMES] ===
-                    name
-                    ? "ring-1 ring-green-500 shadow-green-500/20"
-                    : ""
-                }`}
-              >
-                <div className="flex justify-between items-center text-xs mb-1">
-                  <span className="font-semibold text-white">{name}</span>
-                  <span className={getStatColor(Number(value))}>
-                    {formatStatValue(value)}
-                  </span>
-                </div>
-                {/* Progress bar */}
-                <div className="w-full bg-black/40 rounded-full h-1.5">
+            <div className="grid grid-cols-2 gap-2">
+              {playerStats
+                .filter(({ name }) => name !== undefined)
+                .map(({ name, value }) => (
                   <div
-                    className={`${getStatColor(
-                      Number(value)
-                    )} h-1.5 rounded-full transition-all duration-300`}
-                    style={{ width: `${(Number(value) / 20) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
+                    key={`stat-${name}`}
+                    className={`glass-container p-2 rounded-lg transition-all duration-300 ${
+                      trainingResult &&
+                      STAT_NAMES[
+                        trainingResult.stat as keyof typeof STAT_NAMES
+                      ] === name
+                        ? "ring-1 ring-green-500 shadow-green-500/20"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex justify-between items-center text-xs mb-1">
+                      <span className="font-semibold text-white">{name}</span>
+                      <span className={getStatColor(Number(value))}>
+                        {formatStatValue(value)}
+                      </span>
+                    </div>
+                    <div className="w-full bg-black/40 rounded-full h-1.5">
+                      <div
+                        className={`${getStatColor(
+                          Number(value)
+                        )} h-1.5 rounded-full transition-all duration-300`}
+                        style={{ width: `${(Number(value) / 20) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
-
-          {error && (
-            <div className="text-red-500 text-center mt-2 text-xs">{error}</div>
-          )}
         </div>
+
+        {error && (
+          <div className="text-red-500 text-center mt-2 text-xs">{error}</div>
+        )}
       </main>
       <Footer />
+
+      {showMatchPopup && selectedPosition && (
+        <MatchPopup
+          selectedPosition={selectedPosition}
+          playerName={player.playerName}
+          onClose={handleMatchEnd}
+          matchResult={matchResult}
+        />
+      )}
     </div>
   );
 }

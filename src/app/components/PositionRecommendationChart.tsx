@@ -26,6 +26,7 @@ ChartJS.register(
 interface PositionRecommendationChartProps {
   stats: IPlayerStats;
   onScoresCalculated?: (scores: { D: number; M: number; F: number }) => void;
+  compact?: boolean;
 }
 
 const calculatePositionScores = (stats: IPlayerStats) => {
@@ -49,7 +50,7 @@ const calculatePositionScores = (stats: IPlayerStats) => {
 
 const PositionRecommendationChart: React.FC<
   PositionRecommendationChartProps
-> = ({ stats, onScoresCalculated }) => {
+> = ({ stats, onScoresCalculated, compact = false }) => {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -82,9 +83,9 @@ const PositionRecommendationChart: React.FC<
     maintainAspectRatio: false,
     scales: {
       y: {
-        display: false, // Hide the y-axis
+        display: false,
         beginAtZero: true,
-        max: 100, // Set max to 100 for percentages
+        max: 100,
       },
       x: {
         grid: {
@@ -93,7 +94,7 @@ const PositionRecommendationChart: React.FC<
         ticks: {
           color: "white",
           font: {
-            size: 14,
+            size: compact ? 10 : 14,
             weight: "bold" as const,
             family: "'Inter', sans-serif",
           },
@@ -115,14 +116,18 @@ const PositionRecommendationChart: React.FC<
 
   if (!isClient) {
     return (
-      <div className="w-full h-[200px] animate-pulse">
+      <div
+        className={`w-full ${
+          compact ? "h-[120px]" : "h-[200px]"
+        } animate-pulse`}
+      >
         <div className="w-full h-full bg-gray-700 rounded"></div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-[200px]">
+    <div className={`w-full ${compact ? "h-[120px]" : "h-[200px]"}`}>
       <Bar data={data} options={options} />
     </div>
   );

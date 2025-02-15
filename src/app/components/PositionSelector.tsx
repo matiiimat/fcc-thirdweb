@@ -7,32 +7,40 @@ interface PositionSelectorProps {
   onSelect: (position: Position) => void;
   selectedPosition: Position | null;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 const PositionSelector: React.FC<PositionSelectorProps> = ({
   onSelect,
   selectedPosition,
   disabled = false,
+  compact = false,
 }) => {
   const positions: { value: Position; label: string }[] = [
-    { value: "D", label: "Defender" },
-    { value: "M", label: "Midfielder" },
-    { value: "F", label: "Forward" },
+    { value: "D", label: "DEF" },
+    { value: "M", label: "MID" },
+    { value: "F", label: "FWD" },
   ];
 
   return (
     <div>
-      <h3 className="text-sm sm:text-base font-medium text-white mb-2">
+      <h3
+        className={`${
+          compact ? "text-xs" : "text-sm sm:text-base"
+        } font-medium text-white mb-1 sm:mb-2`}
+      >
         Select Position
       </h3>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-1 sm:gap-2">
         {positions.map(({ value, label }) => (
           <button
             key={value}
             onClick={() => onSelect(value)}
             disabled={disabled}
             className={`
-              p-2 rounded-lg transition-all duration-300 text-center
+              ${
+                compact ? "p-1" : "p-2"
+              } rounded-lg transition-all duration-300 text-center
               ${
                 selectedPosition === value
                   ? "bg-green-600 text-white"
@@ -45,8 +53,20 @@ const PositionSelector: React.FC<PositionSelectorProps> = ({
               }
             `}
           >
-            <div className="text-base sm:text-lg font-bold">{value}</div>
-            <div className="text-xs sm:text-sm">{label}</div>
+            <div
+              className={`${
+                compact ? "text-sm" : "text-base sm:text-lg"
+              } font-bold`}
+            >
+              {value}
+            </div>
+            <div
+              className={`${
+                compact ? "text-[10px]" : "text-xs"
+              } uppercase tracking-tight`}
+            >
+              {label}
+            </div>
           </button>
         ))}
       </div>
