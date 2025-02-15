@@ -3,7 +3,32 @@ import { useState, useEffect } from "react";
 interface TeamMember {
   address: string;
   name: string;
+  stats: {
+    strength: number;
+    stamina: number;
+    passing: number;
+    shooting: number;
+    defending: number;
+    speed: number;
+    positioning: number;
+    workEthic: number;
+  };
 }
+
+const calculateOverallRating = (
+  stats: TeamMember["stats"] | undefined
+): number => {
+  if (!stats) return 0;
+
+  const values = Object.values(stats);
+  if (values.length === 0) return 0;
+
+  const validValues = values.filter((v) => typeof v === "number" && !isNaN(v));
+  if (validValues.length === 0) return 0;
+
+  const average = validValues.reduce((a, b) => a + b, 0) / validValues.length;
+  return Math.round(average);
+};
 
 interface TeamOverviewProps {
   team: {
@@ -40,6 +65,7 @@ export default function TeamOverview({
         return {
           address,
           name: data.playerName,
+          stats: data.stats,
         };
       });
 
@@ -83,44 +109,52 @@ export default function TeamOverview({
     team.captainAddress.toLowerCase() === playerAddress.toLowerCase();
 
   return (
-    <div className="space-y">
-      <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-200">{team.teamName}</h3>
-      </div>
+    <div className="px-2 py-3">
+      <div className="bg-gray-800 rounded-lg p-3 mb-3">
+        <h3 className="text-xl font-bold text-yellow-400 text-center mb-2">
+          {team.teamName}
+        </h3>
 
-      <div className="space-y-4">
-        <div className="bg-gray-800 rounded-lg">
-          <h4 className="text-lg font-medium text-gray-200 mb-3">
-            Team Members
-          </h4>
-          <div className="space-y-2">
-            {teamMembers.map((member) => (
-              <div
-                key={member.address}
-                className="flex items-center justify-between py-2 px-3 bg-gray-700 rounded"
-              >
-                <span className="text-sm text-gray-300">
+        <div className="divide-y divide-gray-700">
+          {teamMembers.map((member) => (
+            <div
+              key={member.address}
+              className="flex items-center justify-between py-2"
+            >
+              <div className="flex items-center">
+                <span className="text-white">
                   {member.name}
                   {member.address.toLowerCase() ===
-                    team.captainAddress.toLowerCase() && " (C)"}
+                    team.captainAddress.toLowerCase() && (
+                    <span className="ml-1 text-yellow-400 font-medium">
+                      (C)
+                    </span>
+                  )}
                 </span>
               </div>
-            ))}
-          </div>
+              <div className="flex items-center">
+                <span className="text-sm px-2 py-1 bg-gray-700 rounded text-green-400 font-medium">
+                  {calculateOverallRating(member.stats)}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
-
-        {!isTeamCaptain && (
-          <button
-            onClick={handleLeaveTeam}
-            disabled={loading}
-            className="w-full px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            {loading ? "Leaving..." : "Leave Team"}
-          </button>
-        )}
       </div>
 
-      {error && <div className="p-4 text-red-400 text-center">{error}</div>}
+      {!isTeamCaptain && (
+        <button
+          onClick={handleLeaveTeam}
+          disabled={loading}
+          className="w-full px-4 py-2 rounded bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+        >
+          {loading ? "Leaving..." : "Leave Team"}
+        </button>
+      )}
+
+      {error && (
+        <div className="mt-2 text-red-400 text-center text-sm">{error}</div>
+      )}
     </div>
   );
 }
