@@ -12,6 +12,13 @@ import { ITactic, IPlayerPosition } from "../models/Team";
 import TacticNameModal from "../components/TacticNameModal";
 
 type Formation = "5-4-1" | "5-3-2" | "4-4-2" | "4-3-3" | "4-5-1" | "3-4-3";
+type TacticalStyle =
+  | "None"
+  | "Tiki-Taka"
+  | "Gegenpressing"
+  | "Kick & Rush"
+  | "Counter Attacking"
+  | "Catennacio";
 
 const FORMATIONS: Formation[] = [
   "5-4-1",
@@ -20,6 +27,15 @@ const FORMATIONS: Formation[] = [
   "4-3-3",
   "4-5-1",
   "3-4-3",
+];
+
+const TACTICAL_STYLES: TacticalStyle[] = [
+  "None",
+  "Tiki-Taka",
+  "Gegenpressing",
+  "Kick & Rush",
+  "Counter Attacking",
+  "Catennacio",
 ];
 
 interface Player {
@@ -40,9 +56,12 @@ export default function TeamManagementPage() {
   const [tactics, setTactics] = useState<ITactic[]>([]);
   const [selectedFormation, setSelectedFormation] =
     useState<Formation>("4-4-2");
+  const [selectedTacticalStyle, setSelectedTacticalStyle] =
+    useState<TacticalStyle>("None");
   const [currentTactic, setCurrentTactic] = useState<ITactic>({
     name: "Default Tactic",
     formation: "4-4-2",
+    tacticalStyle: "None",
     playerPositions: [],
   });
   const [playerModalOpen, setPlayerModalOpen] = useState(false);
@@ -119,6 +138,14 @@ export default function TeamManagementPage() {
     }));
   };
 
+  const handleTacticalStyleChange = (style: TacticalStyle) => {
+    setSelectedTacticalStyle(style);
+    setCurrentTactic((prev) => ({
+      ...prev,
+      tacticalStyle: style,
+    }));
+  };
+
   const handlePositionClick = (x: number, y: number, position: Position) => {
     setSelectedPosition({ x, y, position });
     setPlayerModalOpen(true);
@@ -186,6 +213,7 @@ export default function TeamManagementPage() {
         setCurrentTactic({
           name: "Default Tactic",
           formation: "4-4-2",
+          tacticalStyle: "None",
           playerPositions: [],
         });
         setSelectedFormation("4-4-2");
@@ -239,6 +267,7 @@ export default function TeamManagementPage() {
   const handleLoadTactic = (tactic: ITactic) => {
     setCurrentTactic(tactic);
     setSelectedFormation(tactic.formation as Formation);
+    setSelectedTacticalStyle(tactic.tacticalStyle);
   };
 
   if (loading) {
@@ -329,17 +358,44 @@ export default function TeamManagementPage() {
                     `}
                   >
                     <div className="font-bold">{tactic.name}</div>
-                    <div className="text-sm opacity-75">{tactic.formation}</div>
+                    <div className="text-sm opacity-75">
+                      {tactic.formation} • {tactic.tacticalStyle}
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
           )}
 
+          {/* Tactical Style Selector */}
+          <div className="mb-6">
+            <h3 className="text-sm sm:text-base font-medium text-white mb-2">
+              Tactic
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {TACTICAL_STYLES.map((style) => (
+                <button
+                  key={style}
+                  onClick={() => handleTacticalStyleChange(style)}
+                  className={`
+                    p-3 rounded-lg transition-all duration-300
+                    ${
+                      selectedTacticalStyle === style
+                        ? "bg-green-600 text-white"
+                        : "glass-container hover:bg-gray-800"
+                    }
+                  `}
+                >
+                  <span className="text-sm font-bold">{style}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Formation Selector */}
           <div className="mb-6">
             <h3 className="text-sm sm:text-base font-medium text-white mb-2">
-              Select Formation
+              Formation
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {FORMATIONS.map((formation) => (

@@ -14,6 +14,7 @@ export interface IPlayerPosition {
 export interface ITactic {
   name: string;
   formation: string;
+  tacticalStyle: 'None' | 'Tiki-Taka' | 'Gegenpressing' | 'Kick & Rush' | 'Counter Attacking' | 'Catennacio';
   playerPositions: IPlayerPosition[];
 }
 
@@ -62,6 +63,11 @@ const TacticSchema = new Schema({
     type: String,
     required: true,
     enum: ['5-4-1', '5-3-2', '4-4-2', '4-3-3', '4-5-1', '3-4-3'],
+  },
+  tacticalStyle: {
+    type: String,
+    required: true,
+    enum: ['None', 'Tiki-Taka', 'Gegenpressing', 'Kick & Rush', 'Counter Attacking', 'Catennacio'],
   },
   playerPositions: [PlayerPositionSchema],
 });
