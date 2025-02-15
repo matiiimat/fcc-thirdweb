@@ -1,4 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface TeamMember {
+  address: string;
+  name: string;
+}
 
 interface TeamOverviewProps {
   team: {
@@ -17,6 +22,34 @@ export default function TeamOverview({
 }: TeamOverviewProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    fetchTeamMemberNames();
+  }, [team.players]);
+
+  const fetchTeamMemberNames = async () => {
+    try {
+      const memberPromises = team.players.map(async (address) => {
+        const response = await fetch(
+          `/api/players/address/${encodeURIComponent(address)}`
+        );
+        if (!response.ok)
+          throw new Error(`Failed to fetch player data for ${address}`);
+        const data = await response.json();
+        return {
+          address,
+          name: data.playerName,
+        };
+      });
+
+      const members = await Promise.all(memberPromises);
+      setTeamMembers(members);
+    } catch (error) {
+      console.error("Error fetching team member names:", error);
+      setError("Failed to fetch team member names");
+    }
+  };
 
   const handleLeaveTeam = async () => {
     try {
@@ -50,7 +83,7 @@ export default function TeamOverview({
     team.captainAddress.toLowerCase() === playerAddress.toLowerCase();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y">
       <div className="text-center">
         <h3 className="text-xl font-semibold text-gray-200 mb-2">
           {team.teamName}
@@ -61,23 +94,20 @@ export default function TeamOverview({
       </div>
 
       <div className="space-y-4">
-        <div className="bg-gray-800 rounded-lg p-4">
+        <div className="bg-gray-800 rounded-lg">
           <h4 className="text-lg font-medium text-gray-200 mb-3">
             Team Members
           </h4>
           <div className="space-y-2">
-            {team.players.map((player, index) => (
+            {teamMembers.map((member) => (
               <div
-                key={player}
+                key={member.address}
                 className="flex items-center justify-between py-2 px-3 bg-gray-700 rounded"
               >
                 <span className="text-sm text-gray-300">
-                  Player {index + 1}
-                  {player.toLowerCase() === team.captainAddress.toLowerCase() &&
-                    " (Captain)"}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {player.slice(0, 6)}...{player.slice(-4)}
+                  {member.name}
+                  {member.address.toLowerCase() ===
+                    team.captainAddress.toLowerCase() && " (C)"}
                 </span>
               </div>
             ))}
