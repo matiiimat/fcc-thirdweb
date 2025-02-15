@@ -126,20 +126,76 @@ export default function TeamManagementPage() {
   const handlePlayerSelect = (player: Player) => {
     if (!selectedPosition) return;
 
-    setCurrentTactic((prev) => ({
-      ...prev,
-      playerPositions: [
-        ...prev.playerPositions.filter(
+    // Check if we're clicking on a player that's already in this position
+    const existingPlayer = currentTactic.playerPositions.find(
+      (p) => p.x === selectedPosition.x && p.y === selectedPosition.y
+    );
+
+    if (existingPlayer?.ethAddress === player.ethAddress) {
+      // Unassign the player if clicking on them again
+      setCurrentTactic((prev) => ({
+        ...prev,
+        playerPositions: prev.playerPositions.filter(
           (p) => p.x !== selectedPosition.x || p.y !== selectedPosition.y
         ),
+      }));
+    } else {
+      // Assign the player to the position, removing them from any other position first
+      setCurrentTactic((prev) => ({
+        ...prev,
+        playerPositions: [
+          ...prev.playerPositions.filter(
+            (p) =>
+              p.ethAddress !== player.ethAddress && // Remove player from other positions
+              (p.x !== selectedPosition.x || p.y !== selectedPosition.y) // Remove any player from target position
+          ),
+          {
+            ethAddress: player.ethAddress,
+            position: selectedPosition.position,
+            x: selectedPosition.x,
+            y: selectedPosition.y,
+          },
+        ],
+      }));
+    }
+    setPlayerModalOpen(false);
+  };
+
+  const handleDeleteTactic = async () => {
+    if (!teamData || !wallet || !currentTactic.name) return;
+
+    setSavingTactic(true);
+    try {
+      const response = await fetch(
+        `/api/teams/tactics?teamName=${teamData.teamName}&tacticName=${currentTactic.name}&captainAddress=${wallet.address}`,
         {
-          ethAddress: player.ethAddress,
-          position: selectedPosition.position,
-          x: selectedPosition.x,
-          y: selectedPosition.y,
-        },
-      ],
-    }));
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete tactic");
+      }
+
+      const updatedTactics = await response.json();
+      setTactics(updatedTactics);
+
+      // Reset to default if we have no tactics left, otherwise load the first available tactic
+      if (updatedTactics.length === 0) {
+        setCurrentTactic({
+          name: "Default Tactic",
+          formation: "4-4-2",
+          playerPositions: [],
+        });
+        setSelectedFormation("4-4-2");
+      } else {
+        setCurrentTactic(updatedTactics[0]);
+        setSelectedFormation(updatedTactics[0].formation as Formation);
+      }
+    } catch (error) {
+      console.error("Error deleting tactic:", error);
+    }
+    setSavingTactic(false);
   };
 
   const handleSaveTactic = () => {
@@ -206,28 +262,48 @@ export default function TeamManagementPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Team Management" xp={0} />
-      <main className="flex-1 container max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
+      <main className="flex-1 container max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-32">
         <div className="glass-container p-4 sm:p-6 rounded-xl">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl sm:text-2xl font-bold text-white">
               Team Tactics
             </h2>
             <div className="flex gap-2">
-              <button
-                onClick={handleSaveTactic}
-                disabled={savingTactic || tactics.length >= 3}
-                className={`
-                  px-4 py-2 rounded-lg transition-all duration-200
-                  ${
-                    savingTactic
-                      ? "bg-gray-600"
-                      : "bg-green-600 hover:bg-green-700"
-                  }
-                  ${tactics.length >= 3 ? "opacity-50 cursor-not-allowed" : ""}
-                `}
-              >
-                {savingTactic ? "Saving..." : "Save Tactic"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveTactic}
+                  disabled={savingTactic || tactics.length >= 3}
+                  className={`
+                    px-4 py-2 rounded-lg transition-all duration-200
+                    ${
+                      savingTactic
+                        ? "bg-gray-600"
+                        : "bg-green-600 hover:bg-green-700"
+                    }
+                    ${
+                      tactics.length >= 3 ? "opacity-50 cursor-not-allowed" : ""
+                    }
+                  `}
+                >
+                  {savingTactic ? "Saving..." : "Save Tactic"}
+                </button>
+                {currentTactic.name !== "Default Tactic" && (
+                  <button
+                    onClick={handleDeleteTactic}
+                    disabled={savingTactic}
+                    className={`
+                      px-4 py-2 rounded-lg transition-all duration-200
+                      ${
+                        savingTactic
+                          ? "bg-gray-600"
+                          : "bg-red-600 hover:bg-red-700"
+                      }
+                    `}
+                  >
+                    Delete Tactic
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
@@ -326,6 +402,7 @@ export default function TeamManagementPage() {
             : undefined
         }
         position={selectedPosition?.position || "D"}
+        assignedPlayers={currentTactic.playerPositions.map((p) => p.ethAddress)}
       />
 
       {/* Tactic Name Modal */}

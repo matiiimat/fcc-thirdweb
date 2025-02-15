@@ -14,6 +14,7 @@ interface PlayerSelectionModalProps {
   onSelect: (player: Player) => void;
   selectedPlayer?: Player;
   position: string;
+  assignedPlayers: string[]; // Array of player ETH addresses that are already assigned
 }
 
 const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
@@ -23,6 +24,7 @@ const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
   onSelect,
   selectedPlayer,
   position,
+  assignedPlayers,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -57,20 +59,30 @@ const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
           Select Player for {position} Position
         </h3>
         <div className="max-h-[60vh] overflow-y-auto">
-          {players.length === 0 ? (
+          {players.filter(
+            (p) =>
+              !assignedPlayers.includes(p.ethAddress) ||
+              selectedPlayer?.ethAddress === p.ethAddress
+          ).length === 0 ? (
             <p className="text-gray-400 text-center py-4">
               No available players
             </p>
           ) : (
             <div className="space-y-2">
-              {players.map((player) => (
-                <button
-                  key={player.ethAddress}
-                  onClick={() => {
-                    onSelect(player);
-                    onClose();
-                  }}
-                  className={`
+              {players
+                .filter(
+                  (p) =>
+                    !assignedPlayers.includes(p.ethAddress) ||
+                    selectedPlayer?.ethAddress === p.ethAddress
+                )
+                .map((player) => (
+                  <button
+                    key={player.ethAddress}
+                    onClick={() => {
+                      onSelect(player);
+                      onClose();
+                    }}
+                    className={`
                     w-full p-3 rounded-lg text-left transition-all duration-200
                     ${
                       selectedPlayer?.ethAddress === player.ethAddress
@@ -78,14 +90,14 @@ const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
                         : "glass-container hover:bg-gray-800"
                     }
                   `}
-                >
-                  <div className="font-medium">{player.playerName}</div>
-                  <div className="text-xs text-gray-400">
-                    {player.ethAddress.slice(0, 6)}...
-                    {player.ethAddress.slice(-4)}
-                  </div>
-                </button>
-              ))}
+                  >
+                    <div className="font-medium">{player.playerName}</div>
+                    <div className="text-xs text-gray-400">
+                      {player.ethAddress.slice(0, 6)}...
+                      {player.ethAddress.slice(-4)}
+                    </div>
+                  </button>
+                ))}
             </div>
           )}
         </div>
