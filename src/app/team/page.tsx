@@ -86,6 +86,7 @@ export default function TeamPage() {
       const team = teams.find((t: Team) => t.teamName === player.team);
       if (team) {
         setCurrentTeam(team);
+        setLoading(false);
       } else {
         setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
         fetchTeams();
@@ -102,6 +103,7 @@ export default function TeamPage() {
       if (!response.ok) throw new Error(data.error);
       setTeams(data);
       setError("");
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching teams:", error);
       if (error instanceof Error && error.message !== "No teams found") {
@@ -195,10 +197,6 @@ export default function TeamPage() {
 
   return (
     <PageWrapper>
-      <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-green-400 text-transparent bg-clip-text">
-        Team Management
-      </h2>
-
       {currentTeam ? (
         <TeamOverview
           team={currentTeam}
