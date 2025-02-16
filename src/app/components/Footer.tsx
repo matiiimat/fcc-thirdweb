@@ -56,7 +56,7 @@ export default function Footer() {
             className={getButtonClass("/train")}
           >
             <Image
-              src="/icons/train-icon.png"
+              src="/icons/solomatch-icon.png"
               alt="Train"
               width={20}
               height={20}
@@ -65,38 +65,6 @@ export default function Footer() {
             />
           </button>
           <span className={getTextClass("/train")}>Train</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <button
-            onClick={() => router.push("/solomatch")}
-            className={getButtonClass("/solomatch")}
-          >
-            <Image
-              src="/icons/solomatch-icon.png"
-              alt="Match"
-              width={20}
-              height={20}
-              priority
-              className="transition-transform group-hover:scale-110"
-            />
-          </button>
-          <span className={getTextClass("/solomatch")}>Match</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <button
-            onClick={() => router.push("/store")}
-            className={getButtonClass("/store")}
-          >
-            <Image
-              src="/icons/store-icon.png"
-              alt="Store"
-              width={20}
-              height={20}
-              priority
-              className="transition-transform group-hover:scale-110"
-            />
-          </button>
-          <span className={getTextClass("/store")}>Store</span>
         </div>
         <div className="flex flex-col items-center">
           <button
@@ -113,6 +81,22 @@ export default function Footer() {
             />
           </button>
           <span className={getTextClass("/team")}>Team</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <button
+            onClick={() => router.push("/store")}
+            className={getButtonClass("/store")}
+          >
+            <Image
+              src="/icons/store-icon.png"
+              alt="Store"
+              width={20}
+              height={20}
+              priority
+              className="transition-transform group-hover:scale-110"
+            />
+          </button>
+          <span className={getTextClass("/store")}>Store</span>
         </div>
       </div>
     </footer>
