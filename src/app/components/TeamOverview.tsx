@@ -1,6 +1,22 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { calculatePlayerRating, getStarRating } from "../lib/game";
+import TeamMatchesSection from "./TeamMatchesSection";
+import { ITactic } from "../models/Team";
+
+interface Match {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  isCompleted: boolean;
+  homeTactic?: ITactic;
+  awayTactic?: ITactic;
+  result?: {
+    homeScore: number;
+    awayScore: number;
+  };
+}
 
 interface TeamMember {
   address: string;
@@ -37,6 +53,8 @@ interface TeamOverviewProps {
     teamName: string;
     captainAddress: string;
     players: string[];
+    matches?: Match[];
+    tactics?: ITactic[];
   };
   playerAddress: string;
   onLeaveTeam: () => void;
@@ -167,6 +185,14 @@ export default function TeamOverview({
           </button>
         )}
       </div>
+
+      {/* Matches Section */}
+      <TeamMatchesSection
+        teamName={team.teamName}
+        matches={team.matches || []}
+        tactics={team.tactics || []}
+        isTeamCaptain={isTeamCaptain}
+      />
 
       {error && (
         <div className="mt-2 text-red-400 text-center text-sm">{error}</div>

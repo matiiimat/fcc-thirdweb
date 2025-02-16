@@ -13,10 +13,28 @@ import {
   PageWrapper,
 } from "../components/TeamPageStates";
 
+import { ITactic } from "../models/Team";
+
+interface Match {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  isCompleted: boolean;
+  homeTactic?: ITactic;
+  awayTactic?: ITactic;
+  result?: {
+    homeScore: number;
+    awayScore: number;
+  };
+}
+
 interface Team {
   teamName: string;
   captainAddress: string;
   players: string[];
+  matches?: Match[];
+  tactics?: ITactic[];
 }
 
 interface Player {
@@ -79,13 +97,36 @@ export default function TeamPage() {
     }
 
     try {
-      const response = await fetch("/api/teams");
-      const teams = await response.json();
-      if (!response.ok) throw new Error("Failed to fetch teams");
+      // Fetch team data
+      const teamResponse = await fetch("/api/teams");
+      const teams = await teamResponse.json();
+      if (!teamResponse.ok) throw new Error("Failed to fetch teams");
 
       const team = teams.find((t: Team) => t.teamName === player.team);
       if (team) {
-        setCurrentTeam(team);
+        // Fetch matches data
+        const matchesResponse = await fetch("/api/teams/matches");
+        if (!matchesResponse.ok) throw new Error("Failed to fetch matches");
+        const matches = await matchesResponse.json();
+
+        // Filter matches for current team
+        const teamMatches = matches.filter(
+          (match: Match) =>
+            match.homeTeam === team.teamName || match.awayTeam === team.teamName
+        );
+
+        // Fetch team tactics
+        const tacticsResponse = await fetch(
+          `/api/teams/tactics?teamName=${team.teamName}`
+        );
+        if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
+        const tactics = await tacticsResponse.json();
+
+        setCurrentTeam({
+          ...team,
+          matches: teamMatches,
+          tactics: tactics,
+        });
         setLoading(false);
       } else {
         setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
@@ -93,6 +134,7 @@ export default function TeamPage() {
       }
     } catch (error) {
       console.error("Error fetching current team:", error);
+      setError("Failed to fetch team data");
     }
   };
 
