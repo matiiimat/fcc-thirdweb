@@ -105,8 +105,8 @@ export default function TeamMatchesSection({
                 key={match.id}
                 className="glass-container bg-black/20 p-3 rounded-lg"
               >
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex-1">
+                <div className="flex flex-col">
+                  <div className="flex justify-center items-center mb-1">
                     <span
                       className={
                         match.homeTeam === teamName
@@ -127,7 +127,7 @@ export default function TeamMatchesSection({
                       {match.awayTeam}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-gray-400 text-center mb-2">
                     {formatMatchDate(match.date)}
                   </div>
                 </div>
@@ -199,8 +199,8 @@ export default function TeamMatchesSection({
                 key={match.id}
                 className="glass-container bg-black/20 p-3 rounded-lg"
               >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
+                <div className="flex flex-col">
+                  <div className="flex justify-center items-center mb-1">
                     <span
                       className={
                         match.homeTeam === teamName
@@ -225,11 +225,11 @@ export default function TeamMatchesSection({
                       {match.awayTeam}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-gray-400 text-center mb-1">
                     {formatMatchDate(match.date)}
                   </div>
                 </div>
-                <div className="mt-1 text-xs text-gray-400">
+                <div className="mt-1 text-xs text-gray-400 text-center">
                   Tactic Used: {getTeamTactic(match)?.name || "None"}
                 </div>
               </div>

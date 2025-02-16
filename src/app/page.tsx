@@ -3,16 +3,27 @@
 import Image from "next/image";
 import { ConnectButton } from "thirdweb/react";
 import { client } from "./client";
+import { darkTheme } from "thirdweb/react";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import { useRouter } from "next/navigation";
 
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["farcaster"],
+      options: [
+        "google",
+        "discord",
+        "telegram",
+        "farcaster",
+        "x",
+        "passkey",
+        "apple",
+      ],
     },
   }),
+  createWallet("io.metamask"),
   createWallet("com.coinbase.wallet"),
+  createWallet("me.rainbow"),
 ];
 
 export default function Home() {
@@ -54,10 +65,12 @@ export default function Home() {
             <ConnectButton
               client={client}
               wallets={wallets}
-              connectModal={{ size: "compact" }}
-              appMetadata={{
-                name: "fcc/FC",
-                url: "https://example.com",
+              theme={darkTheme({
+                colors: { accentText: "hsl(140, 100%, 26%)" },
+              })}
+              connectModal={{
+                size: "compact",
+                showThirdwebBranding: false,
               }}
             />
           </div>
