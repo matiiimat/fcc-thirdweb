@@ -4,6 +4,53 @@ import TeamModel, { ITeam, IMatch } from "../../models/Team";
 import PlayerModel from "../../models/Player";
 import { generateMatchSchedule } from "../../lib/match";
 
+interface TeamDocument {
+  _id: string;
+  teamName: string;
+  captainAddress: string;
+  players: string[];
+  tactics: any[];
+  matches?: IMatch[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+async function generateNewSchedule(teams: TeamDocument[]) {
+  if (teams.length < 2) return null;
+
+  const teamNames = teams.map(team => team.teamName);
+  console.log('Teams for match generation:', teamNames);
+  const newMatches = await generateMatchSchedule(teamNames);
+  console.log('Generated matches:', newMatches);
+
+  if (newMatches.length === 0) return null;
+
+  const schedule = await TeamModel.findOne({ teamName: "MatchSchedule" });
+  
+  if (schedule) {
+    // Update existing schedule
+    const updatedSchedule = await TeamModel.findOneAndUpdate(
+      { teamName: "MatchSchedule" },
+      { 
+        $set: { matches: newMatches }
+      },
+      { new: true }
+    ).lean() as (TeamDocument & { matches: IMatch[] }) | null;
+    
+    return updatedSchedule?.matches || [];
+  } else {
+    // Create new schedule
+    const newSchedule = await TeamModel.create({
+      teamName: "MatchSchedule",
+      captainAddress: "system",
+      players: [],
+      matches: newMatches
+    });
+    return newMatches;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { teamName, captainAddress } = await req.json();
@@ -41,6 +88,32 @@ export async function POST(req: NextRequest) {
       { team: teamName }
     );
 
+    // Get all teams to check if we need to generate a schedule
+    const allTeams = await TeamModel.find({
+      teamName: { $ne: "MatchSchedule" }
+    }).lean() as TeamDocument[];
+
+    // Check if we need to generate a new schedule
+    const schedule = await TeamModel.findOne({ 
+      teamName: "MatchSchedule" 
+    }).lean() as (TeamDocument & { matches: IMatch[] }) | null;
+
+    let needNewSchedule = false;
+    if (!schedule || !schedule.matches || schedule.matches.length === 0) {
+      needNewSchedule = true;
+    } else {
+      // Check if all matches are in the past
+      const now = new Date();
+      const futureMatches = schedule.matches.filter(match => new Date(match.date) > now);
+      if (futureMatches.length === 0) {
+        needNewSchedule = true;
+      }
+    }
+
+    if (needNewSchedule) {
+      await generateNewSchedule(allTeams);
+    }
+
     return NextResponse.json(team);
   } catch (error) {
     console.error("Error creating team:", error);
@@ -49,18 +122,6 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-interface TeamDocument {
-  _id: string;
-  teamName: string;
-  captainAddress: string;
-  players: string[];
-  tactics: any[];
-  matches?: IMatch[];
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
 }
 
 export async function GET(req: NextRequest) {
@@ -96,34 +157,10 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    if (needNewSchedule && teams.length > 1) { // Need at least 2 teams
-      const teamNames = teams.map(team => team.teamName);
-      console.log('Teams for match generation:', teamNames);
-      const newMatches = await generateMatchSchedule(teamNames);
-      console.log('Generated matches:', newMatches);
-      
-      if (newMatches.length > 0) {
-        if (schedule) {
-          // Update existing schedule
-          const updatedSchedule = await TeamModel.findOneAndUpdate(
-            { teamName: "MatchSchedule" },
-            { 
-              $set: { matches: newMatches }
-            },
-            { new: true }
-          ).lean() as (TeamDocument & { matches: IMatch[] }) | null;
-          
-          matches = updatedSchedule?.matches || [];
-        } else {
-          // Create new schedule
-          const newSchedule = await TeamModel.create({
-            teamName: "MatchSchedule",
-            captainAddress: "system",
-            players: [],
-            matches: newMatches
-          });
-          matches = newMatches;
-        }
+    if (needNewSchedule) {
+      const newMatches = await generateNewSchedule(teams);
+      if (newMatches) {
+        matches = newMatches;
       }
     }
 
