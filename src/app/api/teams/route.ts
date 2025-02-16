@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../lib/mongodb";
-import TeamModel from "../../models/Team";
+import TeamModel, { ITeam, IMatch } from "../../models/Team";
 import PlayerModel from "../../models/Player";
+import { generateMatchSchedule } from "../../lib/match";
 
 export async function POST(req: NextRequest) {
   try {
@@ -50,15 +51,106 @@ export async function POST(req: NextRequest) {
   }
 }
 
+interface TeamDocument {
+  _id: string;
+  teamName: string;
+  captainAddress: string;
+  players: string[];
+  tactics: any[];
+  matches?: IMatch[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const teams = await TeamModel.find({}).sort({ createdAt: -1 });
-    return NextResponse.json(teams);
+    
+    // Get all teams and the match schedule
+    const teams = await TeamModel.find({
+      teamName: { $ne: "MatchSchedule" }
+    }).sort({ createdAt: -1 }).lean() as TeamDocument[];
+
+    if (!teams || teams.length === 0) {
+      return NextResponse.json([]);
+    }
+
+    const schedule = await TeamModel.findOne({ 
+      teamName: "MatchSchedule" 
+    }).lean() as (TeamDocument & { matches: IMatch[] }) | null;
+    
+    // Check if we need to generate a new schedule
+    let matches: IMatch[] = [];
+    let needNewSchedule = false;
+
+    if (!schedule || !schedule.matches || schedule.matches.length === 0) {
+      needNewSchedule = true;
+    } else {
+      matches = schedule.matches;
+      // Check if all matches are in the past
+      const now = new Date();
+      const futureMatches = matches.filter(match => new Date(match.date) > now);
+      if (futureMatches.length === 0) {
+        needNewSchedule = true;
+      }
+    }
+
+    if (needNewSchedule && teams.length > 1) { // Need at least 2 teams
+      const teamNames = teams.map(team => team.teamName);
+      console.log('Teams for match generation:', teamNames);
+      const newMatches = await generateMatchSchedule(teamNames);
+      console.log('Generated matches:', newMatches);
+      
+      if (newMatches.length > 0) {
+        if (schedule) {
+          // Update existing schedule
+          const updatedSchedule = await TeamModel.findOneAndUpdate(
+            { teamName: "MatchSchedule" },
+            { 
+              $set: { matches: newMatches }
+            },
+            { new: true }
+          ).lean() as (TeamDocument & { matches: IMatch[] }) | null;
+          
+          matches = updatedSchedule?.matches || [];
+        } else {
+          // Create new schedule
+          const newSchedule = await TeamModel.create({
+            teamName: "MatchSchedule",
+            captainAddress: "system",
+            players: [],
+            matches: newMatches
+          });
+          matches = newMatches;
+        }
+      }
+    }
+
+    // Return teams with their matches
+    const teamsWithMatches = teams.map(team => {
+      // Filter matches for this team
+      const teamMatches = matches.filter((match: IMatch) =>
+        match.homeTeam === team.teamName || match.awayTeam === team.teamName
+      );
+      
+      console.log(`Matches for team ${team.teamName}:`, teamMatches);
+      
+      return {
+        ...team,
+        matches: teamMatches
+      };
+    });
+
+    console.log('All teams with matches:', teamsWithMatches);
+    return NextResponse.json(teamsWithMatches);
   } catch (error) {
     console.error("Error fetching teams:", error);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message, error.stack);
+    }
     return NextResponse.json(
-      { error: "Failed to fetch teams" },
+      { error: "Failed to fetch teams", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

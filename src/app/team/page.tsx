@@ -104,17 +104,6 @@ export default function TeamPage() {
 
       const team = teams.find((t: Team) => t.teamName === player.team);
       if (team) {
-        // Fetch matches data
-        const matchesResponse = await fetch("/api/teams/matches");
-        if (!matchesResponse.ok) throw new Error("Failed to fetch matches");
-        const matches = await matchesResponse.json();
-
-        // Filter matches for current team
-        const teamMatches = matches.filter(
-          (match: Match) =>
-            match.homeTeam === team.teamName || match.awayTeam === team.teamName
-        );
-
         // Fetch team tactics
         const tacticsResponse = await fetch(
           `/api/teams/tactics?teamName=${team.teamName}`
@@ -124,7 +113,6 @@ export default function TeamPage() {
 
         setCurrentTeam({
           ...team,
-          matches: teamMatches,
           tactics: tactics,
         });
         setLoading(false);
