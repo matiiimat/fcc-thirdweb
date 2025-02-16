@@ -31,17 +31,17 @@ export default function Home() {
             <Image
               src="/logo.png"
               alt="Logo"
-              width={80}
-              height={80}
+              width={240}
+              height={240}
               className="mx-auto"
               priority
             />
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
+          {/* <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
             fcc/FC
-          </h1>
+          </h1> */}
 
           {/* Instructions */}
           <div className="text-gray-300 text-center text-sm sm:text-base">
