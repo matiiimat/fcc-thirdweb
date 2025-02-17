@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { playerId, item, selectedSkill } = validationResult.data;
+    const { playerId, item, selectedSkill, newName } = validationResult.data;
 
     await connectDB();
 
@@ -52,6 +52,19 @@ export async function POST(req: NextRequest) {
 
       // Add any specific effects based on the item
       switch (item.id) {
+        case "name_change":
+          if (!newName) {
+            return {
+              error: NextResponse.json(
+                { error: "New name is required for name change" },
+                { status: 400 }
+              )
+            };
+          }
+          updateData.$set = {
+            playerName: newName
+          };
+          break;
         case "private_trainer":
           if (!selectedSkill) {
             return {
@@ -97,6 +110,7 @@ export async function POST(req: NextRequest) {
         data: {
           success: true,
           newBalance: updatedPlayer.xp,
+          newName: updatedPlayer.playerName,
           privateTrainer: updatedPlayer.privateTrainer
         }
       };

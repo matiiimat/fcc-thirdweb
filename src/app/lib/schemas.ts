@@ -25,9 +25,14 @@ export const solomatchSchema = playerIdSchema;
 export const storeSchema = z.object({
   ...playerIdSchema.shape,
   item: z.object({
-    id: z.enum(['private_trainer', 'management_certificate', 'training_certificate', 'finance_certificate']),
+    id: z.enum(['name_change', 'private_trainer', 'management_certificate', 'training_certificate', 'finance_certificate']),
     price: z.number().positive(),
   }),
+  newName: z.string()
+    .min(4, 'Name must be at least 4 characters')
+    .max(24, 'Name must be less than 24 characters')
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
+    .optional(),
   selectedSkill: z.enum([
     'strength',
     'stamina',

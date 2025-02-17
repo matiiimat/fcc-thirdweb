@@ -5,6 +5,7 @@ import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import NameChangeModal from "../components/NameChangeModal";
 
 interface PlayerData {
   playerId: string;
@@ -41,10 +42,17 @@ interface StoreItem {
 
 const storeItems: StoreItem[] = [
   {
+    id: "name_change",
+    name: "Name Change",
+    description: "Change your player name",
+    price: 10,
+    section: "Bonuses",
+  },
+  {
     id: "private_trainer",
     name: "Private Trainer",
-    description: "Train skill for 5 sessions",
-    price: 10,
+    description: "Train specific skill for 5 sessions",
+    price: 1000,
     section: "Bonuses",
   },
   {
@@ -79,6 +87,7 @@ export default function Store() {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<string>("");
   const [showSkillModal, setShowSkillModal] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [pendingPurchase, setPendingPurchase] = useState<StoreItem | null>(
     null
@@ -124,6 +133,12 @@ export default function Store() {
   const handlePurchase = async (item: StoreItem) => {
     if (!player || processing) return;
 
+    if (item.id === "name_change") {
+      setPendingPurchase(item);
+      setShowNameModal(true);
+      return;
+    }
+
     if (item.id === "private_trainer") {
       setPendingPurchase(item);
       setShowSkillModal(true);
@@ -133,7 +148,11 @@ export default function Store() {
     await processPurchase(item);
   };
 
-  const processPurchase = async (item: StoreItem, selectedSkill?: string) => {
+  const processPurchase = async (
+    item: StoreItem,
+    selectedSkill?: string,
+    newName?: string
+  ) => {
     if (!wallet) return;
 
     setError(null);
@@ -149,6 +168,7 @@ export default function Store() {
           playerId: player?.playerId,
           item,
           selectedSkill,
+          newName,
         }),
       });
 
@@ -161,7 +181,8 @@ export default function Store() {
         prev
           ? {
               ...prev,
-              money: data.newBalance,
+              xp: data.newBalance,
+              playerName: data.newName,
               privateTrainer: data.privateTrainer,
             }
           : null
@@ -216,6 +237,23 @@ export default function Store() {
           <div className="glass-container border-red-500/50 text-red-400 px-3 py-2 mb-2 rounded-lg text-sm">
             {error}
           </div>
+        )}
+
+        {/* Name Change Modal */}
+        {showNameModal && (
+          <NameChangeModal
+            isOpen={showNameModal}
+            onClose={() => {
+              setShowNameModal(false);
+              setPendingPurchase(null);
+            }}
+            onConfirm={async (newName) => {
+              if (!pendingPurchase) return;
+              await processPurchase(pendingPurchase, undefined, newName);
+              setShowNameModal(false);
+            }}
+            processing={processing !== ""}
+          />
         )}
 
         {/* Store Items */}
