@@ -10,7 +10,13 @@ import { useRouter } from "next/navigation";
 interface LeaderboardPlayer {
   _id: string;
   playerName: string;
-  totalPoints: number;
+  xp: number;
+}
+
+interface LeaderboardTeam {
+  _id: string;
+  teamName: string;
+  victories: number;
 }
 
 interface PlayerData {
@@ -21,6 +27,7 @@ export default function LeaderboardPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("players");
   const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
+  const [teams, setTeams] = useState<LeaderboardTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const activeWallet = useActiveWallet();
@@ -57,35 +64,34 @@ export default function LeaderboardPage() {
   }, [wallet, router]);
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/leaderboard");
-        if (!response.ok) {
-          throw new Error("Failed to fetch leaderboard");
+        if (activeTab === "players") {
+          const response = await fetch("/api/leaderboard");
+          if (!response.ok) {
+            throw new Error("Failed to fetch player leaderboard");
+          }
+          const data = await response.json();
+          setPlayers(data.players);
+        } else {
+          const response = await fetch("/api/leaderboard/teams");
+          if (!response.ok) {
+            throw new Error("Failed to fetch team leaderboard");
+          }
+          const data = await response.json();
+          setTeams(data.teams);
         }
-        const data = await response.json();
-        setPlayers(data.players);
       } catch (err) {
-        setError("Failed to load leaderboard data");
+        setError(`Failed to load ${activeTab} leaderboard data`);
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLeaderboard();
-  }, []);
-
-  const calculateStarRating = (totalPoints: number) => {
-    // Max possible points: 8 stats * 20 points = 160
-    const percentage =
-      (totalPoints / (8 * PLAYER_CONSTANTS.MAX_STAT_VALUE)) * 100;
-    if (percentage >= 90) return "⭐⭐⭐⭐⭐";
-    if (percentage >= 70) return "⭐⭐⭐⭐";
-    if (percentage >= 50) return "⭐⭐⭐";
-    if (percentage >= 30) return "⭐⭐";
-    return "⭐";
-  };
+    setLoading(true);
+    fetchData();
+  }, [activeTab]);
 
   if (loading) {
     return (
@@ -137,7 +143,6 @@ export default function LeaderboardPage() {
                   : "text-gray-400"
               }`}
               onClick={() => setActiveTab("teams")}
-              disabled
             >
               Teams
             </button>
@@ -155,10 +160,7 @@ export default function LeaderboardPage() {
                       Player
                     </th>
                     <th className="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs sm:text-sm">
-                      Rating
-                    </th>
-                    <th className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm">
-                      Points
+                      XP
                     </th>
                   </tr>
                 </thead>
@@ -174,11 +176,8 @@ export default function LeaderboardPage() {
                       <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
                         {player.playerName}
                       </td>
-                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
-                        {calculateStarRating(player.totalPoints)}
-                      </td>
                       <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm">
-                        {Math.floor(player.totalPoints)}
+                        {Math.floor(player.xp)}
                       </td>
                     </tr>
                   ))}
@@ -186,8 +185,40 @@ export default function LeaderboardPage() {
               </table>
             </div>
           ) : (
-            <div className="text-center text-gray-400 py-4 text-sm">
-              Coming soon
+            <div className="overflow-x-auto -mx-2 sm:mx-0">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-gray-400 border-b border-gray-700">
+                    <th className="py-2 sm:py-3 px-2 text-center w-10 sm:w-16 text-xs sm:text-sm">
+                      #
+                    </th>
+                    <th className="py-2 sm:py-3 px-2 sm:px-4 text-left text-xs sm:text-sm">
+                      Team
+                    </th>
+                    <th className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm">
+                      Victories
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teams.map((team, index) => (
+                    <tr
+                      key={team._id}
+                      className="text-gray-300 border-b border-gray-700 active:bg-[#2a2d31]/50 sm:hover:bg-[#2a2d31]/50 transition-colors duration-200"
+                    >
+                      <td className="py-2 sm:py-3 px-2 text-center text-xs sm:text-sm">
+                        {index + 1}
+                      </td>
+                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-xs sm:text-sm">
+                        {team.teamName}
+                      </td>
+                      <td className="py-2 sm:py-3 px-2 sm:px-4 text-right text-xs sm:text-sm">
+                        {team.victories}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
