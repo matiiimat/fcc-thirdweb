@@ -12,7 +12,7 @@ import {
   StatusMessages,
   PageWrapper,
 } from "../components/TeamPageStates";
-
+import { generateTeamName } from "../lib/names";
 import { ITactic } from "../models/Team";
 
 interface Match {
@@ -50,7 +50,6 @@ export default function TeamPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
   const [player, setPlayer] = useState<Player | null>(null);
-  const [newTeamName, setNewTeamName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -148,21 +147,19 @@ export default function TeamPage() {
       return;
     }
 
-    if (!newTeamName.trim()) {
-      setError("Please enter a team name");
-      return;
-    }
-
     setLoading(true);
     setError("");
     setSuccess("");
 
     try {
+      // Generate team name from captain's address
+      const { name: teamName } = generateTeamName(wallet.address);
+
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          teamName: newTeamName,
+          teamName,
           captainAddress: wallet.address,
         }),
       });
@@ -171,7 +168,6 @@ export default function TeamPage() {
       if (!response.ok) throw new Error(data.error);
 
       setSuccess("Team created successfully!");
-      setNewTeamName("");
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to create team");
@@ -236,9 +232,7 @@ export default function TeamPage() {
       ) : (
         <>
           <CreateTeamSection
-            newTeamName={newTeamName}
             loading={loading}
-            onNameChange={setNewTeamName}
             onCreateTeam={handleCreateTeam}
           />
           <AvailableTeamsSection

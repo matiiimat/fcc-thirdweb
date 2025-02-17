@@ -1,5 +1,62 @@
 import { createHash } from 'crypto';
 
+// Team name components
+const firstWords = [
+  'Phoenix', 'Thunder', 'Dragon', 'Storm', 'Silver', 'Golden', 'Crystal', 'Shadow',
+  'Royal', 'Crimson', 'Emerald', 'Frost', 'Solar', 'Lunar', 'Star', 'Ocean',
+  'Mountain', 'Desert', 'Forest', 'Valley', 'Iron', 'Black', 'Red', 'Blue',
+  'White', 'Dark', 'Light', 'Ancient', 'Mystic', 'Eternal'
+];
+
+const secondWords = [
+  'Warriors', 'Knights', 'Raiders', 'Titans', 'Eagles', 'Lions', 'Wolves', 'Hawks',
+  'Panthers', 'Dragons', 'Tigers', 'Giants', 'Kings', 'Guardians', 'Legends', 'Phoenix',
+  'Hunters', 'Wanderers', 'Spirits', 'Riders', 'Rangers', 'Falcons', 'Bears', 'Stallions',
+  'Wolves', 'Vipers', 'Scorpions', 'Ravens', 'Sharks', 'Cobras'
+];
+
+// Possible team prefixes
+const prefixes = [
+  "AC",  // Athletic Club
+  "AS",  // Associazione Sportiva
+  "FC",  // Football Club
+  "CF",  // Club de Fútbol
+  "SC",  // Sporting Club
+  "RC",  // Racing Club
+  "CD",  // Club Deportivo
+  "CA",  // Club Atlético
+  "SV",  // Sport Verein
+  "TSV", // Turn und Sport Verein
+  "US",  // Unione Sportiva
+  "IFK", // Idrottsföreningen Kamraterna
+  "DJK", // Deutsche Jugendkraft
+];
+
+// Function to generate team name from address
+export function generateTeamName(address: string): { name: string; acronym: string } {
+  const hash = generateHash(address);
+  const secondHash = parseInt(createHash('sha256').update(address + 'second').digest('hex').slice(0, 8), 16);
+  const prefixHash = parseInt(createHash('sha256').update(address + 'prefix').digest('hex').slice(0, 8), 16);
+  
+  // Get first word
+  const firstWord = getSeededElement(firstWords, hash);
+  
+  // 50% chance to add a second word
+  const useSecondWord = secondHash % 2 === 0;
+  const secondWord = useSecondWord ? ' ' + getSeededElement(secondWords, secondHash) : '';
+  
+  // Get prefix (FC or AS)
+  const prefix = getSeededElement(prefixes, prefixHash);
+  
+  // Create full name
+  const teamName = `${prefix} ${firstWord}${secondWord}`;
+  
+  return {
+    name: teamName,
+    acronym: prefix
+  };
+}
+
 // List of first names by nationality
 const firstNames = {
   english: ['Jack', 'Harry', 'James', 'William', 'George', 'Oliver', 'Thomas', 'Charlie', 'Oscar', 'Henry',
