@@ -21,7 +21,7 @@ export default function Jersey({
   const dimensions = {
     small: "w-6 h-8",
     medium: "w-12 h-16",
-    large: "w-32 h-40",
+    large: "w-24 h-32",
   };
 
   return (
@@ -32,15 +32,15 @@ export default function Jersey({
             <pattern
               id={`stripes-${size}`}
               patternUnits="userSpaceOnUse"
-              width="20"
-              height="20"
+              width="40"
+              height="40"
               patternTransform="rotate(0)"
             >
-              <rect width="10" height="20" fill={jersey.primaryColor} />
+              <rect width="20" height="40" fill={jersey.primaryColor} />
               <rect
-                x="10"
-                width="10"
-                height="20"
+                x="20"
+                width="20"
+                height="40"
                 fill={jersey.secondaryColor}
               />
             </pattern>
@@ -95,17 +95,27 @@ export default function Jersey({
             >
               <image
                 href={jersey.sponsorLogoUrl}
-                width="30"
-                height="30"
+                width="45"
+                height="45"
+                x="-7.5"
+                y="-7.5"
                 preserveAspectRatio="xMidYMid meet"
               />
             </pattern>
           )}
         </defs>
 
-        {/* Jersey shape */}
+        {/* Base Jersey Shape */}
         <path
-          d="M20,0 h60 a10,10 0 0 1 10,10 v80 a20,20 0 0 1 -20,20 h-40 a20,20 0 0 1 -20,-20 v-80 a10,10 0 0 1 10,-10"
+          d="M20,0 
+             h60 
+             l10,10 
+             l-5,80
+             q0,20 -20,20 
+             h-30 
+             q-20,0 -20,-20
+             l-5,-80
+             l10,-10"
           fill={
             jersey.pattern === "solid"
               ? jersey.primaryColor
@@ -119,16 +129,18 @@ export default function Jersey({
           strokeWidth="2"
         />
 
-        {/* Collar */}
-        <path d="M40,0 v10 h20 v-10" fill="#000" />
-
-        {/* Logo placeholder */}
-        <circle
-          cx="50"
-          cy="40"
-          r="15"
-          fill={jersey.sponsorLogoUrl ? `url(#sponsorLogo-${size})` : "#666"}
+        {/* Simple Collar */}
+        <path
+          d="M40,0 l10,8 l10,-8"
+          fill="none"
+          stroke="#000"
+          strokeWidth="2"
         />
+
+        {/* Sponsor Logo */}
+        {jersey.sponsorLogoUrl && (
+          <circle cx="50" cy="50" r="15" fill={`url(#sponsorLogo-${size})`} />
+        )}
       </svg>
     </div>
   );

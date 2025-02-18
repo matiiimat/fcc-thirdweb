@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IJersey } from "../models/Team";
+import Jersey from "./Jersey";
 
 interface JerseyCustomizationModalProps {
   isOpen: boolean;
@@ -35,24 +36,32 @@ export default function JerseyCustomizationModal({
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave(jersey);
+    // Ensure empty string for sponsorLogoUrl if no value
+    const updatedJersey = {
+      ...jersey,
+      sponsorLogoUrl: jersey.sponsorLogoUrl?.trim() || "",
+    };
+    onSave(updatedJersey);
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-gray-800 rounded-xl w-full max-w-md max-h-[80vh] flex flex-col">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-white mb-4">
-            Jersey Customization
-          </h2>
+        {/* Preview at the top */}
+        <div className="p-4 border-b border-gray-700">
+          <div className="bg-gray-900 rounded-lg p-4">
+            <div className="w-24 h-32 mx-auto flex items-center justify-center">
+              <Jersey jersey={jersey} size="large" />
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6">
-          <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          <div className="space-y-3">
             {/* Color Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Primary Color
               </label>
               <input
@@ -61,12 +70,12 @@ export default function JerseyCustomizationModal({
                 onChange={(e) =>
                   setJersey({ ...jersey, primaryColor: e.target.value })
                 }
-                className="w-full h-10 rounded cursor-pointer"
+                className="w-full h-8 rounded cursor-pointer"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Secondary Color
               </label>
               <input
@@ -75,13 +84,13 @@ export default function JerseyCustomizationModal({
                 onChange={(e) =>
                   setJersey({ ...jersey, secondaryColor: e.target.value })
                 }
-                className="w-full h-10 rounded cursor-pointer"
+                className="w-full h-8 rounded cursor-pointer"
               />
             </div>
 
             {/* Pattern Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Pattern
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -95,7 +104,7 @@ export default function JerseyCustomizationModal({
                       })
                     }
                     className={`
-                      p-2 rounded-lg transition-all duration-200
+                      p-1.5 rounded-lg transition-all duration-200 text-sm
                       ${
                         jersey.pattern === pattern.id
                           ? "bg-green-600 text-white"
@@ -111,7 +120,7 @@ export default function JerseyCustomizationModal({
 
             {/* Sponsorship */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
                 Sponsor Logo URL
               </label>
               <input
@@ -121,152 +130,27 @@ export default function JerseyCustomizationModal({
                 onChange={(e) =>
                   setJersey({ ...jersey, sponsorLogoUrl: e.target.value })
                 }
-                className="w-full px-3 py-2 bg-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-2 py-1.5 bg-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
               />
               <p className="mt-1 text-xs text-gray-400">
                 Enter the URL of your sponsor&apos;s logo image
               </p>
             </div>
-
-            {/* Preview */}
-            <div className="p-4 bg-gray-900 rounded-lg">
-              <div className="w-32 h-40 mx-auto relative">
-                {/* Jersey SVG with dynamic colors and patterns */}
-                <svg viewBox="0 0 100 120" className="w-full h-full">
-                  <defs>
-                    {jersey.pattern === "stripes" && (
-                      <pattern
-                        id="stripes"
-                        patternUnits="userSpaceOnUse"
-                        width="20"
-                        height="20"
-                        patternTransform="rotate(0)"
-                      >
-                        <rect
-                          width="10"
-                          height="20"
-                          fill={jersey.primaryColor}
-                        />
-                        <rect
-                          x="10"
-                          width="10"
-                          height="20"
-                          fill={jersey.secondaryColor}
-                        />
-                      </pattern>
-                    )}
-                    {jersey.pattern === "halves" && (
-                      <linearGradient
-                        id="halves"
-                        x1="0%"
-                        y1="0%"
-                        x2="100%"
-                        y2="0%"
-                      >
-                        <stop
-                          offset="50%"
-                          style={{ stopColor: jersey.primaryColor }}
-                        />
-                        <stop
-                          offset="50%"
-                          style={{ stopColor: jersey.secondaryColor }}
-                        />
-                      </linearGradient>
-                    )}
-                    {jersey.pattern === "quarters" && (
-                      <pattern
-                        id="quarters"
-                        patternUnits="userSpaceOnUse"
-                        width="100"
-                        height="120"
-                      >
-                        <rect
-                          width="50"
-                          height="60"
-                          fill={jersey.primaryColor}
-                        />
-                        <rect
-                          x="50"
-                          width="50"
-                          height="60"
-                          fill={jersey.secondaryColor}
-                        />
-                        <rect
-                          y="60"
-                          width="50"
-                          height="60"
-                          fill={jersey.secondaryColor}
-                        />
-                        <rect
-                          x="50"
-                          y="60"
-                          width="50"
-                          height="60"
-                          fill={jersey.primaryColor}
-                        />
-                      </pattern>
-                    )}
-                    {jersey.sponsorLogoUrl && (
-                      <pattern
-                        id="sponsorLogo"
-                        patternUnits="objectBoundingBox"
-                        width="1"
-                        height="1"
-                      >
-                        <image
-                          href={jersey.sponsorLogoUrl}
-                          width="30"
-                          height="30"
-                          preserveAspectRatio="xMidYMid meet"
-                        />
-                      </pattern>
-                    )}
-                  </defs>
-
-                  {/* Jersey shape */}
-                  <path
-                    d="M20,0 h60 a10,10 0 0 1 10,10 v80 a20,20 0 0 1 -20,20 h-40 a20,20 0 0 1 -20,-20 v-80 a10,10 0 0 1 10,-10"
-                    fill={
-                      jersey.pattern === "solid"
-                        ? jersey.primaryColor
-                        : jersey.pattern === "stripes"
-                        ? "url(#stripes)"
-                        : jersey.pattern === "halves"
-                        ? "url(#halves)"
-                        : "url(#quarters)"
-                    }
-                    stroke="#000"
-                    strokeWidth="2"
-                  />
-
-                  {/* Collar */}
-                  <path d="M40,0 v10 h20 v-10" fill="#000" />
-
-                  {/* Logo placeholder */}
-                  <circle
-                    cx="50"
-                    cy="40"
-                    r="15"
-                    fill={jersey.sponsorLogoUrl ? "url(#sponsorLogo)" : "#666"}
-                  />
-                </svg>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="p-6 border-t border-gray-700 mt-4">
-          <div className="flex justify-end space-x-3">
+        <div className="p-4 border-t border-gray-700">
+          <div className="flex justify-end space-x-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-gray-700 text-white hover:bg-gray-600 transition-colors text-sm"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm"
             >
               Save
             </button>

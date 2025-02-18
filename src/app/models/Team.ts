@@ -178,13 +178,10 @@ const TeamSchema = new Schema<ITeam>(
           enum: ['solid', 'stripes', 'halves', 'quarters'],
           default: 'solid'
         },
-        sponsorLogo: {
+        sponsorLogoUrl: {
           type: String,
-          required: false
-        },
-        useWebsiteLogo: {
-          type: Boolean,
-          default: true
+          required: false,
+          default: ''
         }
       },
       required: false
