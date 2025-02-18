@@ -34,12 +34,20 @@ export interface ITactic {
 }
 
 // Interface for team document
+export interface IJersey {
+  primaryColor: string;
+  secondaryColor: string;
+  pattern: 'solid' | 'stripes' | 'halves' | 'quarters';
+  sponsorLogoUrl?: string; // URL to sponsor logo
+}
+
 export interface ITeam extends Document {
   teamName: string;
   captainAddress: string;
   players: string[]; // Array of player ETH addresses
   tactics: ITactic[];
   matches: IMatch[];
+  jersey?: IJersey;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -155,6 +163,32 @@ const TeamSchema = new Schema<ITeam>(
       }],
       default: []
     },
+    jersey: {
+      type: {
+        primaryColor: {
+          type: String,
+          default: '#ffffff'
+        },
+        secondaryColor: {
+          type: String,
+          default: '#000000'
+        },
+        pattern: {
+          type: String,
+          enum: ['solid', 'stripes', 'halves', 'quarters'],
+          default: 'solid'
+        },
+        sponsorLogo: {
+          type: String,
+          required: false
+        },
+        useWebsiteLogo: {
+          type: Boolean,
+          default: true
+        }
+      },
+      required: false
+    }
   },
   {
     timestamps: true,
