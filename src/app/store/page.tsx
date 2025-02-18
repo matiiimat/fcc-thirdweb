@@ -45,7 +45,7 @@ const storeItems: StoreItem[] = [
     id: "name_change",
     name: "Name Change",
     description: "Change your player name",
-    price: 10,
+    price: 10000,
     section: "Bonuses",
   },
   {
