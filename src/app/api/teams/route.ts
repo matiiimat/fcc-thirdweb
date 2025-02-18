@@ -78,6 +78,12 @@ export async function POST(req: NextRequest) {
       teamName,
       captainAddress,
       players: [captainAddress], // Captain is automatically a player
+      jersey: {
+        primaryColor: "#ffffff",
+        secondaryColor: "#000000",
+        pattern: "solid",
+        sponsorLogoUrl: ""
+      }
     });
 
     await team.save();

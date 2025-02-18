@@ -4,6 +4,7 @@ import { calculatePlayerRating, getStarRating } from "../lib/game";
 import TeamMatchesSection from "./TeamMatchesSection";
 import { ITactic, IJersey } from "../models/Team";
 import JerseyCustomizationModal from "./JerseyCustomizationModal";
+import Jersey from "./Jersey";
 
 interface Match {
   id: string;
@@ -167,9 +168,10 @@ export default function TeamOverview({
   return (
     <div className="px-2 py-3">
       <div className="bg-gray-800 rounded-lg p-3 mb-3">
-        <h3 className="text-xl font-bold text-yellow-400 text-center mb-2">
-          {team.teamName}
-        </h3>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Jersey jersey={team.jersey} size="medium" />
+          <h3 className="text-xl font-bold text-yellow-400">{team.teamName}</h3>
+        </div>
 
         <div className="divide-y divide-gray-700">
           {teamMembers.map((member) => (
