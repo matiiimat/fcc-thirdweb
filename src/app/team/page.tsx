@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useActiveWallet } from "thirdweb/react";
 import TeamOverview from "../components/TeamOverview";
@@ -54,43 +54,23 @@ export default function TeamPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    if (wallet) {
-      fetchPlayerData();
-    } else {
-      setLoading(false);
-    }
-  }, [wallet]);
-
-  useEffect(() => {
-    if (player) {
-      if (player.team && player.team !== "No Team") {
-        fetchCurrentTeam();
-      } else {
-        fetchTeams();
-      }
-    }
-  }, [player]);
-
-  const fetchPlayerData = async () => {
+  const fetchTeams = useCallback(async () => {
     try {
-      const response = await fetch(
-        `/api/players/address/${encodeURIComponent(wallet!.address)}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch player data");
-      }
+      const response = await fetch("/api/teams");
       const data = await response.json();
-      setPlayer(data);
-    } catch (error) {
-      console.error("Error fetching player:", error);
-      setError("Failed to fetch player data");
-    } finally {
+      if (!response.ok) throw new Error(data.error);
+      setTeams(data);
+      setError("");
       setLoading(false);
+    } catch (error) {
+      console.error("Error fetching teams:", error);
+      if (error instanceof Error && error.message !== "No teams found") {
+        setError("Failed to fetch teams");
+      }
     }
-  };
+  }, [setTeams, setError, setLoading]);
 
-  const fetchCurrentTeam = async () => {
+  const fetchCurrentTeam = useCallback(async () => {
     if (!player?.team || player.team === "No Team") {
       return;
     }
@@ -123,23 +103,43 @@ export default function TeamPage() {
       console.error("Error fetching current team:", error);
       setError("Failed to fetch team data");
     }
-  };
+  }, [player, setCurrentTeam, setLoading, setPlayer, setError, fetchTeams]);
 
-  const fetchTeams = async () => {
+  const fetchPlayerData = useCallback(async () => {
     try {
-      const response = await fetch("/api/teams");
+      const response = await fetch(
+        `/api/players/address/${encodeURIComponent(wallet!.address)}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch player data");
+      }
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-      setTeams(data);
-      setError("");
-      setLoading(false);
+      setPlayer(data);
     } catch (error) {
-      console.error("Error fetching teams:", error);
-      if (error instanceof Error && error.message !== "No teams found") {
-        setError("Failed to fetch teams");
+      console.error("Error fetching player:", error);
+      setError("Failed to fetch player data");
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet, setPlayer, setError, setLoading]);
+
+  useEffect(() => {
+    if (wallet) {
+      fetchPlayerData();
+    } else {
+      setLoading(false);
+    }
+  }, [wallet, fetchPlayerData, setLoading]);
+
+  useEffect(() => {
+    if (player) {
+      if (player.team && player.team !== "No Team") {
+        fetchCurrentTeam();
+      } else {
+        fetchTeams();
       }
     }
-  };
+  }, [player, fetchCurrentTeam, fetchTeams]);
 
   const handleCreateTeam = async () => {
     if (!wallet) {

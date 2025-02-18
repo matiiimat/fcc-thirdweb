@@ -54,7 +54,7 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
         clearInterval(timerRef.current);
       }
     };
-  }, []); // Empty dependency array since we want this to run once
+  }, [selectedPosition, playerName]); // Add required dependencies
 
   // Update score when new events occur
   useEffect(() => {

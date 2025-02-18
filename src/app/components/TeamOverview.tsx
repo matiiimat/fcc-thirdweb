@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { calculatePlayerRating, getStarRating } from "../lib/game";
 import TeamMatchesSection from "./TeamMatchesSection";
@@ -106,11 +106,7 @@ export default function TeamOverview({
     }
   };
 
-  useEffect(() => {
-    fetchTeamMemberNames();
-  }, [team.players]);
-
-  const fetchTeamMemberNames = async () => {
+  const fetchTeamMemberNames = useCallback(async () => {
     try {
       const memberPromises = team.players.map(async (address) => {
         const response = await fetch(
@@ -132,7 +128,11 @@ export default function TeamOverview({
       console.error("Error fetching team member names:", error);
       setError("Failed to fetch team member names");
     }
-  };
+  }, [team.players, setTeamMembers, setError]);
+
+  useEffect(() => {
+    fetchTeamMemberNames();
+  }, [fetchTeamMemberNames]);
 
   const handleLeaveTeam = async () => {
     try {
