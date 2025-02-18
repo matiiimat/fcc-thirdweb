@@ -124,7 +124,7 @@ export default function JerseyCustomizationModal({
                 className="w-full px-3 py-2 bg-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
               <p className="mt-1 text-xs text-gray-400">
-                Enter the URL of your sponsor's logo image
+                Enter the URL of your sponsor&apos;s logo image
               </p>
             </div>
 
