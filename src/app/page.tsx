@@ -3,16 +3,27 @@
 import Image from "next/image";
 import { ConnectButton } from "thirdweb/react";
 import { client } from "./client";
+import { darkTheme } from "thirdweb/react";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import { useRouter } from "next/navigation";
 
 const wallets = [
   inAppWallet({
     auth: {
-      options: ["farcaster"],
+      options: [
+        "google",
+        "discord",
+        "telegram",
+        "farcaster",
+        "x",
+        "passkey",
+        "apple",
+      ],
     },
   }),
+  createWallet("io.metamask"),
   createWallet("com.coinbase.wallet"),
+  createWallet("me.rainbow"),
 ];
 
 export default function Home() {
@@ -31,17 +42,17 @@ export default function Home() {
             <Image
               src="/logo.png"
               alt="Logo"
-              width={80}
-              height={80}
+              width={240}
+              height={240}
               className="mx-auto"
               priority
             />
           </div>
 
           {/* Title */}
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
+          {/* <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
             fcc/FC
-          </h1>
+          </h1> */}
 
           {/* Instructions */}
           <div className="text-gray-300 text-center text-sm sm:text-base">
@@ -54,10 +65,12 @@ export default function Home() {
             <ConnectButton
               client={client}
               wallets={wallets}
-              connectModal={{ size: "compact" }}
-              appMetadata={{
-                name: "fcc/FC",
-                url: "https://example.com",
+              theme={darkTheme({
+                colors: { accentText: "hsl(140, 100%, 26%)" },
+              })}
+              connectModal={{
+                size: "compact",
+                showThirdwebBranding: false,
               }}
             />
           </div>

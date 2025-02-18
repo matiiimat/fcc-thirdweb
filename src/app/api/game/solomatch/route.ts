@@ -77,7 +77,10 @@ export async function POST(req: NextRequest) {
       if (event.text.includes(player.playerName)) {
         playerNameMentions++;
       }
-      if (event.type === 'goal' && event.team === 'player' && event.text.includes(player.playerName)) {
+      if (event.type === 'goal' && event.team === 'player' &&
+          (event.text.includes(`${player.playerName} scores`) ||
+           event.text.includes(`finish by ${player.playerName}`) ||
+           event.text.includes(`${player.playerName} finds the back of the net`))) {
         playerScored = true;
       }
     });

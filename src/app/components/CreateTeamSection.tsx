@@ -1,14 +1,10 @@
 interface CreateTeamSectionProps {
-  newTeamName: string;
   loading: boolean;
-  onNameChange: (name: string) => void;
   onCreateTeam: () => void;
 }
 
 export default function CreateTeamSection({
-  newTeamName,
   loading,
-  onNameChange,
   onCreateTeam,
 }: CreateTeamSectionProps) {
   return (
@@ -16,13 +12,9 @@ export default function CreateTeamSection({
       <h3 className="text-xl font-bold mb-3 text-yellow-400">Create Team</h3>
       <div className="bg-gray-800 rounded-lg p-3">
         <div className="flex flex-col gap-3">
-          <input
-            type="text"
-            value={newTeamName}
-            onChange={(e) => onNameChange(e.target.value)}
-            placeholder="Enter team name"
-            className="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:border-yellow-400 placeholder-gray-400"
-          />
+          <p className="text-gray-300 text-sm">
+            A random team name will be generated for your team.
+          </p>
           <button
             onClick={onCreateTeam}
             disabled={loading}

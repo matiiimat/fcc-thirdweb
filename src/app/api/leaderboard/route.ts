@@ -6,26 +6,20 @@ export async function GET() {
   try {
     await connectDB();
 
-    // Get top 100 players sorted by total attributes
+    // Get top 100 players sorted by XP, excluding players with NaN XP
     const players = await Player.aggregate([
+      {
+        $match: {
+          xp: { $type: "number", $ne: NaN }
+        }
+      },
       {
         $project: {
           playerName: 1,
-          totalPoints: {
-            $sum: [
-              "$stats.strength",
-              "$stats.stamina",
-              "$stats.passing",
-              "$stats.shooting",
-              "$stats.defending",
-              "$stats.speed",
-              "$stats.positioning",
-              "$stats.workEthic"
-            ]
-          }
+          xp: 1
         }
       },
-      { $sort: { totalPoints: -1 } },
+      { $sort: { xp: -1 } },
       { $limit: 100 }
     ]);
 

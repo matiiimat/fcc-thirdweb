@@ -1,6 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { calculatePlayerRating, getStarRating } from "../lib/game";
+import TeamMatchesSection from "./TeamMatchesSection";
+import { ITactic, IJersey } from "../models/Team";
+import JerseyCustomizationModal from "./JerseyCustomizationModal";
+import Jersey from "./Jersey";
+
+interface Match {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  isCompleted: boolean;
+  homeTactic?: ITactic;
+  awayTactic?: ITactic;
+  result?: {
+    homeScore: number;
+    awayScore: number;
+  };
+}
 
 interface TeamMember {
   address: string;
@@ -37,6 +55,9 @@ interface TeamOverviewProps {
     teamName: string;
     captainAddress: string;
     players: string[];
+    matches?: Match[];
+    tactics?: ITactic[];
+    jersey?: IJersey;
   };
   playerAddress: string;
   onLeaveTeam: () => void;
@@ -51,12 +72,41 @@ export default function TeamOverview({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [jerseyModalOpen, setJerseyModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchTeamMemberNames();
-  }, [team.players]);
+  const handleJerseyUpdate = async (jersey: IJersey) => {
+    try {
+      setLoading(true);
+      setError("");
 
-  const fetchTeamMemberNames = async () => {
+      const response = await fetch("/api/teams/jersey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamName: team.teamName,
+          captainAddress: playerAddress,
+          jersey,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update jersey");
+      }
+
+      // Refresh team data
+      await fetchTeamMemberNames();
+    } catch (error) {
+      console.error("Error updating jersey:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to update jersey"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTeamMemberNames = useCallback(async () => {
     try {
       const memberPromises = team.players.map(async (address) => {
         const response = await fetch(
@@ -78,7 +128,11 @@ export default function TeamOverview({
       console.error("Error fetching team member names:", error);
       setError("Failed to fetch team member names");
     }
-  };
+  }, [team.players, setTeamMembers, setError]);
+
+  useEffect(() => {
+    fetchTeamMemberNames();
+  }, [fetchTeamMemberNames]);
 
   const handleLeaveTeam = async () => {
     try {
@@ -114,9 +168,10 @@ export default function TeamOverview({
   return (
     <div className="px-2 py-3">
       <div className="bg-gray-800 rounded-lg p-3 mb-3">
-        <h3 className="text-xl font-bold text-yellow-400 text-center mb-2">
-          {team.teamName}
-        </h3>
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Jersey jersey={team.jersey} size="medium" />
+          <h3 className="text-xl font-bold text-yellow-400">{team.teamName}</h3>
+        </div>
 
         <div className="divide-y divide-gray-700">
           {teamMembers.map((member) => (
@@ -167,6 +222,34 @@ export default function TeamOverview({
           </button>
         )}
       </div>
+
+      {/* Matches Section */}
+      <TeamMatchesSection
+        teamName={team.teamName}
+        matches={team.matches || []}
+        tactics={team.tactics || []}
+        isTeamCaptain={isTeamCaptain}
+      />
+
+      {/* Sponsoring Section */}
+      {isTeamCaptain && (
+        <div className="mt-4">
+          <button
+            onClick={() => setJerseyModalOpen(true)}
+            className="w-full px-4 py-2 rounded bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
+          >
+            Sponsoring
+          </button>
+        </div>
+      )}
+
+      {/* Jersey Customization Modal */}
+      <JerseyCustomizationModal
+        isOpen={jerseyModalOpen}
+        onClose={() => setJerseyModalOpen(false)}
+        onSave={handleJerseyUpdate}
+        currentJersey={team.jersey}
+      />
 
       {error && (
         <div className="mt-2 text-red-400 text-center text-sm">{error}</div>

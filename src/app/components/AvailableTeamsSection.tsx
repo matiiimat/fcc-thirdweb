@@ -1,9 +1,12 @@
 import { TEAM_CONSTANTS } from "../lib/constants";
+import { IJersey } from "../models/Team";
+import Jersey from "./Jersey";
 
 interface Team {
   teamName: string;
   captainAddress: string;
   players: string[];
+  jersey?: IJersey;
 }
 
 interface AvailableTeamsSectionProps {
@@ -39,9 +42,12 @@ export default function AvailableTeamsSection({
             return (
               <div key={team.teamName} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-lg font-medium text-white">
-                    {team.teamName}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <Jersey jersey={team.jersey} size="small" />
+                    <h4 className="text-lg font-medium text-white">
+                      {team.teamName}
+                    </h4>
+                  </div>
                   <span className="text-sm px-2 py-1 bg-gray-700 rounded text-green-400">
                     {team.players.length}/{TEAM_CONSTANTS.MAX_PLAYERS}
                   </span>

@@ -54,7 +54,7 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
         clearInterval(timerRef.current);
       }
     };
-  }, []); // Empty dependency array since we want this to run once
+  }, [selectedPosition, playerName]); // Add required dependencies
 
   // Update score when new events occur
   useEffect(() => {
@@ -81,8 +81,8 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
   const currentEvents = events.filter((event) => event.minute <= currentMinute);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] rounded-lg max-w-md w-full p-6 shadow-xl">
+    <div className="fixed inset-x-0 top-0 bg-black bg-opacity-50 z-50">
+      <div className="bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] rounded-b-lg max-w-md mx-auto p-6 shadow-xl">
         {/* Score */}
         <div className="text-center mb-4">
           <div className="text-2xl font-bold text-white mb-2">

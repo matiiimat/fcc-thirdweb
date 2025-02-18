@@ -329,7 +329,11 @@ export default function TrainPage() {
               </button>
               <div
                 className={`text-xs ${
-                  canPlay ? "text-green-400" : "text-red-400"
+                  !selectedPosition
+                    ? "text-green-400"
+                    : canPlay
+                    ? "text-green-400"
+                    : "text-red-400"
                 }`}
               >
                 {matchCooldown.onCooldown
@@ -371,12 +375,12 @@ export default function TrainPage() {
                 </div>
               )}
 
-              <div
-                className={`text-xs ${
-                  canTrain ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {canTrain ? "Ready" : trainCooldown.remainingTime}
+              <div className="text-xs">
+                <span
+                  className={`${canTrain ? "text-green-400" : "text-red-400"}`}
+                >
+                  {canTrain ? "Ready" : trainCooldown.remainingTime}
+                </span>
               </div>
               {player.privateTrainer?.selectedSkill &&
                 player.privateTrainer.remainingSessions > 0 && (

@@ -2,6 +2,21 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { PLAYER_CONSTANTS, TEAM_CONSTANTS } from '../lib/constants';
 import { Position } from './Player';
 
+// Interface for match
+export interface IMatch {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
+  isCompleted: boolean;
+  homeTactic?: ITactic;
+  awayTactic?: ITactic;
+  result?: {
+    homeScore: number;
+    awayScore: number;
+  };
+}
+
 // Interface for player position in tactic
 export interface IPlayerPosition {
   ethAddress: string;
@@ -19,11 +34,20 @@ export interface ITactic {
 }
 
 // Interface for team document
+export interface IJersey {
+  primaryColor: string;
+  secondaryColor: string;
+  pattern: 'solid' | 'stripes' | 'halves' | 'quarters';
+  sponsorLogoUrl?: string; // URL to sponsor logo
+}
+
 export interface ITeam extends Document {
   teamName: string;
   captainAddress: string;
   players: string[]; // Array of player ETH addresses
   tactics: ITactic[];
+  matches: IMatch[];
+  jersey?: IJersey;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,6 +96,24 @@ const TacticSchema = new Schema({
   playerPositions: [PlayerPositionSchema],
 });
 
+// Schema for match result
+const MatchResultSchema = new Schema({
+  homeScore: Number,
+  awayScore: Number
+}, { _id: false });
+
+// Schema for match
+const MatchSchema = new Schema({
+  id: String,
+  homeTeam: String,
+  awayTeam: String,
+  date: String,
+  isCompleted: Boolean,
+  homeTactic: TacticSchema,
+  awayTactic: TacticSchema,
+  result: MatchResultSchema
+}, { _id: false });
+
 const TeamSchema = new Schema<ITeam>(
   {
     teamName: {
@@ -105,6 +147,45 @@ const TeamSchema = new Schema<ITeam>(
         message: 'Team cannot have more than 3 tactics',
       },
     },
+    matches: {
+      type: [{
+        id: String,
+        homeTeam: String,
+        awayTeam: String,
+        date: String,
+        isCompleted: Boolean,
+        homeTactic: TacticSchema,
+        awayTactic: TacticSchema,
+        result: {
+          homeScore: Number,
+          awayScore: Number
+        }
+      }],
+      default: []
+    },
+    jersey: {
+      type: {
+        primaryColor: {
+          type: String,
+          default: '#ffffff'
+        },
+        secondaryColor: {
+          type: String,
+          default: '#000000'
+        },
+        pattern: {
+          type: String,
+          enum: ['solid', 'stripes', 'halves', 'quarters'],
+          default: 'solid'
+        },
+        sponsorLogoUrl: {
+          type: String,
+          required: false,
+          default: ''
+        }
+      },
+      required: false
+    }
   },
   {
     timestamps: true,
