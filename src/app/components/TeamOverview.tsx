@@ -204,12 +204,20 @@ export default function TeamOverview({
 
       <div className="space-y-2">
         {isTeamCaptain && (
-          <button
-            onClick={() => router.push("/teammanagement")}
-            className="w-full px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-          >
-            Manage Team
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={() => router.push("/teammanagement")}
+              className="w-full px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+            >
+              Manage Team
+            </button>
+            <button
+              onClick={() => router.push("/scouting")}
+              className="w-full px-4 py-2 rounded bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors"
+            >
+              Scouting
+            </button>
+          </div>
         )}
 
         {!isTeamCaptain && (
