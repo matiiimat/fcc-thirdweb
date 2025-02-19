@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActiveWallet } from "thirdweb/react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import HireBotModal from "../components/HireBotModal";
 import { IPlayerStats } from "../models/Player";
 
 interface Player {
@@ -28,7 +29,9 @@ export default function ScoutingPage() {
   const [bots, setBots] = useState<Bot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isCaptain, setIsCaptain] = useState(false);
+  const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
 
   useEffect(() => {
     const checkCaptainStatus = async () => {
@@ -223,6 +226,8 @@ export default function ScoutingPage() {
                       <tr
                         key={bot.ethAddress}
                         className="text-gray-300 border-b border-gray-700 active:bg-[#2a2d31]/50 sm:hover:bg-[#2a2d31]/50 transition-colors duration-200"
+                        onClick={() => setSelectedBot(bot)}
+                        style={{ cursor: "pointer" }}
                       >
                         <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
                           {bot.playerName}
@@ -258,6 +263,19 @@ export default function ScoutingPage() {
           </div>
         </div>
 
+        {/* Status Messages */}
+        {(error || success) && (
+          <div
+            className={`mt-4 p-3 rounded-lg text-center ${
+              error
+                ? "bg-red-500/20 text-red-300"
+                : "bg-green-500/20 text-green-300"
+            }`}
+          >
+            {error || success}
+          </div>
+        )}
+
         {/* Back Button */}
         <div className="mt-6 flex justify-center pb-20">
           <button
@@ -269,6 +287,44 @@ export default function ScoutingPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Hire Bot Modal */}
+      <HireBotModal
+        isOpen={!!selectedBot}
+        onClose={() => setSelectedBot(null)}
+        onConfirm={async () => {
+          if (!selectedBot || !wallet) return;
+
+          try {
+            const response = await fetch("/api/teams/hire-bot", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                botAddress: selectedBot.ethAddress,
+                captainAddress: wallet.address,
+              }),
+            });
+
+            if (!response.ok) {
+              const data = await response.json();
+              throw new Error(data.error || "Failed to hire bot");
+            }
+
+            setSuccess(`Successfully hired ${selectedBot.playerName}!`);
+            // Refresh the bots list
+            const botsResponse = await fetch("/api/bots");
+            if (!botsResponse.ok) {
+              throw new Error("Failed to refresh bots list");
+            }
+            const data = await botsResponse.json();
+            setBots(data.bots);
+          } catch (err: any) {
+            setError(err.message || "Failed to hire bot");
+          }
+          setSelectedBot(null);
+        }}
+        botName={selectedBot?.playerName || ""}
+      />
     </div>
   );
 }

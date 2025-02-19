@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
+import { useEffect, useRef, useState } from "react";
 import { calculatePlayerRating, getStarRating } from "../lib/game";
+import FireBotModal from "./FireBotModal";
+import { Position } from "../models/Player";
 
 interface Player {
   ethAddress: string;
   playerName: string;
+  isBot?: boolean;
   stats?: {
     strength: number;
     stamina: number;
@@ -38,11 +40,12 @@ interface PlayerSelectionModalProps {
   players: Player[];
   onSelect: (player: Player) => void;
   selectedPlayer?: Player;
-  position: string;
-  assignedPlayers: string[]; // Array of player ETH addresses that are already assigned
+  position: Position;
+  assignedPlayers: string[];
+  onFireBot?: (botAddress: string) => void;
 }
 
-const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
+export default function PlayerSelectionModal({
   isOpen,
   onClose,
   players,
@@ -50,8 +53,10 @@ const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
   selectedPlayer,
   position,
   assignedPlayers,
-}) => {
+  onFireBot,
+}: PlayerSelectionModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [botToFire, setBotToFire] = useState<Player | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,71 +80,100 @@ const PlayerSelectionModal: React.FC<PlayerSelectionModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div
-        ref={modalRef}
-        className="bg-[#1a1d21] rounded-xl p-4 w-full max-w-md mx-4"
-      >
-        <h3 className="text-lg font-bold text-white mb-2">
-          Select Player for {getPositionName(position)} Position
-        </h3>
-        <div className="max-h-[60vh] overflow-y-auto">
-          {players.filter(
-            (p) =>
-              !assignedPlayers.includes(p.ethAddress) ||
-              selectedPlayer?.ethAddress === p.ethAddress
-          ).length === 0 ? (
-            <p className="text-gray-400 text-center py-4">
-              No available players
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {players
-                .filter(
-                  (p) =>
-                    !assignedPlayers.includes(p.ethAddress) ||
-                    selectedPlayer?.ethAddress === p.ethAddress
-                )
-                .map((player) => (
-                  <button
-                    key={player.ethAddress}
-                    onClick={() => {
-                      onSelect(player);
-                      onClose();
-                    }}
-                    className={`
-                    w-full p-3 rounded-lg text-left transition-all duration-200
-                    ${
-                      selectedPlayer?.ethAddress === player.ethAddress
-                        ? "bg-green-600 text-white"
-                        : "glass-container hover:bg-gray-800"
-                    }
-                  `}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="font-medium">{player.playerName}</div>
-                      <div className="text-[0.7rem] leading-none">
-                        {player.stats
-                          ? getStarRating(calculatePlayerRating(player.stats))
-                          : "⭐"}
+    <>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+          ref={modalRef}
+          className="bg-[#1a1d21] rounded-xl p-4 w-full max-w-md mx-4"
+        >
+          <h3 className="text-lg font-bold text-white mb-2">
+            Select Player for {getPositionName(position)} Position
+          </h3>
+          <div className="max-h-[60vh] overflow-y-auto">
+            {players.filter(
+              (p) =>
+                !assignedPlayers.includes(p.ethAddress) ||
+                selectedPlayer?.ethAddress === p.ethAddress
+            ).length === 0 ? (
+              <p className="text-gray-400 text-center py-4">
+                No available players
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {players
+                  .filter(
+                    (p) =>
+                      !assignedPlayers.includes(p.ethAddress) ||
+                      selectedPlayer?.ethAddress === p.ethAddress
+                  )
+                  .map((player) => (
+                    <button
+                      key={player.ethAddress}
+                      onClick={() => {
+                        onSelect(player);
+                        onClose();
+                      }}
+                      className={`
+                        w-full p-3 rounded-lg text-left transition-all duration-200
+                        ${
+                          selectedPlayer?.ethAddress === player.ethAddress
+                            ? "bg-green-600 text-white"
+                            : "glass-container hover:bg-gray-800"
+                        }
+                      `}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">{player.playerName}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-[0.7rem] leading-none">
+                            {player.stats
+                              ? getStarRating(
+                                  calculatePlayerRating(player.stats)
+                                )
+                              : "⭐"}
+                          </div>
+                          {player.isBot && onFireBot && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setBotToFire(player);
+                              }}
+                              className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 transition-colors"
+                            >
+                              Fire
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
-            </div>
-          )}
-        </div>
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
-          >
-            Cancel
-          </button>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
 
-export default PlayerSelectionModal;
+      {/* Fire Bot Modal */}
+      <FireBotModal
+        isOpen={!!botToFire}
+        onClose={() => setBotToFire(null)}
+        onConfirm={() => {
+          if (botToFire && onFireBot) {
+            onFireBot(botToFire.ethAddress);
+            setBotToFire(null);
+            onClose();
+          }
+        }}
+        botName={botToFire?.playerName || ""}
+      />
+    </>
+  );
+}

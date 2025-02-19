@@ -41,6 +41,17 @@ const TACTICAL_STYLES: TacticalStyle[] = [
 interface Player {
   ethAddress: string;
   playerName: string;
+  isBot?: boolean;
+  stats?: {
+    strength: number;
+    stamina: number;
+    passing: number;
+    shooting: number;
+    defending: number;
+    speed: number;
+    positioning: number;
+    workEthic: number;
+  };
 }
 
 export default function TeamManagementPage() {
@@ -72,6 +83,8 @@ export default function TeamManagementPage() {
     position: Position;
   } | null>(null);
   const [savingTactic, setSavingTactic] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const init = async () => {
@@ -101,6 +114,7 @@ export default function TeamManagementPage() {
                 ethAddress: p.ethAddress,
                 playerName: p.playerName,
                 stats: p.stats,
+                isBot: p.ethAddress.startsWith("0xbot"), // Check if it's a bot by the address pattern
               }))
             );
 
@@ -262,6 +276,46 @@ export default function TeamManagementPage() {
       console.error("Error saving tactic:", error);
     }
     setSavingTactic(false);
+  };
+
+  const handleFireBot = async (botAddress: string) => {
+    if (!wallet || !teamData) return;
+
+    try {
+      const response = await fetch("/api/teams/fire-bot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          botAddress,
+          captainAddress: wallet.address,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to fire bot");
+      }
+
+      // Refresh players list
+      const playersPromises = teamData.players
+        .filter((address) => address !== botAddress)
+        .map(async (address: string) => {
+          const response = await fetch(`/api/players/address/${address}`);
+          return response.json();
+        });
+      const playerData = await Promise.all(playersPromises);
+      setPlayers(
+        playerData.map((p: any) => ({
+          ethAddress: p.ethAddress,
+          playerName: p.playerName,
+          stats: p.stats,
+        }))
+      );
+
+      setSuccess("Successfully fired bot!");
+    } catch (err: any) {
+      setError(err.message || "Failed to fire bot");
+    }
   };
 
   const handleLoadTactic = (tactic: ITactic) => {
@@ -440,6 +494,19 @@ export default function TeamManagementPage() {
       </main>
       <Footer />
 
+      {/* Status Messages */}
+      {(error || success) && (
+        <div
+          className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-lg ${
+            error
+              ? "bg-red-500/20 text-red-300"
+              : "bg-green-500/20 text-green-300"
+          }`}
+        >
+          {error || success}
+        </div>
+      )}
+
       {/* Player Selection Modal */}
       <PlayerSelectionModal
         isOpen={playerModalOpen}
@@ -460,6 +527,7 @@ export default function TeamManagementPage() {
         }
         position={selectedPosition?.position || "D"}
         assignedPlayers={currentTactic.playerPositions.map((p) => p.ethAddress)}
+        onFireBot={handleFireBot}
       />
 
       {/* Tactic Name Modal */}
