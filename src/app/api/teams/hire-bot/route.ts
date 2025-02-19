@@ -41,11 +41,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify bot exists and is unassigned
+    // Verify bot exists and is unassigned (case-insensitive)
     const bot = await mongoose.connection.db
       .collection("players")
       .findOne({
-        ethAddress: botAddress,
+        ethAddress: { $regex: new RegExp(`^${botAddress}$`, 'i') },
         team: "Unassigned"
       });
 
@@ -56,20 +56,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update bot's team
+    // Update bot's team using the original case from the database
     await mongoose.connection.db
       .collection("players")
       .updateOne(
-        { ethAddress: botAddress },
+        { ethAddress: { $regex: new RegExp(`^${botAddress}$`, 'i') } },
         { $set: { team: team.teamName } }
       );
 
-    // Add bot to team's players
+    // Add bot to team's players using the stored case
     await mongoose.connection.db
       .collection("teams")
       .updateOne(
         { _id: new ObjectId(team._id) },
-        { $addToSet: { players: botAddress } }
+        { $addToSet: { players: bot.ethAddress } } // Use the case from the database
       );
 
     return NextResponse.json({ success: true });

@@ -35,8 +35,10 @@ export async function GET(req: NextRequest, { params }: Params) {
         matches: p.ethAddress.toLowerCase() === searchAddress
       }))); // Debug log
 
-      // First find the player
-      const player = await Player.findOne({ ethAddress: searchAddress });
+      // Find the player
+      const player = await Player.findOne({
+        ethAddress: { $regex: new RegExp(`^${searchAddress}$`, 'i') }
+      });
       
       if (player) {
         // Just update the last connection date
