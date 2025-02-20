@@ -105,68 +105,65 @@ export default function TeamOverview({
     team.captainAddress.toLowerCase() === playerAddress.toLowerCase();
 
   return (
-    <div className="px-2 py-3">
-      <div className="bg-gray-800 rounded-lg p-3 mb-3">
-        <div className="flex items-center justify-center gap-2">
-          <Jersey jersey={team.jersey} size="medium" />
-          <h3 className="text-xl font-bold text-yellow-400">{team.teamName}</h3>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-center gap-3">
+        <Jersey jersey={team.jersey} size="medium" />
+        <h3 className="text-xl font-bold text-yellow-400">{team.teamName}</h3>
       </div>
 
-      <div className="space-y-2">
-        {isTeamCaptain && (
-          <div className="space-y-2">
-            <button
-              onClick={() => router.push("/manageteam")}
-              className="w-full px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-            >
-              Manage Team
-            </button>
-            <button
-              onClick={() => router.push("/teammanagement")}
-              className="w-full px-4 py-2 rounded bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
-            >
-              Tactics
-            </button>
-            <button
-              onClick={() => router.push("/scouting")}
-              className="w-full px-4 py-2 rounded bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors"
-            >
-              Scouting
-            </button>
+      <div className="space-y-4">
+        {isTeamCaptain ? (
+          <div className="grid gap-3">
+            <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+              <h4 className="text-lg font-semibold text-yellow-400 mb-3">
+                Team Management
+              </h4>
+              <div className="grid gap-2">
+                <button
+                  onClick={() => router.push("/manageteam")}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Manage Team
+                </button>
+                <button
+                  onClick={() => router.push("/teammanagement")}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Tactics
+                </button>
+                <button
+                  onClick={() => router.push("/scouting")}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Scouting
+                </button>
+                <button
+                  onClick={() => setJerseyModalOpen(true)}
+                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Sponsoring
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-
-        {!isTeamCaptain && (
+        ) : (
           <button
             onClick={handleLeaveTeam}
             disabled={loading}
-            className="w-full px-4 py-2 rounded bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:transform-none"
           >
             {loading ? "Leaving..." : "Leave Team"}
           </button>
         )}
+
+        {/* Matches Section */}
+        <TeamMatchesSection
+          teamName={team.teamName}
+          matches={team.matches || []}
+          tactics={team.tactics || []}
+          isTeamCaptain={isTeamCaptain}
+        />
       </div>
-
-      {/* Matches Section */}
-      <TeamMatchesSection
-        teamName={team.teamName}
-        matches={team.matches || []}
-        tactics={team.tactics || []}
-        isTeamCaptain={isTeamCaptain}
-      />
-
-      {/* Sponsoring Section */}
-      {isTeamCaptain && (
-        <div className="mt-4">
-          <button
-            onClick={() => setJerseyModalOpen(true)}
-            className="w-full px-4 py-2 rounded bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
-          >
-            Sponsoring
-          </button>
-        </div>
-      )}
 
       {/* Jersey Customization Modal */}
       <JerseyCustomizationModal
