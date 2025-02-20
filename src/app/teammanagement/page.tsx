@@ -303,66 +303,6 @@ export default function TeamManagementPage() {
     setSavingTactic(false);
   };
 
-  const handleFireBot = async (botAddress: string) => {
-    if (!wallet || !teamData) return;
-
-    try {
-      const response = await fetch("/api/teams/fire-bot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          botAddress,
-          captainAddress: wallet.address,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to fire bot");
-      }
-
-      // Refresh players list
-      const playersPromises = teamData.players
-        .filter((address) => address !== botAddress)
-        .map(async (address: string) => {
-          if (address.toLowerCase().startsWith("0xbot")) {
-            const botsResponse = await fetch(
-              `/api/bots?address=${encodeURIComponent(address)}`
-            );
-            if (!botsResponse.ok) {
-              throw new Error(`Failed to fetch bot data for ${address}`);
-            }
-            const botsData = await botsResponse.json();
-            const bot = botsData.bots[0];
-            return {
-              ethAddress: bot.ethAddress,
-              playerName: bot.playerName,
-              stats: bot.stats,
-              isBot: true,
-            };
-          } else {
-            const response = await fetch(`/api/players/address/${address}`);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch player data for ${address}`);
-            }
-            const data = await response.json();
-            return {
-              ethAddress: data.ethAddress,
-              playerName: data.playerName,
-              stats: data.stats,
-              isBot: false,
-            };
-          }
-        });
-      const playerData = await Promise.all(playersPromises);
-      setPlayers(playerData);
-
-      setSuccess("Successfully fired bot!");
-    } catch (err: any) {
-      setError(err.message || "Failed to fire bot");
-    }
-  };
-
   const handleLoadTactic = (tactic: ITactic) => {
     setCurrentTactic(tactic);
     setSelectedFormation(tactic.formation as Formation);
@@ -572,7 +512,6 @@ export default function TeamManagementPage() {
         }
         position={selectedPosition?.position || "D"}
         assignedPlayers={currentTactic.playerPositions.map((p) => p.ethAddress)}
-        onFireBot={handleFireBot}
       />
 
       {/* Tactic Name Modal */}

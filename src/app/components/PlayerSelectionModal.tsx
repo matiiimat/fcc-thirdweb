@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { calculatePlayerRating, getStarRating } from "../lib/game";
-import FireBotModal from "./FireBotModal";
 import { Position } from "../models/Player";
 
 interface Player {
@@ -42,7 +41,6 @@ interface PlayerSelectionModalProps {
   selectedPlayer?: Player;
   position: Position;
   assignedPlayers: string[];
-  onFireBot?: (botAddress: string) => void;
 }
 
 export default function PlayerSelectionModal({
@@ -53,10 +51,8 @@ export default function PlayerSelectionModal({
   selectedPlayer,
   position,
   assignedPlayers,
-  onFireBot,
 }: PlayerSelectionModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  const [botToFire, setBotToFire] = useState<Player | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -132,17 +128,6 @@ export default function PlayerSelectionModal({
                                 )
                               : "⭐"}
                           </div>
-                          {player.isBot && onFireBot && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setBotToFire(player);
-                              }}
-                              className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 transition-colors"
-                            >
-                              Fire
-                            </button>
-                          )}
                         </div>
                       </div>
                     </button>
@@ -160,20 +145,6 @@ export default function PlayerSelectionModal({
           </div>
         </div>
       </div>
-
-      {/* Fire Bot Modal */}
-      <FireBotModal
-        isOpen={!!botToFire}
-        onClose={() => setBotToFire(null)}
-        onConfirm={() => {
-          if (botToFire && onFireBot) {
-            onFireBot(botToFire.ethAddress);
-            setBotToFire(null);
-            onClose();
-          }
-        }}
-        botName={botToFire?.playerName || ""}
-      />
     </>
   );
 }
