@@ -115,9 +115,6 @@ export default function TeamOverview({
         {isTeamCaptain ? (
           <div className="grid gap-3">
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-              <h4 className="text-lg font-semibold text-yellow-400 mb-3">
-                Team Management
-              </h4>
               <div className="grid gap-2">
                 <button
                   onClick={() => router.push("/manageteam")}
