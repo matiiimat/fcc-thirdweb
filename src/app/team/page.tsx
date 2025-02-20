@@ -13,7 +13,12 @@ import {
   PageWrapper,
 } from "../components/TeamPageStates";
 import { generateTeamName } from "../lib/names";
-import { ITactic } from "../models/Team";
+import { ITactic, ITeamStats } from "../models/Team";
+import { Types } from "mongoose";
+
+interface MongoTactic extends ITactic {
+  _id: Types.ObjectId;
+}
 
 interface Match {
   id: string;
@@ -29,7 +34,24 @@ interface Match {
   };
 }
 
+interface MongoTeam {
+  _id: string;
+  teamName: string;
+  captainAddress: string;
+  players: string[];
+  matches?: Match[];
+  tactics: MongoTactic[];
+  stats: ITeamStats;
+  jersey?: {
+    primaryColor: string;
+    secondaryColor: string;
+    pattern: "solid" | "stripes" | "halves" | "quarters";
+    sponsorLogoUrl?: string;
+  };
+}
+
 interface Team {
+  _id: string;
   teamName: string;
   captainAddress: string;
   players: string[];
@@ -48,7 +70,7 @@ export default function TeamPage() {
   const activeWallet = useActiveWallet();
   const wallet = activeWallet?.getAccount();
   const [teams, setTeams] = useState<Team[]>([]);
-  const [currentTeam, setCurrentTeam] = useState<Team | null>(null);
+  const [currentTeam, setCurrentTeam] = useState<MongoTeam | null>(null);
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -90,10 +112,23 @@ export default function TeamPage() {
         if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
         const tactics = await tacticsResponse.json();
 
+        // Initialize default stats if not present
+        const defaultStats: ITeamStats = {
+          gamesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          cleanSheets: 0,
+          tacticsUsed: [],
+        };
+
         setCurrentTeam({
           ...team,
           tactics: tactics,
-        });
+          stats: team.stats || defaultStats,
+        } as MongoTeam);
         setLoading(false);
       } else {
         setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));

@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TeamMatchesSection from "./TeamMatchesSection";
-import { ITactic, IJersey } from "../models/Team";
+import TeamStatsDisplay from "./TeamStatsDisplay";
+import { ITactic, IJersey, ITeamStats } from "../models/Team";
 import JerseyCustomizationModal from "./JerseyCustomizationModal";
 import Jersey from "./Jersey";
+import { Types } from "mongoose";
+
+interface MongoTactic extends ITactic {
+  _id: Types.ObjectId;
+}
 
 interface Match {
   id: string;
@@ -19,15 +25,19 @@ interface Match {
   };
 }
 
+interface MongoTeam {
+  _id: string;
+  teamName: string;
+  captainAddress: string;
+  players: string[];
+  matches?: Match[];
+  tactics: MongoTactic[];
+  jersey?: IJersey;
+  stats: ITeamStats;
+}
+
 interface TeamOverviewProps {
-  team: {
-    teamName: string;
-    captainAddress: string;
-    players: string[];
-    matches?: Match[];
-    tactics?: ITactic[];
-    jersey?: IJersey;
-  };
+  team: MongoTeam;
   playerAddress: string;
   onLeaveTeam: () => void;
 }
@@ -41,6 +51,7 @@ export default function TeamOverview({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [jerseyModalOpen, setJerseyModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"matches" | "stats">("matches");
 
   const handleJerseyUpdate = async (jersey: IJersey) => {
     try {
@@ -153,13 +164,44 @@ export default function TeamOverview({
           </button>
         )}
 
-        {/* Matches Section */}
-        <TeamMatchesSection
-          teamName={team.teamName}
-          matches={team.matches || []}
-          tactics={team.tactics || []}
-          isTeamCaptain={isTeamCaptain}
-        />
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setActiveTab("matches")}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+              activeTab === "matches"
+                ? "bg-green-600 text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
+          >
+            Matches
+          </button>
+          <button
+            onClick={() => setActiveTab("stats")}
+            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+              activeTab === "stats"
+                ? "bg-blue-600 text-white"
+                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+            }`}
+          >
+            Statistics
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "matches" ? (
+          <TeamMatchesSection
+            teamName={team.teamName}
+            matches={team.matches || []}
+            tactics={team.tactics || []}
+            isTeamCaptain={isTeamCaptain}
+            currentTeam={team}
+          />
+        ) : (
+          <div className="glass-container p-4 rounded-xl shadow-lg">
+            <TeamStatsDisplay stats={team.stats} />
+          </div>
+        )}
       </div>
 
       {/* Jersey Customization Modal */}

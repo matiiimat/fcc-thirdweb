@@ -41,6 +41,26 @@ export interface IJersey {
   sponsorLogoUrl?: string; // URL to sponsor logo
 }
 
+// Interface for team statistics
+export interface ITeamStats {
+  gamesPlayed: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  cleanSheets: number;
+  tacticsUsed: {
+    name: string;
+    gamesPlayed: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    goalsFor: number;
+    goalsAgainst: number;
+  }[];
+}
+
 export interface ITeam extends Document {
   teamName: string;
   captainAddress: string;
@@ -48,11 +68,75 @@ export interface ITeam extends Document {
   tactics: ITactic[];
   matches: IMatch[];
   jersey?: IJersey;
+  stats: ITeamStats;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Main team schema
+// Schema for team statistics
+const TacticStatsSchema = new Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  gamesPlayed: {
+    type: Number,
+    default: 0,
+  },
+  wins: {
+    type: Number,
+    default: 0,
+  },
+  draws: {
+    type: Number,
+    default: 0,
+  },
+  losses: {
+    type: Number,
+    default: 0,
+  },
+  goalsFor: {
+    type: Number,
+    default: 0,
+  },
+  goalsAgainst: {
+    type: Number,
+    default: 0,
+  },
+}, { _id: false });
+
+const TeamStatsSchema = new Schema({
+  gamesPlayed: {
+    type: Number,
+    default: 0,
+  },
+  wins: {
+    type: Number,
+    default: 0,
+  },
+  draws: {
+    type: Number,
+    default: 0,
+  },
+  losses: {
+    type: Number,
+    default: 0,
+  },
+  goalsFor: {
+    type: Number,
+    default: 0,
+  },
+  goalsAgainst: {
+    type: Number,
+    default: 0,
+  },
+  cleanSheets: {
+    type: Number,
+    default: 0,
+  },
+  tacticsUsed: [TacticStatsSchema],
+}, { _id: false });
+
 // Schema for player position in tactic
 const PlayerPositionSchema = new Schema({
   ethAddress: {
@@ -148,19 +232,7 @@ const TeamSchema = new Schema<ITeam>(
       },
     },
     matches: {
-      type: [{
-        id: String,
-        homeTeam: String,
-        awayTeam: String,
-        date: String,
-        isCompleted: Boolean,
-        homeTactic: TacticSchema,
-        awayTactic: TacticSchema,
-        result: {
-          homeScore: Number,
-          awayScore: Number
-        }
-      }],
+      type: [MatchSchema],
       default: []
     },
     jersey: {
@@ -185,7 +257,20 @@ const TeamSchema = new Schema<ITeam>(
         }
       },
       required: false
-    }
+    },
+    stats: {
+      type: TeamStatsSchema,
+      default: () => ({
+        gamesPlayed: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        cleanSheets: 0,
+        tacticsUsed: [],
+      }),
+    },
   },
   {
     timestamps: true,
