@@ -74,6 +74,15 @@ const getRandomTeamAction = (position: Position, playerName: string): string => 
   const includePlayer = Math.random() < 0.5;
   
   const teamActions = {
+    GK: includePlayer ? [
+      `${playerName} organizes the defense from the back`,
+      `${playerName} shows great communication with the backline`,
+      `${playerName} positions the wall perfectly`
+    ] : [
+      "The goalkeeper commands their area well",
+      "Great organization from the back",
+      "The keeper's distribution is excellent"
+    ],
     D: includePlayer ? [
       `${playerName}'s defensive partner makes a crucial block`,
       `${playerName} combines with teammates to clear the danger`,
@@ -107,6 +116,12 @@ const getRandomTeamAction = (position: Position, playerName: string): string => 
 
 const getRandomOpponentAction = (position: Position): string => {
   const opponentActions = {
+    GK: [
+      "The opposing keeper makes a confident claim",
+      "The away team's goalkeeper organizes their defense",
+      "The rival keeper's distribution is precise",
+      "The opposing goalkeeper shows great positioning"
+    ],
     D: [
       "The away team probes the defense",
       "The opposing forwards press high",
@@ -138,6 +153,12 @@ export const generateMatchEvents = (selectedPosition: Position, playerName: stri
 
   // Generate random events based on position
   const possibleEvents = {
+    GK: [
+      "makes a great save",
+      "claims the cross confidently",
+      "distributes the ball quickly",
+      "comes off their line well",
+    ],
     D: [
       "makes a crucial tackle",
       "clears the ball",
