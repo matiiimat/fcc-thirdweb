@@ -146,49 +146,49 @@ export default function ManageTeamPage() {
                     <div>
                       <span className="text-gray-400">STR: </span>
                       <span className="text-green-400">
-                        {player.stats.strength}
+                        {Math.round(player.stats.strength)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">STA: </span>
                       <span className="text-green-400">
-                        {player.stats.stamina}
+                        {Math.round(player.stats.stamina)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">PAS: </span>
                       <span className="text-green-400">
-                        {player.stats.passing}
+                        {Math.round(player.stats.passing)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">SHO: </span>
                       <span className="text-green-400">
-                        {player.stats.shooting}
+                        {Math.round(player.stats.shooting)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">DEF: </span>
                       <span className="text-green-400">
-                        {player.stats.defending}
+                        {Math.round(player.stats.defending)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">SPD: </span>
                       <span className="text-green-400">
-                        {player.stats.speed}
+                        {Math.round(player.stats.speed)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">POS: </span>
                       <span className="text-green-400">
-                        {player.stats.positioning}
+                        {Math.round(player.stats.positioning)}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-400">WRK: </span>
                       <span className="text-green-400">
-                        {player.stats.workEthic}
+                        {Math.round(player.stats.workEthic)}
                       </span>
                     </div>
                   </div>
