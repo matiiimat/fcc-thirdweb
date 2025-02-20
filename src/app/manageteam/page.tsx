@@ -125,74 +125,100 @@ export default function ManageTeamPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Manage Team" xp={0} />
-      <main className="flex-1 container max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-32">
-        <div className="glass-container p-4 sm:p-6 rounded-xl">
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-6">
-            Team Players
-          </h2>
+      <main className="flex-1 container max-w-4xl mx-auto px-2 sm:px-6 py-2 sm:py-4 pb-32">
+        <div className="glass-container p-3 sm:p-6 rounded-xl">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              Team Players
+            </h2>
+            <span className="text-sm text-gray-400">
+              {players.length} Players
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {players.map((player) => (
               <div
                 key={player.ethAddress}
-                className="glass-container p-4 rounded-lg"
+                className="glass-container p-3 sm:p-4 rounded-lg flex flex-col"
               >
-                <div className="font-bold text-white">{player.playerName}</div>
-                <div className="text-sm text-gray-400">
-                  {player.isBot ? "Bot Player" : "Human Player"}
+                {/* Player Header */}
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <div className="font-bold text-white text-lg">
+                      {player.playerName}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {player.isBot ? "Bot Player" : "Human Player"}
+                    </div>
+                  </div>
                 </div>
+
+                {/* Stats Section */}
                 {player.stats && (
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-400">STR: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.strength)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">STA: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.stamina)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">PAS: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.passing)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">SHO: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.shooting)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">DEF: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.defending)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">SPD: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.speed)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">POS: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.positioning)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">WRK: </span>
-                      <span className="text-green-400">
-                        {Math.round(player.stats.workEthic)}
-                      </span>
+                  <div className="flex-1">
+                    <div className="grid grid-cols-4 gap-2 text-sm mb-4">
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">STR</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.strength)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">STA</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.stamina)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">PAS</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.passing)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">SHO</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.shooting)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">DEF</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.defending)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">SPD</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.speed)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">POS</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.positioning)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-gray-800/30 rounded p-1.5">
+                        <span className="text-gray-400 w-8">WRK</span>
+                        <span className="text-green-400 ml-0.5">
+                          {Math.round(player.stats.workEthic)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-2">
+                  <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm">
+                    Action 1
+                  </button>
+                  <button className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm">
+                    Action 2
+                  </button>
+                </div>
               </div>
             ))}
           </div>
