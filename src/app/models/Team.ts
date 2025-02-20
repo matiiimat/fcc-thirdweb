@@ -64,7 +64,7 @@ const PlayerPositionSchema = new Schema({
   position: {
     type: String,
     required: true,
-    enum: ['D', 'M', 'F'],
+    enum: ['GK', 'D', 'M', 'F'],
   },
   x: {
     type: Number,

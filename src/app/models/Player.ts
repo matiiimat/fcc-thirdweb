@@ -13,7 +13,7 @@ export interface IPlayerStats {
   workEthic: number;
 }
 
-export type Position = 'D' | 'M' | 'F';
+export type Position = 'GK' | 'D' | 'M' | 'F';
 
 // Interface for game result
 export interface IGameResult {
@@ -159,7 +159,7 @@ const GameResultSchema = new Schema<IGameResult>({
   position: {
     type: String,
     required: false,
-    enum: ['D', 'M', 'F'],
+    enum: ['GK', 'D', 'M', 'F'],
   },
 });
 
