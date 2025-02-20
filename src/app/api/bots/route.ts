@@ -8,8 +8,22 @@ const generateRandomStat = () => {
 };
 
 const generateBot = (index: number) => {
-  const botName = getBotName(index);
-  const ethAddress = `0xbot${index.toString().padStart(40, "0")}`.toLowerCase();
+  if (typeof index !== 'number' || isNaN(index)) {
+    throw new Error(`Invalid index: ${index}`);
+  }
+
+  // Ensure index is a non-negative integer
+  const safeIndex = Math.max(0, Math.floor(index));
+  
+  // Get name from the bot names array
+  const botName = getBotName(safeIndex);
+  
+  // Format ethAddress to ensure it's exactly 42 characters (0x + 40 chars)
+  const paddedIndex = safeIndex.toString().padStart(38, "0"); // 38 because "0xbot" takes 4 chars
+  const ethAddress = `0xbot${paddedIndex}`.toLowerCase();
+  
+  // Create a unique playerId
+  const playerId = `bot_${safeIndex}`;
   const stats = {
     strength: generateRandomStat(),
     stamina: generateRandomStat(),
@@ -22,6 +36,7 @@ const generateBot = (index: number) => {
   };
 
   return {
+    playerId, // Add playerId to the returned object
     playerName: botName,
     ethAddress,
     team: "Unassigned", // Always start as unassigned
@@ -32,6 +47,10 @@ const generateBot = (index: number) => {
     lastGameResult: null,
     lastConnectionDate: new Date(),
     consecutiveConnections: 0,
+    privateTrainer: { // Add required privateTrainer field
+      selectedSkill: null,
+      remainingSessions: 0
+    }
   };
 };
 
@@ -113,6 +132,9 @@ export async function POST(request: NextRequest) {
   try {
     const { count = 100 } = await request.json();
 
+    // Validate count
+    const safeCount = Math.min(Math.max(1, Math.floor(count)), 1000); // Limit between 1 and 1000
+
     const mongoose = await connectDB();
     if (!mongoose) {
       return NextResponse.json(
@@ -121,24 +143,79 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Delete existing bots
-    await mongoose.connection.db
-      .collection("players")
-      .deleteMany({ ethAddress: /^0xbot/ });
+    // Find highest indices from both playerId and ethAddress separately
+    const [highestBotById, highestBotByAddress] = await Promise.all([
+      mongoose.connection.db
+        .collection("players")
+        .find({ playerId: /^bot_\d+$/ })
+        .sort({ playerId: -1 })
+        .limit(1)
+        .toArray(),
+      mongoose.connection.db
+        .collection("players")
+        .find({ ethAddress: /^0xbot/ })
+        .sort({ ethAddress: -1 })
+        .limit(1)
+        .toArray()
+    ]);
 
-    // Create new bots
-    const bots = Array.from({ length: count }, (_, i) => generateBot(i));
+    // Extract indices
+    let startIndex = 0;
+    
+    if (highestBotById.length > 0) {
+      const idMatch = highestBotById[0].playerId.match(/^bot_(\d+)$/);
+      if (idMatch) {
+        startIndex = Math.max(startIndex, parseInt(idMatch[1]));
+      }
+    }
+    
+    if (highestBotByAddress.length > 0) {
+      const addressMatch = highestBotByAddress[0].ethAddress.match(/^0xbot0*(\d+)$/);
+      if (addressMatch) {
+        startIndex = Math.max(startIndex, parseInt(addressMatch[1]));
+      }
+    }
+
+    // Increment to get the next available index
+    startIndex += 1;
+
+    // Generate bots
+    const bots = [];
+    for (let i = 0; i < safeCount; i++) {
+      try {
+        const bot = generateBot(startIndex + i);
+        bots.push(bot);
+      } catch (error) {
+        console.error(`Failed to generate bot at index ${startIndex + i}:`, error);
+        continue;
+      }
+    }
+
+    if (bots.length === 0) {
+      return NextResponse.json(
+        { error: "Failed to generate any valid bots" },
+        { status: 500 }
+      );
+    }
 
     // Insert bots into database
     await mongoose.connection.db
       .collection("players")
       .insertMany(bots);
 
-    return NextResponse.json({ bots });
+    return NextResponse.json({
+      success: true,
+      count: bots.length,
+      bots
+    });
   } catch (error) {
     console.error("Error in POST /api/bots:", error);
+    // More detailed error response
     return NextResponse.json(
-      { error: "Failed to generate bots" },
+      {
+        error: "Failed to generate bots",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
