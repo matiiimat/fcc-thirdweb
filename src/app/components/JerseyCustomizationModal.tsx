@@ -29,7 +29,7 @@ export default function JerseyCustomizationModal({
       primaryColor: "#ffffff",
       secondaryColor: "#000000",
       pattern: "solid",
-      sponsorLogoUrl: "",
+      sponsorLogoUrl: "/logo.png",
     }
   );
 
