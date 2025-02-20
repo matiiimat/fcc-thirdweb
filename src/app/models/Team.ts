@@ -44,7 +44,7 @@ export interface IJersey {
 export interface ITeam extends Document {
   teamName: string;
   captainAddress: string;
-  players: string[]; // Array of player ETH addresses
+  players: string[]; // Array of player ETH addresses, managed via the Manage Team page
   tactics: ITactic[];
   matches: IMatch[];
   jersey?: IJersey;
