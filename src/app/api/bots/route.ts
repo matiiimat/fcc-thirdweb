@@ -9,7 +9,7 @@ const generateRandomStat = () => {
 
 const generateBot = (index: number) => {
   const botName = getBotName(index);
-  const ethAddress = `0xbot${index.toString().padStart(40, "0")}`;
+  const ethAddress = `0xbot${index.toString().padStart(40, "0")}`.toLowerCase();
   const stats = {
     strength: generateRandomStat(),
     stamina: generateRandomStat(),
@@ -23,7 +23,7 @@ const generateBot = (index: number) => {
 
   return {
     playerName: botName,
-    ethAddress: `0xbot${index.toString().padStart(40, "0")}`,
+    ethAddress,
     team: "Unassigned", // Always start as unassigned
     stats,
     xp: 0,
@@ -45,17 +45,50 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get existing bots
+    // Check if we're looking for a specific bot address
+    const url = new URL(request.url);
+    const botAddress = url.searchParams.get('address');
+
+    if (botAddress) {
+      console.log("Looking for specific bot with address:", botAddress);
+      // If looking for a specific bot, return it regardless of assignment status
+      const bot = await mongoose.connection.db
+        .collection("players")
+        .findOne({
+          ethAddress: { $regex: new RegExp(`^${botAddress}$`, 'i') }
+        });
+
+      console.log("Bot search result:", bot);
+
+      if (!bot) {
+        console.log("No bot found for address:", botAddress);
+        return NextResponse.json(
+          { error: "Bot not found" },
+          { status: 404 }
+        );
+      }
+
+      // Ensure consistent case in response
+      bot.ethAddress = bot.ethAddress.toLowerCase();
+      return NextResponse.json({ bots: [bot] });
+    }
+
+    // Otherwise, get only unassigned bots for scouting
     const existingBots = await mongoose.connection.db
       .collection("players")
-      .find({ 
+      .find({
         ethAddress: /^0xbot/,
-        team: "Unassigned" // Only return unassigned bots
+        team: "Unassigned" // Only return unassigned bots for scouting
       })
       .toArray();
 
     if (existingBots.length > 0) {
-      return NextResponse.json({ bots: existingBots });
+      // Ensure consistent case in response
+      const normalizedBots = existingBots.map((bot: { ethAddress: string; [key: string]: any }) => ({
+        ...bot,
+        ethAddress: bot.ethAddress.toLowerCase()
+      }));
+      return NextResponse.json({ bots: normalizedBots });
     }
 
     // If no bots exist, create them

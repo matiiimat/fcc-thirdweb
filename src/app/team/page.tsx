@@ -125,6 +125,11 @@ export default function TeamPage() {
 
   useEffect(() => {
     if (wallet) {
+      // Reset states when component mounts
+      setCurrentTeam(null);
+      setPlayer(null);
+      setTeams([]);
+      // Fetch fresh data
       fetchPlayerData();
     } else {
       setLoading(false);

@@ -73,11 +73,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Normalize team name and captain address
+    const normalizedTeamName = teamName.trim();
+    const normalizedCaptainAddress = captainAddress.toLowerCase();
+
     // Create new team
     const team = new TeamModel({
-      teamName,
-      captainAddress,
-      players: [captainAddress], // Captain is automatically a player
+      teamName: normalizedTeamName,
+      captainAddress: normalizedCaptainAddress,
+      players: [normalizedCaptainAddress], // Captain is automatically a player
       jersey: {
         primaryColor: "#ffffff",
         secondaryColor: "#000000",
@@ -88,10 +92,10 @@ export async function POST(req: NextRequest) {
 
     await team.save();
 
-    // Update captain's player record
+    // Update captain's player record with normalized values
     await PlayerModel.findOneAndUpdate(
-      { ethAddress: captainAddress },
-      { team: teamName }
+      { ethAddress: { $regex: new RegExp(`^${normalizedCaptainAddress}$`, 'i') } },
+      { team: normalizedTeamName }
     );
 
     // Get all teams to check if we need to generate a schedule

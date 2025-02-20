@@ -109,17 +109,47 @@ export default function TeamOverview({
   const fetchTeamMemberNames = useCallback(async () => {
     try {
       const memberPromises = team.players.map(async (address) => {
-        const response = await fetch(
-          `/api/players/address/${encodeURIComponent(address)}`
-        );
-        if (!response.ok)
-          throw new Error(`Failed to fetch player data for ${address}`);
-        const data = await response.json();
-        return {
-          address,
-          name: data.playerName,
-          stats: data.stats,
-        };
+        // Check if this is a bot address
+        if (address.toLowerCase().startsWith("0xbot")) {
+          console.log("Fetching bot data for address:", address);
+          // Fetch the specific bot
+          const botsResponse = await fetch(
+            `/api/bots?address=${encodeURIComponent(address)}`
+          );
+          if (!botsResponse.ok) {
+            console.error(
+              "Bot fetch response not ok:",
+              await botsResponse.text()
+            );
+            throw new Error(`Failed to fetch bot data for ${address}`);
+          }
+          const botsData = await botsResponse.json();
+          console.log("Bot data received:", botsData);
+          const bot = botsData.bots[0];
+          if (!bot) {
+            console.error("No bot data found in response");
+            throw new Error(`No bot data found for ${address}`);
+          }
+          return {
+            address,
+            name: bot.playerName,
+            stats: bot.stats,
+          };
+        } else {
+          // Regular player
+          const response = await fetch(
+            `/api/players/address/${encodeURIComponent(address)}`
+          );
+          if (!response.ok) {
+            throw new Error(`Failed to fetch player data for ${address}`);
+          }
+          const data = await response.json();
+          return {
+            address,
+            name: data.playerName,
+            stats: data.stats,
+          };
+        }
       });
 
       const members = await Promise.all(memberPromises);

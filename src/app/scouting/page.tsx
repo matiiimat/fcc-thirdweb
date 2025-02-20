@@ -311,13 +311,26 @@ export default function ScoutingPage() {
             }
 
             setSuccess(`Successfully hired ${selectedBot.playerName}!`);
-            // Refresh the bots list
-            const botsResponse = await fetch("/api/bots");
-            if (!botsResponse.ok) {
-              throw new Error("Failed to refresh bots list");
+
+            // Refresh the team data to include the new bot
+            const teamsResponse = await fetch("/api/teams");
+            if (!teamsResponse.ok) {
+              throw new Error("Failed to refresh team data");
             }
-            const data = await botsResponse.json();
-            setBots(data.bots);
+            const teamsData = await teamsResponse.json();
+            const captainTeam = teamsData.find(
+              (t: any) =>
+                t.captainAddress.toLowerCase() === wallet.address.toLowerCase()
+            );
+
+            if (!captainTeam) {
+              throw new Error("Failed to find captain's team");
+            }
+
+            // Remove the hired bot from the available bots list
+            setBots((prevBots) =>
+              prevBots.filter((b) => b.ethAddress !== selectedBot.ethAddress)
+            );
           } catch (err: any) {
             setError(err.message || "Failed to hire bot");
           }

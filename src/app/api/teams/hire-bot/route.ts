@@ -2,6 +2,26 @@ import { NextResponse } from "next/server";
 import connectDB from "../../../lib/mongodb";
 import { ObjectId } from "mongodb";
 
+// Helper function to ensure team name consistency across collections
+async function updatePlayerTeam(
+  db: any,
+  playerAddress: string,
+  teamId: ObjectId,
+  teamName: string
+) {
+  // Update player's team name
+  await db.collection("players").updateOne(
+    { ethAddress: { $regex: new RegExp(`^${playerAddress}$`, 'i') } },
+    { $set: { team: teamName } }
+  );
+
+  // Update team's players array
+  await db.collection("teams").updateOne(
+    { _id: teamId },
+    { $addToSet: { players: playerAddress.toLowerCase() } }
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const { botAddress, captainAddress } = await req.json();
@@ -13,8 +33,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify this is actually a bot address
-    if (!botAddress.startsWith("0xbot")) {
+    // Verify this is actually a bot address (case-insensitive)
+    if (!botAddress.toLowerCase().startsWith("0xbot")) {
       return NextResponse.json(
         { error: "Invalid bot address" },
         { status: 400 }
@@ -29,10 +49,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Verify captain status
+    // Verify captain status (case-insensitive)
     const team = await mongoose.connection.db
       .collection("teams")
-      .findOne({ captainAddress: captainAddress.toLowerCase() });
+      .findOne({
+        captainAddress: {
+          $regex: new RegExp(`^${captainAddress}$`, 'i')
+        }
+      });
 
     if (!team) {
       return NextResponse.json(
@@ -56,21 +80,28 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update bot's team using the original case from the database
-    await mongoose.connection.db
-      .collection("players")
-      .updateOne(
-        { ethAddress: { $regex: new RegExp(`^${botAddress}$`, 'i') } },
-        { $set: { team: team.teamName } }
-      );
-
-    // Add bot to team's players using the stored case
-    await mongoose.connection.db
+    // Get the actual team document using ObjectId
+    const teamDoc = await mongoose.connection.db
       .collection("teams")
-      .updateOne(
-        { _id: new ObjectId(team._id) },
-        { $addToSet: { players: bot.ethAddress } } // Use the case from the database
+      .findOne({ _id: new ObjectId(team._id) });
+
+    if (!teamDoc) {
+      return NextResponse.json(
+        { error: "Team not found" },
+        { status: 404 }
       );
+    }
+
+    // Normalize addresses
+    const normalizedBotAddress = bot.ethAddress.toLowerCase();
+
+    // Use the helper function to ensure consistency
+    await updatePlayerTeam(
+      mongoose.connection.db,
+      normalizedBotAddress,
+      teamDoc._id,
+      teamDoc.teamName
+    );
 
     return NextResponse.json({ success: true });
   } catch (error) {

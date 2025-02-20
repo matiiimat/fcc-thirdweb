@@ -104,19 +104,44 @@ export default function TeamManagementPage() {
             // Fetch players
             const playersPromises = team.players.map(
               async (address: string) => {
-                const response = await fetch(`/api/players/address/${address}`);
-                return response.json();
+                if (address.toLowerCase().startsWith("0xbot")) {
+                  // Fetch the specific bot
+                  const botsResponse = await fetch(
+                    `/api/bots?address=${encodeURIComponent(address)}`
+                  );
+                  if (!botsResponse.ok) {
+                    throw new Error(`Failed to fetch bot data for ${address}`);
+                  }
+                  const botsData = await botsResponse.json();
+                  const bot = botsData.bots[0];
+                  return {
+                    ethAddress: bot.ethAddress,
+                    playerName: bot.playerName,
+                    stats: bot.stats,
+                    isBot: true,
+                  };
+                } else {
+                  // Regular player
+                  const response = await fetch(
+                    `/api/players/address/${address}`
+                  );
+                  if (!response.ok) {
+                    throw new Error(
+                      `Failed to fetch player data for ${address}`
+                    );
+                  }
+                  const data = await response.json();
+                  return {
+                    ethAddress: data.ethAddress,
+                    playerName: data.playerName,
+                    stats: data.stats,
+                    isBot: false,
+                  };
+                }
               }
             );
             const playerData = await Promise.all(playersPromises);
-            setPlayers(
-              playerData.map((p: any) => ({
-                ethAddress: p.ethAddress,
-                playerName: p.playerName,
-                stats: p.stats,
-                isBot: p.ethAddress.startsWith("0xbot"), // Check if it's a bot by the address pattern
-              }))
-            );
+            setPlayers(playerData);
 
             // Fetch tactics
             const tacticsResponse = await fetch(
@@ -300,17 +325,37 @@ export default function TeamManagementPage() {
       const playersPromises = teamData.players
         .filter((address) => address !== botAddress)
         .map(async (address: string) => {
-          const response = await fetch(`/api/players/address/${address}`);
-          return response.json();
+          if (address.toLowerCase().startsWith("0xbot")) {
+            const botsResponse = await fetch(
+              `/api/bots?address=${encodeURIComponent(address)}`
+            );
+            if (!botsResponse.ok) {
+              throw new Error(`Failed to fetch bot data for ${address}`);
+            }
+            const botsData = await botsResponse.json();
+            const bot = botsData.bots[0];
+            return {
+              ethAddress: bot.ethAddress,
+              playerName: bot.playerName,
+              stats: bot.stats,
+              isBot: true,
+            };
+          } else {
+            const response = await fetch(`/api/players/address/${address}`);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch player data for ${address}`);
+            }
+            const data = await response.json();
+            return {
+              ethAddress: data.ethAddress,
+              playerName: data.playerName,
+              stats: data.stats,
+              isBot: false,
+            };
+          }
         });
       const playerData = await Promise.all(playersPromises);
-      setPlayers(
-        playerData.map((p: any) => ({
-          ethAddress: p.ethAddress,
-          playerName: p.playerName,
-          stats: p.stats,
-        }))
-      );
+      setPlayers(playerData);
 
       setSuccess("Successfully fired bot!");
     } catch (err: any) {
