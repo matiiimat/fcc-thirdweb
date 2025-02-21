@@ -6,6 +6,7 @@ import Image from "next/image";
 import TeamMatchPopup from "./TeamMatchPopup";
 import MatchScheduler from "./MatchScheduler";
 import { Types } from "mongoose";
+import MatchCard from "./MatchCard";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
@@ -48,7 +49,6 @@ export default function TeamMatchesSection({
   currentTeam,
 }: TeamMatchesSectionProps) {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [selectedTactic, setSelectedTactic] = useState<ITactic | null>(null);
   const [updating, setUpdating] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
@@ -70,18 +70,6 @@ export default function TeamMatchesSection({
   // Get limited matches for calendar view
   const limitedUpcomingMatches = upcomingMatches.slice(0, 5);
   const limitedCompletedMatches = completedMatches.slice(0, 5);
-
-  const formatMatchDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-GB", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  };
 
   const handleUpdateTactic = async (match: Match, tactic: ITactic) => {
     if (!isTeamCaptain) return;
@@ -105,7 +93,6 @@ export default function TeamMatchesSection({
       // Update local state
       const updatedMatch = await response.json();
       setSelectedMatch(updatedMatch);
-      setSelectedTactic(null);
     } catch (error) {
       console.error("Error updating tactic:", error);
     } finally {
@@ -145,100 +132,11 @@ export default function TeamMatchesSection({
     }
   };
 
-  const getTeamTactic = (match: Match) => {
-    return match.homeTeam === teamName ? match.homeTactic : match.awayTactic;
-  };
-
   const handleMatchClick = (match: Match) => {
     if (match.isCompleted) {
       setSelectedMatch(match);
     }
   };
-
-  const renderMatch = (match: Match) => (
-    <div
-      key={match.id}
-      className={`glass-container bg-black/20 p-3 rounded-lg ${
-        match.isCompleted ? "cursor-pointer hover:bg-black/30" : ""
-      }`}
-      onClick={() => handleMatchClick(match)}
-    >
-      <div className="flex flex-col">
-        <div className="flex justify-center items-center mb-1">
-          <span
-            className={
-              match.homeTeam === teamName ? "text-green-400" : "text-white"
-            }
-          >
-            {match.homeTeam}
-          </span>
-          <span className="text-gray-400 mx-2">
-            {match.result
-              ? `${match.result.homeScore} - ${match.result.awayScore}`
-              : "vs"}
-          </span>
-          <span
-            className={
-              match.awayTeam === teamName ? "text-green-400" : "text-white"
-            }
-          >
-            {match.awayTeam}
-          </span>
-        </div>
-        <div className="text-xs text-gray-400 text-center mb-2">
-          {formatMatchDate(match.date)}
-        </div>
-      </div>
-
-      {!match.isCompleted && isTeamCaptain && (
-        <div className="mt-2">
-          <div className="text-xs text-gray-400 mb-1">
-            Current Tactic: {getTeamTactic(match)?.name || "None"}
-          </div>
-          <div className="flex gap-2">
-            <select
-              className="flex-1 bg-black/30 text-white text-sm rounded px-2 py-1"
-              value={selectedTactic?.name || ""}
-              onChange={(e) => {
-                const tactic = tactics.find((t) => t.name === e.target.value);
-                setSelectedTactic(tactic || null);
-              }}
-            >
-              <option value="">Select Tactic</option>
-              {tactics.map((tactic) => (
-                <option key={tactic.name} value={tactic.name}>
-                  {tactic.name} ({tactic.formation} • {tactic.tacticalStyle})
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                selectedTactic && handleUpdateTactic(match, selectedTactic);
-              }}
-              disabled={!selectedTactic || updating}
-              className={`px-3 py-1 rounded text-sm transition-all duration-200
-                ${
-                  updating
-                    ? "bg-gray-600"
-                    : selectedTactic
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-gray-600 opacity-50 cursor-not-allowed"
-                }`}
-            >
-              {updating ? "Updating..." : "Set"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {match.isCompleted && (
-        <div className="mt-1 text-xs text-gray-400 text-center">
-          Tactic Used: {getTeamTactic(match)?.name || "None"}
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="glass-container p-4 rounded-xl shadow-lg mt-4">
@@ -308,7 +206,20 @@ export default function TeamMatchesSection({
             </h3>
             <div className="space-y-2">
               {limitedUpcomingMatches.length > 0 ? (
-                limitedUpcomingMatches.map((match) => renderMatch(match))
+                limitedUpcomingMatches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    teamName={teamName}
+                    isTeamCaptain={isTeamCaptain}
+                    tactics={tactics}
+                    onMatchClick={() => handleMatchClick(match)}
+                    onUpdateTactic={(tactic) =>
+                      handleUpdateTactic(match, tactic)
+                    }
+                    updating={updating}
+                  />
+                ))
               ) : (
                 <div className="text-gray-400 text-sm text-center">
                   No upcoming matches scheduled
@@ -324,7 +235,16 @@ export default function TeamMatchesSection({
             </h3>
             <div className="space-y-2">
               {limitedCompletedMatches.length > 0 ? (
-                limitedCompletedMatches.map((match) => renderMatch(match))
+                limitedCompletedMatches.map((match) => (
+                  <MatchCard
+                    key={match.id}
+                    match={match}
+                    teamName={teamName}
+                    isTeamCaptain={isTeamCaptain}
+                    tactics={tactics}
+                    onMatchClick={() => handleMatchClick(match)}
+                  />
+                ))
               ) : (
                 <div className="text-gray-400 text-sm text-center">
                   No match history available
@@ -341,7 +261,17 @@ export default function TeamMatchesSection({
           </h3>
           <div className="space-y-2">
             {nextMatch ? (
-              renderMatch(nextMatch)
+              <MatchCard
+                match={nextMatch}
+                teamName={teamName}
+                isTeamCaptain={isTeamCaptain}
+                tactics={tactics}
+                onMatchClick={() => handleMatchClick(nextMatch)}
+                onUpdateTactic={(tactic) =>
+                  handleUpdateTactic(nextMatch, tactic)
+                }
+                updating={updating}
+              />
             ) : (
               <div className="text-gray-400 text-sm text-center">
                 No upcoming matches scheduled

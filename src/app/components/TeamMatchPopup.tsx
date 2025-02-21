@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { IMatch, ITeamStats } from "../models/Team";
-import { calculateWinRate, calculateGoalDifference } from "../lib/teamStats";
+import { calculateWinRate } from "../lib/teamStats";
+import { calculateWinRateChange } from "../lib/matchUtils";
+import StatBar from "./StatBar";
+import PlayerPerformance from "./PlayerPerformance";
 
 interface MatchStats {
   possession: number;
@@ -14,20 +17,6 @@ interface MatchStats {
   fouls: number;
 }
 
-interface PlayerRating {
-  ethAddress: string;
-  position: string;
-  rating: number;
-  stats: {
-    goals: number;
-    assists: number;
-    shots: number;
-    passes: number;
-    tackles: number;
-    saves?: number;
-  };
-}
-
 interface TeamMatchPopupProps {
   match: IMatch & {
     events?: string[];
@@ -37,262 +26,151 @@ interface TeamMatchPopupProps {
     };
     homeStats?: MatchStats;
     awayStats?: MatchStats;
-    homePlayerRatings?: PlayerRating[];
-    awayPlayerRatings?: PlayerRating[];
+    homePlayerRatings?: any[];
+    awayPlayerRatings?: any[];
   };
   onClose: () => void;
 }
 
-const TeamMatchPopup: React.FC<TeamMatchPopupProps> = ({ match, onClose }) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "stats" | "players">(
-    "overview"
-  );
-
-  const StatChange = ({
-    label,
-    value,
-    change,
-  }: {
-    label: string;
-    value: number;
-    change: number;
-  }) => (
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-gray-400">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-white">{value}</span>
-        {change !== 0 && (
-          <span className={change > 0 ? "text-green-400" : "text-red-400"}>
-            {change > 0 ? "+" : ""}
-            {change}
-          </span>
-        )}
-      </div>
+const StatChange = ({
+  label,
+  value,
+  change,
+}: {
+  label: string;
+  value: number;
+  change: number;
+}) => (
+  <div className="flex justify-between items-center text-sm">
+    <span className="text-gray-400">{label}</span>
+    <div className="flex items-center gap-2">
+      <span className="text-white">{value}</span>
+      {change !== 0 && (
+        <span className={change > 0 ? "text-green-400" : "text-red-400"}>
+          {change > 0 ? "+" : ""}
+          {change}
+        </span>
+      )}
     </div>
-  );
+  </div>
+);
 
-  const TeamStats = ({
+const TeamStats = ({
+  stats,
+  isWinner,
+  goalsScored,
+  goalsConceded,
+}: {
+  stats: ITeamStats;
+  isWinner: boolean;
+  goalsScored: number;
+  goalsConceded: number;
+}) => {
+  const winRateChange = calculateWinRateChange(
     stats,
     isWinner,
     goalsScored,
-    goalsConceded,
-  }: {
-    stats: ITeamStats;
-    isWinner: boolean;
-    goalsScored: number;
-    goalsConceded: number;
-  }) => {
-    const winRateChange =
-      ((stats.wins * 3 + stats.draws) / (stats.gamesPlayed * 3)) * 100 -
-      (((stats.wins - (isWinner ? 1 : 0)) * 3 +
-        (stats.draws - (goalsScored === goalsConceded ? 1 : 0))) /
-        ((stats.gamesPlayed - 1) * 3)) *
-        100;
+    goalsConceded
+  );
 
-    return (
-      <div className="glass-container bg-black/20 p-3 rounded-lg space-y-2">
-        <StatChange label="Games Played" value={stats.gamesPlayed} change={1} />
-        <StatChange label="Wins" value={stats.wins} change={isWinner ? 1 : 0} />
-        <StatChange
-          label="Draws"
-          value={stats.draws}
-          change={goalsScored === goalsConceded ? 1 : 0}
-        />
-        <StatChange
-          label="Losses"
-          value={stats.losses}
-          change={!isWinner && goalsScored !== goalsConceded ? 1 : 0}
-        />
-        <StatChange
-          label="Goals For"
-          value={stats.goalsFor}
-          change={goalsScored}
-        />
-        <StatChange
-          label="Goals Against"
-          value={stats.goalsAgainst}
-          change={goalsConceded}
-        />
-        <StatChange
-          label="Clean Sheets"
-          value={stats.cleanSheets}
-          change={goalsConceded === 0 ? 1 : 0}
-        />
-        <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-gray-700">
-          <span className="text-gray-400">Win Rate</span>
-          <div className="flex items-center gap-2">
-            <span className="text-white">
-              {calculateWinRate(stats).toFixed(1)}%
+  return (
+    <div className="glass-container bg-black/20 p-3 rounded-lg space-y-2">
+      <StatChange label="Games Played" value={stats.gamesPlayed} change={1} />
+      <StatChange label="Wins" value={stats.wins} change={isWinner ? 1 : 0} />
+      <StatChange
+        label="Draws"
+        value={stats.draws}
+        change={goalsScored === goalsConceded ? 1 : 0}
+      />
+      <StatChange
+        label="Losses"
+        value={stats.losses}
+        change={!isWinner && goalsScored !== goalsConceded ? 1 : 0}
+      />
+      <StatChange
+        label="Goals For"
+        value={stats.goalsFor}
+        change={goalsScored}
+      />
+      <StatChange
+        label="Goals Against"
+        value={stats.goalsAgainst}
+        change={goalsConceded}
+      />
+      <StatChange
+        label="Clean Sheets"
+        value={stats.cleanSheets}
+        change={goalsConceded === 0 ? 1 : 0}
+      />
+      <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-gray-700">
+        <span className="text-gray-400">Win Rate</span>
+        <div className="flex items-center gap-2">
+          <span className="text-white">
+            {calculateWinRate(stats).toFixed(1)}%
+          </span>
+          {winRateChange !== 0 && (
+            <span
+              className={winRateChange > 0 ? "text-green-400" : "text-red-400"}
+            >
+              {winRateChange > 0 ? "+" : ""}
+              {winRateChange.toFixed(1)}%
             </span>
-            {winRateChange !== 0 && (
-              <span
-                className={
-                  winRateChange > 0 ? "text-green-400" : "text-red-400"
-                }
-              >
-                {winRateChange > 0 ? "+" : ""}
-                {winRateChange.toFixed(1)}%
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const MatchStatsComparison = ({
-    homeStats,
-    awayStats,
-  }: {
-    homeStats: MatchStats;
-    awayStats: MatchStats;
-  }) => (
-    <div className="space-y-4">
-      <div className="glass-container bg-black/20 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">Match Statistics</h3>
-        <div className="space-y-3">
-          <StatBar
-            label="Possession"
-            homeValue={Math.round(homeStats.possession)}
-            awayValue={Math.round(awayStats.possession)}
-            unit="%"
-          />
-          <StatBar
-            label="Shots"
-            homeValue={homeStats.shots}
-            awayValue={awayStats.shots}
-            subLabel={`(${homeStats.shotsOnTarget} on target - ${awayStats.shotsOnTarget} on target)`}
-          />
-          <StatBar
-            label="Passes"
-            homeValue={homeStats.passes}
-            awayValue={awayStats.passes}
-            subLabel={`(${Math.round(
-              homeStats.passAccuracy
-            )}% acc. - ${Math.round(awayStats.passAccuracy)}% acc.)`}
-          />
-          <StatBar
-            label="Tackles"
-            homeValue={homeStats.tackles}
-            awayValue={awayStats.tackles}
-          />
-          <StatBar
-            label="Fouls"
-            homeValue={homeStats.fouls}
-            awayValue={awayStats.fouls}
-          />
+          )}
         </div>
       </div>
     </div>
   );
+};
 
-  const StatBar = ({
-    label,
-    homeValue,
-    awayValue,
-    unit = "",
-    subLabel = "",
-  }: {
-    label: string;
-    homeValue: number;
-    awayValue: number;
-    unit?: string;
-    subLabel?: string;
-  }) => {
-    const total = homeValue + awayValue;
-    const homePercent = total === 0 ? 50 : (homeValue / total) * 100;
-
-    return (
-      <div className="space-y-1">
-        <div className="flex justify-between text-sm text-gray-400">
-          <span>{label}</span>
-          {subLabel && <span className="text-xs">{subLabel}</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-green-400 w-12 text-right">
-            {homeValue}
-            {unit}
-          </span>
-          <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500 rounded-r-none rounded-full"
-              style={{ width: `${homePercent}%` }}
-            />
-          </div>
-          <span className="text-blue-400 w-12">
-            {awayValue}
-            {unit}
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  const PlayerPerformance = ({
-    playerRatings,
-    teamName,
-  }: {
-    playerRatings: PlayerRating[];
-    teamName: string;
-  }) => (
+const MatchStatsComparison = ({
+  homeStats,
+  awayStats,
+}: {
+  homeStats: MatchStats;
+  awayStats: MatchStats;
+}) => (
+  <div className="space-y-4">
     <div className="glass-container bg-black/20 p-4 rounded-lg">
-      <h3 className="text-lg font-semibold mb-2">{teamName}</h3>
+      <h3 className="text-lg font-semibold mb-4">Match Statistics</h3>
       <div className="space-y-3">
-        {playerRatings
-          .sort((a, b) => b.rating - a.rating)
-          .map((player) => (
-            <div
-              key={player.ethAddress}
-              className="glass-container bg-black/20 p-3 rounded-lg"
-            >
-              <div className="flex justify-between items-center mb-2">
-                <div>
-                  <span className="font-medium">
-                    {player.ethAddress.slice(0, 6)}...
-                  </span>
-                  <span className="text-gray-400 text-sm ml-2">
-                    {player.position}
-                  </span>
-                </div>
-                <div
-                  className={`text-lg font-bold ${
-                    player.rating >= 8
-                      ? "text-green-400"
-                      : player.rating >= 6
-                      ? "text-yellow-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  {player.rating.toFixed(1)}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                {player.stats.goals > 0 && (
-                  <div className="text-green-400">
-                    ⚽ {player.stats.goals} goals
-                  </div>
-                )}
-                {player.stats.assists > 0 && (
-                  <div className="text-blue-400">
-                    👟 {player.stats.assists} assists
-                  </div>
-                )}
-                {player.stats.saves !== undefined && player.stats.saves > 0 && (
-                  <div className="text-yellow-400">
-                    🧤 {player.stats.saves} saves
-                  </div>
-                )}
-                <div className="text-gray-400">
-                  📊 {player.stats.passes} passes
-                </div>
-                <div className="text-gray-400">
-                  🛡 {player.stats.tackles} tackles
-                </div>
-              </div>
-            </div>
-          ))}
+        <StatBar
+          label="Possession"
+          homeValue={Math.round(homeStats.possession)}
+          awayValue={Math.round(awayStats.possession)}
+          unit="%"
+        />
+        <StatBar
+          label="Shots"
+          homeValue={homeStats.shots}
+          awayValue={awayStats.shots}
+          subLabel={`(${homeStats.shotsOnTarget} on target - ${awayStats.shotsOnTarget} on target)`}
+        />
+        <StatBar
+          label="Passes"
+          homeValue={homeStats.passes}
+          awayValue={awayStats.passes}
+          subLabel={`(${Math.round(
+            homeStats.passAccuracy
+          )}% acc. - ${Math.round(awayStats.passAccuracy)}% acc.)`}
+        />
+        <StatBar
+          label="Tackles"
+          homeValue={homeStats.tackles}
+          awayValue={awayStats.tackles}
+        />
+        <StatBar
+          label="Fouls"
+          homeValue={homeStats.fouls}
+          awayValue={awayStats.fouls}
+        />
       </div>
     </div>
+  </div>
+);
+
+const TeamMatchPopup: React.FC<TeamMatchPopupProps> = ({ match, onClose }) => {
+  const [activeTab, setActiveTab] = useState<"overview" | "stats" | "players">(
+    "overview"
   );
 
   return (
