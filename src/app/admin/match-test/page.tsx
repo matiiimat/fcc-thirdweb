@@ -18,6 +18,7 @@ interface Team {
   _id: string;
   teamName: string;
   tactics: MongoTactic[];
+  players: string[];
 }
 
 interface Match {
@@ -82,6 +83,22 @@ export default function MatchTestPage() {
       !selectedAwayTactic
     ) {
       setError("Please select both teams and their tactics");
+      return;
+    }
+
+    if (
+      !selectedHomeTeam.players?.length ||
+      !selectedAwayTeam.players?.length
+    ) {
+      setError("Both teams must have players");
+      return;
+    }
+
+    if (
+      !selectedHomeTactic.playerPositions?.length ||
+      !selectedAwayTactic.playerPositions?.length
+    ) {
+      setError("Both teams must have player positions set in their tactics");
       return;
     }
 
@@ -194,37 +211,54 @@ export default function MatchTestPage() {
                   <h3 className="text-sm font-semibold mb-2 text-green-400">
                     Home Team
                   </h3>
-                  <select
-                    className="w-full bg-black/30 text-white rounded px-3 py-2 mb-4"
-                    value={selectedHomeTeam?._id || ""}
-                    onChange={(e) => {
-                      const team = teams.find((t) => t._id === e.target.value);
-                      setSelectedHomeTeam(team || null);
-                      setSelectedHomeTactic(null);
-                    }}
-                  >
-                    <option value="">Select Home Team</option>
-                    {teams.map((team) => (
-                      <option key={team._id} value={team._id}>
-                        {team.teamName}
-                      </option>
-                    ))}
-                  </select>
+                  <div>
+                    <select
+                      className="w-full bg-black/30 text-white rounded px-3 py-2 mb-2"
+                      value={selectedHomeTeam?._id || ""}
+                      onChange={(e) => {
+                        const team = teams.find(
+                          (t) => t._id === e.target.value
+                        );
+                        setSelectedHomeTeam(team || null);
+                        setSelectedHomeTactic(null);
+                      }}
+                    >
+                      <option value="">Select Home Team</option>
+                      {teams.map((team) => (
+                        <option key={team._id} value={team._id}>
+                          {team.teamName}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedHomeTeam && !selectedHomeTeam.tactics?.length && (
+                      <p className="text-red-400 text-sm mb-2">
+                        This team has no tactics set up
+                      </p>
+                    )}
+                    {selectedHomeTeam && !selectedHomeTeam.players?.length && (
+                      <p className="text-red-400 text-sm mb-2">
+                        This team has no players
+                      </p>
+                    )}
+                  </div>
 
-                  {selectedHomeTeam && (
+                  {selectedHomeTeam && selectedHomeTeam.tactics?.length > 0 && (
                     <select
                       className="w-full bg-black/30 text-white rounded px-3 py-2"
-                      value={selectedHomeTactic?.name || ""}
+                      value={selectedHomeTactic?._id.toString() || ""}
                       onChange={(e) => {
                         const tactic = selectedHomeTeam.tactics.find(
-                          (t) => t.name === e.target.value
+                          (t) => t._id.toString() === e.target.value
                         );
                         setSelectedHomeTactic(tactic || null);
                       }}
                     >
                       <option value="">Select Tactic</option>
-                      {selectedHomeTeam.tactics.map((tactic) => (
-                        <option key={tactic.name} value={tactic.name}>
+                      {selectedHomeTeam?.tactics?.map((tactic) => (
+                        <option
+                          key={tactic._id.toString()}
+                          value={tactic._id.toString()}
+                        >
                           {tactic.name} ({tactic.formation} •{" "}
                           {tactic.tacticalStyle})
                         </option>
@@ -238,37 +272,54 @@ export default function MatchTestPage() {
                   <h3 className="text-sm font-semibold mb-2 text-blue-400">
                     Away Team
                   </h3>
-                  <select
-                    className="w-full bg-black/30 text-white rounded px-3 py-2 mb-4"
-                    value={selectedAwayTeam?._id || ""}
-                    onChange={(e) => {
-                      const team = teams.find((t) => t._id === e.target.value);
-                      setSelectedAwayTeam(team || null);
-                      setSelectedAwayTactic(null);
-                    }}
-                  >
-                    <option value="">Select Away Team</option>
-                    {teams.map((team) => (
-                      <option key={team._id} value={team._id}>
-                        {team.teamName}
-                      </option>
-                    ))}
-                  </select>
+                  <div>
+                    <select
+                      className="w-full bg-black/30 text-white rounded px-3 py-2 mb-2"
+                      value={selectedAwayTeam?._id || ""}
+                      onChange={(e) => {
+                        const team = teams.find(
+                          (t) => t._id === e.target.value
+                        );
+                        setSelectedAwayTeam(team || null);
+                        setSelectedAwayTactic(null);
+                      }}
+                    >
+                      <option value="">Select Away Team</option>
+                      {teams.map((team) => (
+                        <option key={team._id} value={team._id}>
+                          {team.teamName}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedAwayTeam && !selectedAwayTeam.tactics?.length && (
+                      <p className="text-red-400 text-sm mb-2">
+                        This team has no tactics set up
+                      </p>
+                    )}
+                    {selectedAwayTeam && !selectedAwayTeam.players?.length && (
+                      <p className="text-red-400 text-sm mb-2">
+                        This team has no players
+                      </p>
+                    )}
+                  </div>
 
-                  {selectedAwayTeam && (
+                  {selectedAwayTeam && selectedAwayTeam.tactics?.length > 0 && (
                     <select
                       className="w-full bg-black/30 text-white rounded px-3 py-2"
-                      value={selectedAwayTactic?.name || ""}
+                      value={selectedAwayTactic?._id.toString() || ""}
                       onChange={(e) => {
                         const tactic = selectedAwayTeam.tactics.find(
-                          (t) => t.name === e.target.value
+                          (t) => t._id.toString() === e.target.value
                         );
                         setSelectedAwayTactic(tactic || null);
                       }}
                     >
                       <option value="">Select Tactic</option>
-                      {selectedAwayTeam.tactics.map((tactic) => (
-                        <option key={tactic.name} value={tactic.name}>
+                      {selectedAwayTeam?.tactics?.map((tactic) => (
+                        <option
+                          key={tactic._id.toString()}
+                          value={tactic._id.toString()}
+                        >
                           {tactic.name} ({tactic.formation} •{" "}
                           {tactic.tacticalStyle})
                         </option>
@@ -287,7 +338,11 @@ export default function MatchTestPage() {
                     !selectedHomeTeam ||
                     !selectedAwayTeam ||
                     !selectedHomeTactic ||
-                    !selectedAwayTactic
+                    !selectedAwayTactic ||
+                    !selectedHomeTeam?.tactics?.length ||
+                    !selectedAwayTeam?.tactics?.length ||
+                    !selectedHomeTeam?.players?.length ||
+                    !selectedAwayTeam?.players?.length
                   }
                   className={`gradient-button py-3 px-8 rounded-lg text-lg transition-all duration-300
                     ${
@@ -295,7 +350,11 @@ export default function MatchTestPage() {
                       !selectedHomeTeam ||
                       !selectedAwayTeam ||
                       !selectedHomeTactic ||
-                      !selectedAwayTactic
+                      !selectedAwayTactic ||
+                      !selectedHomeTeam?.tactics?.length ||
+                      !selectedAwayTeam?.tactics?.length ||
+                      !selectedHomeTeam?.players?.length ||
+                      !selectedAwayTeam?.players?.length
                         ? "opacity-50 cursor-not-allowed"
                         : "hover:scale-105 active:scale-95"
                     }`}

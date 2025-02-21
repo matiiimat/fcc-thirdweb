@@ -55,6 +55,11 @@ const FORMATION_MODIFIERS: Record<string, { attack: number; defense: number }> =
   "4-5-1": { attack: 0.9, defense: 1.1 },
   "4-3-3": { attack: 1.2, defense: 0.8 },
   "3-4-3": { attack: 1.3, defense: 0.7 },
+  "3-5-2": { attack: 1.1, defense: 0.9 },
+  "5-2-3": { attack: 1.0, defense: 1.1 },
+  "4-2-4": { attack: 1.4, defense: 0.6 },
+  // Default modifier for unknown formations
+  "default": { attack: 1.0, defense: 1.0 }
 };
 
 // Calculate average of specific stats for a group of players
@@ -134,11 +139,13 @@ const calculateTeamRatings = (
     playersByPosition.F.reduce((sum, p) => sum + calculatePositionRating(p), 0) /
     (playersByPosition.F.length || 1);
 
-  // Apply formation modifiers
-  const formationMod = FORMATION_MODIFIERS[tactic.formation];
-  const baseAttack = (attackRating + midfieldRating * 0.5) * formationMod.attack;
+  // Apply formation modifiers (use default if formation not found)
+  const formationMod = FORMATION_MODIFIERS[tactic.formation] || FORMATION_MODIFIERS.default;
+  
+  // Calculate base ratings with safety checks
+  const baseAttack = (attackRating + (midfieldRating || 0) * 0.5) * formationMod.attack;
   const baseDefense =
-    (defenseRating + gkRating + midfieldRating * 0.3) * formationMod.defense;
+    (defenseRating + (gkRating || 0) + (midfieldRating || 0) * 0.3) * formationMod.defense;
 
   return { attack: baseAttack, defense: baseDefense };
 };
@@ -442,23 +449,36 @@ export const simulateMatch = async (
   const distributeGoals = (score: number, playerRatings: PlayerRating[]) => {
     const forwards = playerRatings.filter(p => p.position === "F");
     const midfielders = playerRatings.filter(p => p.position === "M");
+    const attackingPlayers = [...forwards, ...midfielders];
+    
+    if (attackingPlayers.length === 0) {
+      // If no forwards or midfielders, any player can score
+      attackingPlayers.push(...playerRatings.filter(p => p.position !== "GK"));
+    }
+    
+    if (attackingPlayers.length === 0) return; // Safety check
     
     for (let i = 0; i < score; i++) {
-      const scorer = Math.random() < 0.7 
-        ? forwards[Math.floor(Math.random() * forwards.length)]
-        : midfielders[Math.floor(Math.random() * midfielders.length)];
+      // Select a random scorer from attacking players
+      const scorerIndex = Math.floor(Math.random() * attackingPlayers.length);
+      const scorer = attackingPlayers[scorerIndex];
       
       if (scorer) {
         scorer.stats.goals++;
         scorer.stats.shots++;
         
-        // Add an assist
-        const assister = playerRatings
-          .filter(p => p !== scorer && (p.position === "M" || p.position === "F"))
-          [Math.floor(Math.random() * (midfielders.length + forwards.length - 1))];
+        // Find potential assisters (excluding the scorer and goalkeeper)
+        const potentialAssisters = playerRatings.filter(p =>
+          p !== scorer && p.position !== "GK"
+        );
         
-        if (assister) {
-          assister.stats.assists++;
+        // Add an assist if there are potential assisters
+        if (potentialAssisters.length > 0) {
+          const assisterIndex = Math.floor(Math.random() * potentialAssisters.length);
+          const assister = potentialAssisters[assisterIndex];
+          if (assister) {
+            assister.stats.assists++;
+          }
         }
       }
     }

@@ -25,12 +25,23 @@ interface TeamStats {
 }
 
 export function updateTeamStats(
-  currentStats: TeamStats,
+  currentStats: TeamStats | undefined,
   isHomeTeam: boolean,
   result: MatchResult,
   tactic?: ITactic
 ): TeamStats {
-  const stats = { ...currentStats };
+  // Initialize default stats if none exist
+  const stats = {
+    gamesPlayed: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    goalsFor: 0,
+    goalsAgainst: 0,
+    cleanSheets: 0,
+    tacticsUsed: [],
+    ...currentStats
+  };
   const teamScore = isHomeTeam ? result.homeScore : result.awayScore;
   const opponentScore = isHomeTeam ? result.awayScore : result.homeScore;
 
