@@ -64,8 +64,8 @@ export default function NotificationBanner({
     // Initial fetch
     fetchNotifications();
 
-    // Set up periodic refresh every 30 seconds
-    const intervalId = setInterval(fetchNotifications, 30000);
+    // Set up periodic refresh every minute (can be changed to hourly in production)
+    const intervalId = setInterval(fetchNotifications, 60000); // 1 minute
 
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
