@@ -10,7 +10,10 @@ import mongoose from 'mongoose';
 export async function GET() {
   try {
     await connectDB();
-    const players = await Player.find({}).select('-__v');
+    // Exclude players whose ethAddress starts with '0xbot' (bots)
+    const players = await Player.find({
+      ethAddress: { $not: /^0xbot/ }
+    }).select('-__v');
     return NextResponse.json(players);
   } catch (error) {
     console.error('GET /api/players error:', error);

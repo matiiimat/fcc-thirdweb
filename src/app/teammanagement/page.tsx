@@ -41,6 +41,17 @@ const TACTICAL_STYLES: TacticalStyle[] = [
 interface Player {
   ethAddress: string;
   playerName: string;
+  isBot?: boolean;
+  stats?: {
+    strength: number;
+    stamina: number;
+    passing: number;
+    shooting: number;
+    defending: number;
+    speed: number;
+    positioning: number;
+    workEthic: number;
+  };
 }
 
 export default function TeamManagementPage() {
@@ -72,6 +83,8 @@ export default function TeamManagementPage() {
     position: Position;
   } | null>(null);
   const [savingTactic, setSavingTactic] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     const init = async () => {
@@ -91,18 +104,44 @@ export default function TeamManagementPage() {
             // Fetch players
             const playersPromises = team.players.map(
               async (address: string) => {
-                const response = await fetch(`/api/players/address/${address}`);
-                return response.json();
+                if (address.toLowerCase().startsWith("0xbot")) {
+                  // Fetch the specific bot
+                  const botsResponse = await fetch(
+                    `/api/bots?address=${encodeURIComponent(address)}`
+                  );
+                  if (!botsResponse.ok) {
+                    throw new Error(`Failed to fetch bot data for ${address}`);
+                  }
+                  const botsData = await botsResponse.json();
+                  const bot = botsData.bots[0];
+                  return {
+                    ethAddress: bot.ethAddress,
+                    playerName: bot.playerName,
+                    stats: bot.stats,
+                    isBot: true,
+                  };
+                } else {
+                  // Regular player
+                  const response = await fetch(
+                    `/api/players/address/${address}`
+                  );
+                  if (!response.ok) {
+                    throw new Error(
+                      `Failed to fetch player data for ${address}`
+                    );
+                  }
+                  const data = await response.json();
+                  return {
+                    ethAddress: data.ethAddress,
+                    playerName: data.playerName,
+                    stats: data.stats,
+                    isBot: false,
+                  };
+                }
               }
             );
             const playerData = await Promise.all(playersPromises);
-            setPlayers(
-              playerData.map((p: any) => ({
-                ethAddress: p.ethAddress,
-                playerName: p.playerName,
-                stats: p.stats,
-              }))
-            );
+            setPlayers(playerData);
 
             // Fetch tactics
             const tacticsResponse = await fetch(
@@ -273,7 +312,7 @@ export default function TeamManagementPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Team Management" xp={0} />
+        <Header pageName="Tactics" xp={0} />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
@@ -291,7 +330,7 @@ export default function TeamManagementPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Team Management" xp={0} />
+      <Header pageName="Tactics" xp={0} />
       <main className="flex-1 container max-w-4xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-32">
         <div className="glass-container p-4 sm:p-6 rounded-xl">
           <div className="flex justify-between items-center mb-4">
@@ -439,6 +478,19 @@ export default function TeamManagementPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Status Messages */}
+      {(error || success) && (
+        <div
+          className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-4 py-2 rounded-lg ${
+            error
+              ? "bg-red-500/20 text-red-300"
+              : "bg-green-500/20 text-green-300"
+          }`}
+        >
+          {error || success}
+        </div>
+      )}
 
       {/* Player Selection Modal */}
       <PlayerSelectionModal

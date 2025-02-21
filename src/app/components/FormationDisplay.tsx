@@ -36,7 +36,7 @@ const FormationDisplay: React.FC<FormationDisplayProps> = ({
     const positions: { x: number; y: number; position: Position }[] = [];
 
     // Add goalkeeper
-    positions.push({ x: 50, y: 90, position: "D" });
+    positions.push({ x: 50, y: 90, position: "GK" });
 
     // Add defenders
     const defenderSpacing = 80 / (defenders + 1);

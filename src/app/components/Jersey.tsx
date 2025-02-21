@@ -95,10 +95,10 @@ export default function Jersey({
             >
               <image
                 href={jersey.sponsorLogoUrl}
-                width="45"
-                height="45"
-                x="-7.5"
-                y="-7.5"
+                width="90"
+                height="90"
+                x="-15"
+                y="-15"
                 preserveAspectRatio="xMidYMid meet"
               />
             </pattern>

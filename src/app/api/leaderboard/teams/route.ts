@@ -1,63 +1,103 @@
-import { NextResponse } from "next/server";
-import connectDB from "@/app/lib/mongodb";
-import Team from "@/app/models/Team";
+import { NextRequest, NextResponse } from "next/server";
+import TeamModel from "@/app/models/Team";
+import connectDB from "../../../lib/mongodb";
+import { calculateWinRate } from "@/app/lib/teamStats";
 
-export async function GET() {
+export type LeaderboardSortBy = 
+  | "points" 
+  | "wins" 
+  | "goalDifference" 
+  | "goalsFor" 
+  | "cleanSheets" 
+  | "winRate";
+
+interface LeaderboardEntry {
+  teamName: string;
+  gamesPlayed: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  cleanSheets: number;
+  points: number;
+  winRate: number;
+  form: string;
+}
+
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    // Get top 50 teams sorted by victories
-    const teams = await Team.aggregate([
-      {
-        $addFields: {
-          matches: {
-            $ifNull: ["$matches", []]
-          }
-        }
-      },
-      {
-        $project: {
-          teamName: 1,
-          victories: {
-            $size: {
-              $filter: {
-                input: "$matches",
-                as: "match",
-                cond: {
-                  $and: [
-                    { "$eq": ["$$match.isCompleted", true] },
-                    {
-                      $or: [
-                        {
-                          $and: [
-                            { "$eq": ["$$match.homeTeam", "$teamName"] },
-                            { "$gt": ["$$match.result.homeScore", "$$match.result.awayScore"] }
-                          ]
-                        },
-                        {
-                          $and: [
-                            { "$eq": ["$$match.awayTeam", "$teamName"] },
-                            { "$gt": ["$$match.result.awayScore", "$$match.result.homeScore"] }
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      { $sort: { victories: -1 } },
-      { $limit: 50 }
-    ]);
+    // Get query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const sortBy = (searchParams.get("sortBy") || "points") as LeaderboardSortBy;
+    const limit = parseInt(searchParams.get("limit") || "100", 10);
 
-    return NextResponse.json({ teams });
+    // Fetch all teams with their stats
+    const teams = await TeamModel.find({}, {
+      teamName: 1,
+      stats: 1,
+    });
+
+    // Calculate additional stats and sort teams
+    const leaderboard: LeaderboardEntry[] = teams
+      .map(team => {
+        const stats = team.stats;
+        const points = stats.wins * 3 + stats.draws;
+        const goalDifference = stats.goalsFor - stats.goalsAgainst;
+        const winRate = calculateWinRate(stats);
+
+        return {
+          teamName: team.teamName,
+          gamesPlayed: stats.gamesPlayed,
+          wins: stats.wins,
+          draws: stats.draws,
+          losses: stats.losses,
+          goalsFor: stats.goalsFor,
+          goalsAgainst: stats.goalsAgainst,
+          goalDifference,
+          cleanSheets: stats.cleanSheets,
+          points,
+          winRate,
+          form: stats.gamesPlayed === 0 ? "N/A" : 
+            ((points / (stats.gamesPlayed * 3)) * 100 >= 60 ? "Good" : 
+            ((points / (stats.gamesPlayed * 3)) * 100 >= 40 ? "Average" : "Poor")),
+        };
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "points":
+            return b.points - a.points || // Primary sort by points
+                   b.goalDifference - a.goalDifference || // Secondary sort by goal difference
+                   b.goalsFor - a.goalsFor; // Tertiary sort by goals scored
+          case "wins":
+            return b.wins - a.wins;
+          case "goalDifference":
+            return b.goalDifference - a.goalDifference;
+          case "goalsFor":
+            return b.goalsFor - a.goalsFor;
+          case "cleanSheets":
+            return b.cleanSheets - a.cleanSheets;
+          case "winRate":
+            return b.winRate - a.winRate;
+          default:
+            return b.points - a.points;
+        }
+      })
+      .slice(0, limit);
+
+    return NextResponse.json({
+      success: true,
+      leaderboard,
+    });
   } catch (error) {
     console.error("Error fetching team leaderboard:", error);
     return NextResponse.json(
-      { error: "Failed to fetch team leaderboard" },
+      {
+        error: error instanceof Error ? error.message : "Failed to fetch leaderboard",
+      },
       { status: 500 }
     );
   }
