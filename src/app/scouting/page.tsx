@@ -75,7 +75,8 @@ export default function ScoutingPage() {
           }
           const players = await response.json();
           const unassignedPlayers = players.filter(
-            (player: Player) => player.team === "Unassigned"
+            (player: Player & { isBot?: boolean }) =>
+              player.team === "Unassigned" && !player.isBot
           );
           setPlayers(unassignedPlayers);
         } else {
@@ -331,6 +332,18 @@ export default function ScoutingPage() {
             setBots((prevBots) =>
               prevBots.filter((b) => b.ethAddress !== selectedBot.ethAddress)
             );
+
+            // Refresh the players list to ensure hired bots don't show up
+            const playersResponse = await fetch("/api/players");
+            if (!playersResponse.ok) {
+              throw new Error("Failed to refresh players data");
+            }
+            const playersData = await playersResponse.json();
+            const unassignedPlayers = playersData.filter(
+              (player: Player & { isBot?: boolean }) =>
+                player.team === "Unassigned" && !player.isBot
+            );
+            setPlayers(unassignedPlayers);
           } catch (err: any) {
             setError(err.message || "Failed to hire bot");
           }
