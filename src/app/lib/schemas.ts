@@ -2,6 +2,13 @@ import { z } from 'zod';
 import { PLAYER_CONSTANTS } from './constants';
 
 // Base schemas
+export const notificationSchema = z.object({
+  fromTeamId: z.string().min(1, 'Team ID is required'),
+  toPlayerId: z.string().min(1, 'Player ID is required'),
+  type: z.enum(['TEAM_INVITATION']),
+  status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED']).default('PENDING'),
+});
+
 export const playerIdSchema = z.object({
   playerId: z.string().min(1, 'Player ID is required'),
 });

@@ -1,18 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "../../../lib/mongodb";
-import TeamModel from "../../../models/Team";
-import PlayerModel from "../../../models/Player";
-import { TEAM_CONSTANTS } from "../../../lib/constants";
+import connectDB from "@/app/lib/mongodb";
+import TeamModel from "@/app/models/Team";
+import PlayerModel from "@/app/models/Player";
+import { TEAM_CONSTANTS } from "@/app/lib/constants";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const { teamName, playerAddress } = await req.json();
-    console.log('Received request:', { teamName, playerAddress });
+    const ethAddress = req.headers.get("ethAddress")?.toLowerCase();
+    if (!ethAddress) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!teamName || !playerAddress) {
-      console.log('Missing required fields:', { teamName, playerAddress });
+    const { teamId } = await req.json();
+    if (!teamId) {
       return NextResponse.json(
-        { error: "Team name and player address are required" },
+        { error: "Team ID is required" },
         { status: 400 }
       );
     }
@@ -20,8 +22,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     // Check if team exists
-    const team = await TeamModel.findOne({ teamName });
-    console.log('Found team:', team);
+    const team = await TeamModel.findById(teamId);
     if (!team) {
       return NextResponse.json(
         { error: "Team not found" },
@@ -37,9 +38,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if player is already in a team
-    const player = await PlayerModel.findOne({ ethAddress: playerAddress.toLowerCase() });
-    console.log('Found player:', player);
+    // Check if player exists and their current team status
+    const player = await PlayerModel.findOne({ ethAddress });
     if (!player) {
       return NextResponse.json(
         { error: "Player not found" },
@@ -55,16 +55,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Add player to team
-    if (!team.players.includes(playerAddress.toLowerCase())) {
-      team.players.push(playerAddress.toLowerCase());
+    if (!team.players.includes(ethAddress)) {
+      team.players.push(ethAddress);
       await team.save();
     }
 
     // Update player's team
-    player.team = teamName;
+    player.team = team.teamName;
     await player.save();
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, team: team.teamName });
   } catch (error) {
     console.error("Error joining team:", error);
     return NextResponse.json(

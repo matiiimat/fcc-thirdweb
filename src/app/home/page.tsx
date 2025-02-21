@@ -5,6 +5,7 @@ import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
 import Footer from "../components/Footer";
 import StatsRadarChart from "../components/StatsRadarChart";
+import NotificationBanner from "../components/NotificationBanner";
 import { useEffect, useState } from "react";
 import {
   calculatePlayerRating,
@@ -126,6 +127,10 @@ export default function HomePage() {
       <Header pageName="Home" xp={player.xp} />
       <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
         <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
+          <NotificationBanner
+            playerId={player.playerId}
+            ethAddress={player.ethAddress}
+          />
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
             <h2 className="text-center text-xl sm:text-2xl mb-1">
               {player.playerName}
