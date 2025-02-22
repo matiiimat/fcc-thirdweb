@@ -42,6 +42,7 @@ interface MongoTeam {
   matches?: Match[];
   tactics: MongoTactic[];
   stats: ITeamStats;
+  isPublic: boolean;
   jersey?: {
     primaryColor: string;
     secondaryColor: string;
@@ -57,6 +58,7 @@ interface Team {
   players: string[];
   matches?: Match[];
   tactics?: ITactic[];
+  isPublic: boolean;
 }
 
 interface Player {
@@ -229,10 +231,12 @@ export default function TeamPage() {
     try {
       const response = await fetch("/api/teams/join", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ethAddress: wallet.address,
+        },
         body: JSON.stringify({
-          teamName,
-          playerAddress: wallet.address,
+          teamName: teamName,
         }),
       });
 

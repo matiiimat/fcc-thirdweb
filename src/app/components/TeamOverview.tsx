@@ -34,6 +34,7 @@ interface MongoTeam {
   tactics: MongoTactic[];
   jersey?: IJersey;
   stats: ITeamStats;
+  isPublic: boolean;
 }
 
 interface TeamOverviewProps {
@@ -52,6 +53,41 @@ export default function TeamOverview({
   const [error, setError] = useState("");
   const [jerseyModalOpen, setJerseyModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"matches" | "stats">("matches");
+
+  const handleVisibilityToggle = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch("/api/teams/visibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teamName: team.teamName,
+          captainAddress: playerAddress,
+          isPublic: !team.isPublic,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update team visibility");
+      }
+
+      // Update local state
+      team.isPublic = !team.isPublic;
+      router.refresh(); // Refresh the page to update the teams list
+    } catch (error) {
+      console.error("Error updating team visibility:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update team visibility"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleJerseyUpdate = async (jersey: IJersey) => {
     try {

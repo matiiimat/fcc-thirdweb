@@ -11,22 +11,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { teamId } = await req.json();
-    if (!teamId) {
+    const { teamId, teamName } = await req.json();
+    
+    await connectDB();
+
+    // Check if team exists - try by ID first, then by name
+    let team;
+    if (teamId) {
+      team = await TeamModel.findById(teamId);
+    } else if (teamName) {
+      team = await TeamModel.findOne({ teamName });
+    }
+
+    if (!teamId && !teamName) {
       return NextResponse.json(
-        { error: "Team ID is required" },
+        { error: "Team ID or name is required" },
         { status: 400 }
       );
     }
-
-    await connectDB();
-
-    // Check if team exists
-    const team = await TeamModel.findById(teamId);
     if (!team) {
       return NextResponse.json(
         { error: "Team not found" },
         { status: 404 }
+      );
+    }
+
+    // Check if team is public
+    if (!team.isPublic) {
+      return NextResponse.json(
+        { error: "This team is private and cannot be joined directly" },
+        { status: 403 }
       );
     }
 
