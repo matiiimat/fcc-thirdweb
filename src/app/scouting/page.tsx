@@ -159,6 +159,19 @@ export default function ScoutingPage() {
             </button>
           </div>
 
+          {/* Status Messages */}
+          {(error || success) && (
+            <div
+              className={`mb-4 p-3 rounded-lg text-center ${
+                error
+                  ? "bg-red-500/20 text-red-300"
+                  : "bg-green-500/20 text-green-300"
+              }`}
+            >
+              {error || success}
+            </div>
+          )}
+
           <div className="overflow-x-auto -mx-2 sm:mx-0">
             <table className="w-full">
               <thead>
@@ -270,19 +283,6 @@ export default function ScoutingPage() {
             </table>
           </div>
         </div>
-
-        {/* Status Messages */}
-        {(error || success) && (
-          <div
-            className={`mt-4 p-3 rounded-lg text-center ${
-              error
-                ? "bg-red-500/20 text-red-300"
-                : "bg-green-500/20 text-green-300"
-            }`}
-          >
-            {error || success}
-          </div>
-        )}
 
         {/* Back Button */}
         <div className="mt-6 flex justify-center pb-20">
