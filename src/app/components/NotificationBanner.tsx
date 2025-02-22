@@ -27,6 +27,7 @@ export default function NotificationBanner({
   useEffect(() => {
     const fetchNotifications = async () => {
       setLoading(true);
+      setTeamName(""); // Reset team name when fetching new notifications
       try {
         const response = await fetch("/api/notifications", {
           headers: {
@@ -46,10 +47,11 @@ export default function NotificationBanner({
           const teamResponse = await fetch(
             `/api/teams/${data.notifications[0].fromTeamId}`
           );
-          if (teamResponse.ok) {
-            const teamData = await teamResponse.json();
-            setTeamName(teamData.name);
+          if (!teamResponse.ok) {
+            throw new Error("Failed to fetch team details");
           }
+          const teamData = await teamResponse.json();
+          setTeamName(teamData.teamName); // Use teamName instead of name
         } else {
           setNotifications([]);
         }
@@ -76,7 +78,7 @@ export default function NotificationBanner({
     setError("");
 
     try {
-      // Update notification status
+      // Update notification status first
       const response = await fetch(`/api/notifications/${notificationId}`, {
         method: "PUT",
         headers: {
@@ -92,6 +94,9 @@ export default function NotificationBanner({
         throw new Error("Failed to update notification");
       }
 
+      // Wait a moment to ensure notification status is updated
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // If accepted, join the team
       if (accept) {
         const joinResponse = await fetch("/api/teams/join", {
@@ -106,7 +111,8 @@ export default function NotificationBanner({
         });
 
         if (!joinResponse.ok) {
-          throw new Error("Failed to join team");
+          const errorData = await joinResponse.json();
+          throw new Error(errorData.error || "Failed to join team");
         }
       }
 
