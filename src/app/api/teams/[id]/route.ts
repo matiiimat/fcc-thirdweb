@@ -24,3 +24,39 @@ export async function GET(
     );
   }
 }
+
+// DELETE /api/teams/[id] - Delete a team by ID
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+
+    // First find the team to get its players
+    const team = await Team.findById(params.id);
+    if (!team) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Import Player model
+    const Player = (await import("@/app/models/Player")).default;
+
+    // Update all players in this team to be unassigned
+    await Player.updateMany(
+      { team: team.teamName },
+      { $set: { team: "Unassigned" } }
+    );
+
+    // Now delete the team
+    await Team.findByIdAndDelete(params.id);
+
+    return NextResponse.json({ message: "Team deleted successfully and players unassigned" });
+  } catch (error) {
+    console.error("Error deleting team:", error);
+    return NextResponse.json(
+      { error: "Failed to delete team" },
+      { status: 500 }
+    );
+  }
+}
