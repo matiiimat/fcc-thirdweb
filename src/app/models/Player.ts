@@ -40,6 +40,7 @@ export interface IPlayer extends Document {
     selectedSkill: keyof IPlayerStats | null;
     remainingSessions: number;
   };
+  managementCertificate: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -172,6 +173,10 @@ const PlayerSchema = new Schema<IPlayer>(
       unique: true,
       trim: true,
       index: true,
+    },
+    managementCertificate: {
+      type: Boolean,
+      default: false,
     },
     xp: {
       type: Number,

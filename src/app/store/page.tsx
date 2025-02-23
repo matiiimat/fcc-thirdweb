@@ -15,6 +15,7 @@ interface PlayerData {
     selectedSkill: string | null;
     remainingSessions: number;
   };
+  managementCertificate?: boolean;
 }
 
 interface SkillOption {
@@ -271,7 +272,9 @@ export default function Store() {
                             player.money < item.price ||
                             (item.id === "private_trainer" &&
                               (player.privateTrainer?.remainingSessions ?? 0) >
-                                0)
+                                0) ||
+                            (item.id === "management_certificate" &&
+                              player.managementCertificate)
                           }
                           className={`gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs ${
                             processing === item.id ||
@@ -294,6 +297,12 @@ export default function Store() {
                         {player.privateTrainer.remainingSessions} sessions left
                       </div>
                     )}
+                    {item.id === "management_certificate" &&
+                      player.managementCertificate && (
+                        <div className="mt-1 text-xs text-center text-green-400">
+                          Certificate obtained
+                        </div>
+                      )}
                   </div>
                 ))}
               </div>

@@ -65,6 +65,7 @@ interface Player {
   playerName: string;
   ethAddress: string;
   team: string;
+  managementCertificate: boolean;
 }
 
 export default function TeamPage() {
@@ -189,6 +190,13 @@ export default function TeamPage() {
       return;
     }
 
+    if (!player?.managementCertificate) {
+      setError(
+        "You need a Management Certificate to create a team. Purchase it from the Store."
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -278,6 +286,7 @@ export default function TeamPage() {
           <CreateTeamSection
             loading={loading}
             onCreateTeam={handleCreateTeam}
+            hasCertificate={player?.managementCertificate}
           />
           <AvailableTeamsSection
             teams={teams}

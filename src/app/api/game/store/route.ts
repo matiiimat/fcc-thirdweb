@@ -82,6 +82,10 @@ export async function POST(req: NextRequest) {
           };
           break;
         case "management_certificate":
+          updateData.$set = {
+            managementCertificate: true
+          };
+          break;
         case "training_certificate":
         case "finance_certificate":
           // These will be used in future features
@@ -111,7 +115,8 @@ export async function POST(req: NextRequest) {
           success: true,
           newBalance: updatedPlayer.xp,
           newName: updatedPlayer.playerName,
-          privateTrainer: updatedPlayer.privateTrainer
+          privateTrainer: updatedPlayer.privateTrainer,
+          managementCertificate: updatedPlayer.managementCertificate
         }
       };
     });
