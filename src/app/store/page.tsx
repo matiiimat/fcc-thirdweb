@@ -46,35 +46,21 @@ const storeItems: StoreItem[] = [
     name: "Name Change",
     description: "Change your player name",
     price: 10000,
-    section: "Bonuses",
+    section: "Buy",
   },
   {
     id: "private_trainer",
     name: "Private Trainer",
     description: "Train specific skill for 5 sessions",
     price: 1000,
-    section: "Bonuses",
+    section: "Buy",
   },
   {
     id: "management_certificate",
-    name: "Management Cert.",
+    name: "Management Certificate",
     description: "Team management license",
-    price: 10000,
-    section: "Certifications",
-  },
-  {
-    id: "training_certificate",
-    name: "Training Cert.",
-    description: "Team training license",
-    price: 10000,
-    section: "Certifications",
-  },
-  {
-    id: "finance_certificate",
-    name: "Finance Cert.",
-    description: "Team finance license",
-    price: 10000,
-    section: "Certifications",
+    price: 1, //TO DO: Change price to $5 WHEN LIVE
+    section: "Buy",
   },
 ];
 
@@ -259,11 +245,11 @@ export default function Store() {
         {/* Store Items */}
         <div className="glass-container p-2 sm:p-6 rounded-lg sm:rounded-2xl shadow-lg">
           <div className="grid grid-cols-1 gap-2">
-            {/* Bonuses Section */}
+            {/* Buy Section */}
             <div>
-              <h2 className="text-base font-bold text-white mb-2">Bonuses</h2>
+              <h2 className="text-base font-bold text-white mb-2">Buy</h2>
               <div className="space-y-2">
-                {itemsBySection["Bonuses"].map((item) => (
+                {itemsBySection["Buy"].map((item) => (
                   <div
                     key={item.id}
                     className="glass-container p-2 rounded-lg transition-all duration-300 active:bg-[#1a1d21]/50 sm:hover:bg-[#1a1d21]/50"
@@ -308,47 +294,6 @@ export default function Store() {
                         {player.privateTrainer.remainingSessions} sessions left
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Certifications Section */}
-            <div className="mt-3">
-              <h2 className="text-base font-bold text-white mb-2">
-                Certifications
-              </h2>
-              <div className="space-y-2">
-                {itemsBySection["Certifications"].map((item) => (
-                  <div
-                    key={item.id}
-                    className="glass-container p-2 rounded-lg transition-all duration-300 active:bg-[#1a1d21]/50 sm:hover:bg-[#1a1d21]/50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold truncate">
-                          {item.name}
-                        </h3>
-                        <p className="text-xs text-gray-400 truncate">
-                          {item.description}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handlePurchase(item)}
-                        disabled={
-                          processing === item.id || player.money < item.price
-                        }
-                        className={`gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs ${
-                          processing === item.id || player.money < item.price
-                            ? "opacity-50 cursor-not-allowed"
-                            : "active:scale-95"
-                        }`}
-                      >
-                        {processing === item.id
-                          ? "..."
-                          : item.price.toLocaleString()}
-                      </button>
-                    </div>
                   </div>
                 ))}
               </div>
