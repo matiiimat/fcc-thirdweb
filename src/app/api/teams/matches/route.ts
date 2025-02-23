@@ -66,11 +66,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get the match
+    const match = schedule.matches[matchIndex];
+
     // Update the appropriate team's tactic
-    if (schedule.matches[matchIndex].homeTeam === teamName) {
-      schedule.matches[matchIndex].homeTactic = tactic;
-    } else if (schedule.matches[matchIndex].awayTeam === teamName) {
-      schedule.matches[matchIndex].awayTactic = tactic;
+    if (match.homeTeam === teamName) {
+      match.homeTactic = tactic;
+    } else if (match.awayTeam === teamName) {
+      match.awayTactic = tactic;
     } else {
       return NextResponse.json(
         { error: "Team is not part of this match" },
@@ -78,8 +81,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Update the match in the schedule
+    schedule.matches[matchIndex] = match;
     await schedule.save();
-    return NextResponse.json(schedule.matches[matchIndex]);
+
+    // Return the updated match without simulating
+    return NextResponse.json(match);
   } catch (error) {
     console.error("Error in POST /api/teams/matches:", error);
     return NextResponse.json(
