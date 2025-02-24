@@ -36,19 +36,9 @@ export async function POST(req: NextRequest) {
 
     const player = authResult.player;
 
-    // Check if player has enough XP
-    if (player.xp < item.price) {
-      return NextResponse.json(
-        { error: "Insufficient XP" },
-        { status: 400 }
-      );
-    }
-
     // 4. Run purchase logic in transaction
     const result = await runTransaction(async (session) => {
-      let updateData: any = {
-        $inc: { xp: -item.price }
-      };
+      let updateData: any = {};
 
       // Add any specific effects based on the item
       switch (item.id) {
@@ -113,7 +103,6 @@ export async function POST(req: NextRequest) {
       return {
         data: {
           success: true,
-          newBalance: updatedPlayer.xp,
           newName: updatedPlayer.playerName,
           privateTrainer: updatedPlayer.privateTrainer,
           managementCertificate: updatedPlayer.managementCertificate
