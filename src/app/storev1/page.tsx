@@ -204,10 +204,8 @@ export default function Store() {
       (item) => item.id === "management_certificate"
     );
     if (managementCertificateItem) {
-      // Here we update the player's state to allow team creation.
-      setPlayer((prev) =>
-        prev ? { ...prev, managementCertificate: true } : prev
-      );
+      // Process the purchase to update the database
+      processPurchase(managementCertificateItem);
     }
   };
 
@@ -318,20 +316,29 @@ export default function Store() {
                             0.001 ETH
                           </TransactionButton>
                         ) : item.id === "management_certificate" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: 5000000000000000n, // Adjust ETH value as needed
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={
-                              handleSuccessManagementCertificate
-                            }
-                            onError={handleError}
-                          >
-                            0.005 ETH
-                          </TransactionButton>
+                          player.managementCertificate ? (
+                            <button
+                              disabled
+                              className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs opacity-50 cursor-not-allowed"
+                            >
+                              Owned
+                            </button>
+                          ) : (
+                            <TransactionButton
+                              transaction={async () => ({
+                                to: recipientAddress,
+                                value: 5000000000000000n, // Adjust ETH value as needed
+                                chain: sepolia,
+                                client: client,
+                              })}
+                              onTransactionConfirmed={
+                                handleSuccessManagementCertificate
+                              }
+                              onError={handleError}
+                            >
+                              0.005 ETH
+                            </TransactionButton>
+                          )
                         ) : (
                           <button
                             onClick={() => {}}
@@ -350,7 +357,7 @@ export default function Store() {
                     {item.id === "management_certificate" &&
                       player.managementCertificate && (
                         <div className="mt-1 text-xs text-center text-green-400">
-                          Certificate obtained
+                          Certificate already acquired
                         </div>
                       )}
                   </div>
