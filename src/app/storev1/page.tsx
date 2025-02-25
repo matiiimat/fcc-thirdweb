@@ -244,7 +244,7 @@ export default function Store() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Store" xp={player.xp} />
+      <Header pageName="Store" />
       <main className="container max-w-2xl mx-auto px-3 sm:px-6 py-2 sm:py-6 pb-16">
         {error && (
           <div className="glass-container border-red-500/50 text-red-400 px-3 py-2 mb-2 rounded-lg text-sm">
@@ -295,7 +295,7 @@ export default function Store() {
                           <TransactionButton
                             transaction={async () => ({
                               to: recipientAddress,
-                              value: 10000n, // Adjust ETH value as needed
+                              value: 1000000000000000n, // Adjust ETH value as needed
                               chain: sepolia,
                               client: client,
                             })}
@@ -308,7 +308,7 @@ export default function Store() {
                           <TransactionButton
                             transaction={async () => ({
                               to: recipientAddress,
-                              value: 1n, // Adjust ETH value as needed
+                              value: 1000000000000000n, // Adjust ETH value as needed
                               chain: sepolia,
                               client: client,
                             })}
@@ -321,7 +321,7 @@ export default function Store() {
                           <TransactionButton
                             transaction={async () => ({
                               to: recipientAddress,
-                              value: 50000n, // Adjust ETH value as needed
+                              value: 5000000000000000n, // Adjust ETH value as needed
                               chain: sepolia,
                               client: client,
                             })}
