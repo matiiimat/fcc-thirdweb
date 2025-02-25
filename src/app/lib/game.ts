@@ -1,10 +1,12 @@
 import { TRAINING_CONSTANTS } from './constants';
 
-// Calculate player rating based on stats
+// Calculate player rating based on highest stat (excluding work ethic)
 export function calculatePlayerRating(stats: any) {
-  const values = Object.values(stats).map(Number);
-  const sum = values.reduce((a: number, b: number) => a + b, 0);
-  return sum / values.length;
+  const values = Object.entries(stats)
+    .filter(([key]) => key !== 'workEthic')
+    .map(([_, value]) => Number(value));
+  const highestStat = Math.max(...values);
+  return highestStat / 4;
 }
 
 // Get star rating based on player rating
