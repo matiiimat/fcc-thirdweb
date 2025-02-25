@@ -97,20 +97,14 @@ export async function POST(req: NextRequest) {
     const rating = minRating + (ratingRange * ratingFromMentions);
     const finalRating = Math.round(rating * 10) / 10; // Round to 1 decimal
 
-    // Calculate XP gained (rating * 10)
-    const xpGained = Math.round(finalRating * 10);
-
     // 6. Run game logic in transaction
     const result = await runTransaction(async (session) => {
-      // Update player with new game date and XP
+      // Update player with new game date
       const updatedPlayer = await Player.findOneAndUpdate(
         { playerId },
         {
           $set: {
             lastGameDate: now
-          },
-          $inc: {
-            xp: xpGained
           }
         },
         {
@@ -129,8 +123,7 @@ export async function POST(req: NextRequest) {
         success: true,
         player: updatedPlayer,
         matchResult: {
-          rating: finalRating,
-          xpGained
+          rating: finalRating
         }
       };
     });

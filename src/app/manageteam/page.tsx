@@ -137,7 +137,7 @@ export default function ManageTeamPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Manage Team" xp={0} />
+        <Header pageName="Manage Team" />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
@@ -155,7 +155,7 @@ export default function ManageTeamPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Manage Team" xp={0} />
+      <Header pageName="Manage Team" />
       <main className="flex-1 container max-w-4xl mx-auto px-2 sm:px-6 py-2 sm:py-4 pb-32">
         <div className="glass-container p-3 sm:p-6 rounded-xl">
           <div className="mb-6">

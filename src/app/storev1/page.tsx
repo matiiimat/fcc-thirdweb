@@ -12,7 +12,6 @@ import { client } from "../client";
 interface PlayerData {
   playerId: string;
   money: number;
-  xp: number;
   privateTrainer?: {
     selectedSkill: string | null;
     remainingSessions: number;
@@ -218,7 +217,7 @@ export default function Store() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Store" xp={0} />
+        <Header pageName="Store" />
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
           <p className="mt-2 text-green-400">Loading...</p>
