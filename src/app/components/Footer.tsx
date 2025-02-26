@@ -84,7 +84,7 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/store")}
+            onClick={() => router.push("/storev1")}
             className={getButtonClass("/store")}
           >
             <Image

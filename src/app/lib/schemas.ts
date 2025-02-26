@@ -2,6 +2,13 @@ import { z } from 'zod';
 import { PLAYER_CONSTANTS } from './constants';
 
 // Base schemas
+export const notificationSchema = z.object({
+  fromTeamId: z.string().min(1, 'Team ID is required'),
+  toPlayerId: z.string().min(1, 'Player ID is required'),
+  type: z.enum(['TEAM_INVITATION']),
+  status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED']).default('PENDING'),
+});
+
 export const playerIdSchema = z.object({
   playerId: z.string().min(1, 'Player ID is required'),
 });
@@ -25,8 +32,7 @@ export const solomatchSchema = playerIdSchema;
 export const storeSchema = z.object({
   ...playerIdSchema.shape,
   item: z.object({
-    id: z.enum(['name_change', 'private_trainer', 'management_certificate', 'training_certificate', 'finance_certificate']),
-    price: z.number().positive(),
+    id: z.enum(['name_change', 'private_trainer', 'management_certificate', 'training_certificate', 'finance_certificate'])
   }),
   newName: z.string()
     .min(4, 'Name must be at least 4 characters')

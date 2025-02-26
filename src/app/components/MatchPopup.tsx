@@ -10,7 +10,6 @@ interface MatchPopupProps {
   onClose: () => void;
   matchResult?: {
     rating: number;
-    xpGained: number;
   };
 }
 
@@ -98,11 +97,8 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
           {/* Show rating and XP gained after final whistle */}
           {currentMinute === 90 && matchResult && (
             <div className="mb-4 pb-4 border-b border-gray-700">
-              <div className="text-yellow-400 font-bold text-sm mb-1">
+              <div className="text-yellow-400 font-bold text-sm">
                 Rating: {matchResult.rating.toFixed(1)}
-              </div>
-              <div className="text-green-400 font-bold text-sm">
-                XP gained: {matchResult.xpGained}
               </div>
             </div>
           )}

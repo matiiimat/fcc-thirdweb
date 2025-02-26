@@ -11,7 +11,8 @@ const defaultJersey: IJersey = {
   primaryColor: "#ffffff",
   secondaryColor: "#000000",
   pattern: "solid",
-  sponsorLogoUrl: "",
+  sponsorLogoUrl:
+    "https://fcc-test.netlify.app/_next/image?url=%2Flogo.png&w=90&q=90", // TODO: DEFAUT URL PATH IMAGE TO CHANGE WHEN LIVE
 };
 
 export default function Jersey({
@@ -89,16 +90,16 @@ export default function Jersey({
           {jersey.sponsorLogoUrl && (
             <pattern
               id={`sponsorLogo-${size}`}
-              patternUnits="objectBoundingBox"
-              width="1"
-              height="1"
+              patternUnits="userSpaceOnUse"
+              width="100"
+              height="120"
             >
               <image
                 href={jersey.sponsorLogoUrl}
                 width="90"
                 height="90"
-                x="-15"
-                y="-15"
+                x="20"
+                y="30"
                 preserveAspectRatio="xMidYMid meet"
               />
             </pattern>
@@ -139,7 +140,13 @@ export default function Jersey({
 
         {/* Sponsor Logo */}
         {jersey.sponsorLogoUrl && (
-          <circle cx="50" cy="50" r="15" fill={`url(#sponsorLogo-${size})`} />
+          <rect
+            x="20"
+            y="30"
+            width="60"
+            height="60"
+            fill={`url(#sponsorLogo-${size})`}
+          />
         )}
       </svg>
     </div>

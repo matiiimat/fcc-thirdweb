@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
+import { useActiveWallet, TransactionButton } from "thirdweb/react";
+import { sepolia } from "thirdweb/chains";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import NameChangeModal from "../components/NameChangeModal";
+import { client } from "../client";
 
 interface PlayerData {
   playerId: string;
@@ -59,7 +61,7 @@ const storeItems: StoreItem[] = [
     id: "management_certificate",
     name: "Management Certificate",
     description: "Team management license",
-    price: 1, //TO DO: Change price to $5 WHEN LIVE
+    price: 1, // TO DO: Change price to $5 WHEN LIVE
     section: "Buy",
   },
 ];
@@ -78,6 +80,8 @@ export default function Store() {
   const [pendingPurchase, setPendingPurchase] = useState<StoreItem | null>(
     null
   );
+  const [txStatus, setTxStatus] = useState<string>("");
+  const recipientAddress = "0xE2A190F13b023f2675bd14B4f3efFEEB1f713641";
 
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
@@ -91,7 +95,6 @@ export default function Store() {
         setLoading(false);
         return;
       }
-
       try {
         const response = await fetch(
           `/api/players/address/${encodeURIComponent(wallet.address)}`
@@ -103,7 +106,6 @@ export default function Store() {
           }
           throw new Error("Failed to fetch player data");
         }
-
         const data = await response.json();
         setPlayer(data);
       } catch (err) {
@@ -112,27 +114,8 @@ export default function Store() {
         setLoading(false);
       }
     }
-
     fetchPlayer();
   }, [wallet, router]);
-
-  const handlePurchase = async (item: StoreItem) => {
-    if (!player || processing) return;
-
-    if (item.id === "name_change") {
-      setPendingPurchase(item);
-      setShowNameModal(true);
-      return;
-    }
-
-    if (item.id === "private_trainer") {
-      setPendingPurchase(item);
-      setShowSkillModal(true);
-      return;
-    }
-
-    await processPurchase(item);
-  };
 
   const processPurchase = async (
     item: StoreItem,
@@ -140,7 +123,6 @@ export default function Store() {
     newName?: string
   ) => {
     if (!wallet) return;
-
     setError(null);
     setProcessing(item.id);
     try {
@@ -157,24 +139,24 @@ export default function Store() {
           newName,
         }),
       });
-
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || "Failed to purchase item");
       }
-
       setPlayer((prev) =>
         prev
           ? {
               ...prev,
               playerName: data.newName,
               privateTrainer: data.privateTrainer,
+              managementCertificate:
+                data.managementCertificate || prev.managementCertificate,
             }
           : null
       );
-
       // Reset modal state
       setShowSkillModal(false);
+      setShowNameModal(false);
       setPendingPurchase(null);
       setSelectedSkill(null);
     } catch (err) {
@@ -187,6 +169,49 @@ export default function Store() {
   const handleSkillSelect = async () => {
     if (!pendingPurchase || !selectedSkill) return;
     await processPurchase(pendingPurchase, selectedSkill);
+  };
+
+  // Handler for name change transaction success:
+  const handleSuccessNameChange = () => {
+    console.log("Transaction confirmed for name change! 🎉");
+    setTxStatus("Transaction confirmed for name change! 🎉");
+    const nameChangeItem = storeItems.find((item) => item.id === "name_change");
+    if (nameChangeItem) {
+      setPendingPurchase(nameChangeItem);
+      setShowNameModal(true);
+    }
+  };
+
+  // Handler for private trainer transaction success:
+  const handleSuccessPrivateTrainer = () => {
+    console.log("Transaction confirmed for private trainer! 🎉");
+    setTxStatus("Transaction confirmed! 🎉");
+    const privateTrainerItem = storeItems.find(
+      (item) => item.id === "private_trainer"
+    );
+    if (privateTrainerItem) {
+      setPendingPurchase(privateTrainerItem);
+      setShowSkillModal(true);
+    }
+  };
+
+  // Handler for management certificate transaction success:
+  const handleSuccessManagementCertificate = () => {
+    console.log("Transaction confirmed for management certificate! 🎉");
+    setTxStatus("Transaction confirmed! 🎉");
+    const managementCertificateItem = storeItems.find(
+      (item) => item.id === "management_certificate"
+    );
+    if (managementCertificateItem) {
+      // Process the purchase to update the database
+      processPurchase(managementCertificateItem);
+    }
+  };
+
+  // Handle transaction errors
+  const handleError = (error: Error) => {
+    console.log("ERROR", error);
+    setTxStatus(`Transaction failed: ${error.message}`);
   };
 
   if (loading) {
@@ -263,31 +288,64 @@ export default function Store() {
                         </p>
                       </div>
                       <div className="flex-shrink-0">
-                        <button
-                          onClick={() => handlePurchase(item)}
-                          disabled={
-                            processing === item.id ||
-                            player.money < item.price ||
-                            (item.id === "private_trainer" &&
-                              (player.privateTrainer?.remainingSessions ?? 0) >
-                                0) ||
-                            (item.id === "management_certificate" &&
-                              player.managementCertificate)
-                          }
-                          className={`gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs ${
-                            processing === item.id ||
-                            player.money < item.price ||
-                            (item.id === "private_trainer" &&
-                              (player.privateTrainer?.remainingSessions ?? 0) >
-                                0)
-                              ? "opacity-50 cursor-not-allowed"
-                              : "active:scale-95"
-                          }`}
-                        >
-                          {processing === item.id
-                            ? "..."
-                            : item.price.toLocaleString()}
-                        </button>
+                        {item.id === "name_change" ? (
+                          <TransactionButton
+                            transaction={async () => ({
+                              to: recipientAddress,
+                              value: 1000000000000000n, // Adjust ETH value as needed
+                              chain: sepolia,
+                              client: client,
+                            })}
+                            onTransactionConfirmed={handleSuccessNameChange}
+                            onError={handleError}
+                          >
+                            0.001 ETH
+                          </TransactionButton>
+                        ) : item.id === "private_trainer" ? (
+                          <TransactionButton
+                            transaction={async () => ({
+                              to: recipientAddress,
+                              value: 1000000000000000n, // Adjust ETH value as needed
+                              chain: sepolia,
+                              client: client,
+                            })}
+                            onTransactionConfirmed={handleSuccessPrivateTrainer}
+                            onError={handleError}
+                          >
+                            0.001 ETH
+                          </TransactionButton>
+                        ) : item.id === "management_certificate" ? (
+                          player.managementCertificate ? (
+                            <button
+                              disabled
+                              className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs opacity-50 cursor-not-allowed"
+                            >
+                              Owned
+                            </button>
+                          ) : (
+                            <TransactionButton
+                              transaction={async () => ({
+                                to: recipientAddress,
+                                value: 5000000000000000n, // Adjust ETH value as needed
+                                chain: sepolia,
+                                client: client,
+                              })}
+                              onTransactionConfirmed={
+                                handleSuccessManagementCertificate
+                              }
+                              onError={handleError}
+                            >
+                              0.005 ETH
+                            </TransactionButton>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => {}}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
+                          >
+                            BUY
+                          </button>
+                        )}
                       </div>
                     </div>
                     {item.id === "private_trainer" && player.privateTrainer && (
@@ -298,7 +356,7 @@ export default function Store() {
                     {item.id === "management_certificate" &&
                       player.managementCertificate && (
                         <div className="mt-1 text-xs text-center text-green-400">
-                          Certificate obtained
+                          Certificate already acquired
                         </div>
                       )}
                   </div>

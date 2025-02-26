@@ -8,7 +8,7 @@ interface PageWrapperProps {
 export function PageWrapper({ children }: PageWrapperProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Team" xp={0} />
+      <Header pageName="Team" />
       <div className="container max-w-md mx-auto px-3 py-4 pb-20">
         <div className="glass-container p-4 text-center rounded-2xl shadow-lg">
           {children}

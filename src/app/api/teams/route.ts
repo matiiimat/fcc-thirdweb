@@ -11,6 +11,7 @@ interface TeamDocument {
   players: string[];
   tactics: any[];
   matches?: IMatch[];
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -87,7 +88,8 @@ export async function POST(req: NextRequest) {
         secondaryColor: "#000000",
         pattern: "solid",
         sponsorLogoUrl: ""
-      }
+      },
+      isPublic: true // Teams are public by default
     });
 
     await team.save();

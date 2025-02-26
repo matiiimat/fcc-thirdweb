@@ -69,6 +69,7 @@ export interface ITeam extends Document {
   matches: IMatch[];
   jersey?: IJersey;
   stats: ITeamStats;
+  isPublic: boolean; // Whether the team is visible in available teams section
   createdAt: Date;
   updatedAt: Date;
 }
@@ -270,6 +271,10 @@ const TeamSchema = new Schema<ITeam>(
         cleanSheets: 0,
         tacticsUsed: [],
       }),
+    },
+    isPublic: {
+      type: Boolean,
+      default: true, // Teams are public by default
     },
   },
   {

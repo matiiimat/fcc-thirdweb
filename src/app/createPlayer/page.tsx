@@ -70,6 +70,7 @@ export default function CreatePlayerPage() {
         body: JSON.stringify({
           ethAddress: walletAddress,
           team: "Unassigned",
+          managementCertificate: false,
         }),
       });
 

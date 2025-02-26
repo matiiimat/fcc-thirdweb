@@ -1,31 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "../../../lib/mongodb";
-import TeamModel from "../../../models/Team";
-import PlayerModel from "../../../models/Player";
-import { TEAM_CONSTANTS } from "../../../lib/constants";
+import connectDB from "@/app/lib/mongodb";
+import TeamModel from "@/app/models/Team";
+import PlayerModel from "@/app/models/Player";
+import { TEAM_CONSTANTS } from "@/app/lib/constants";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const { teamName, playerAddress } = await req.json();
-    console.log('Received request:', { teamName, playerAddress });
+    const ethAddress = req.headers.get("ethAddress")?.toLowerCase();
+    if (!ethAddress) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!teamName || !playerAddress) {
-      console.log('Missing required fields:', { teamName, playerAddress });
+    const { teamId, teamName } = await req.json();
+    
+    await connectDB();
+
+    // Check if team exists - try by ID first, then by name
+    let team;
+    if (teamId) {
+      team = await TeamModel.findById(teamId);
+    } else if (teamName) {
+      team = await TeamModel.findOne({ teamName });
+    }
+
+    if (!teamId && !teamName) {
       return NextResponse.json(
-        { error: "Team name and player address are required" },
+        { error: "Team ID or name is required" },
         { status: 400 }
       );
     }
-
-    await connectDB();
-
-    // Check if team exists
-    const team = await TeamModel.findOne({ teamName });
-    console.log('Found team:', team);
     if (!team) {
       return NextResponse.json(
         { error: "Team not found" },
         { status: 404 }
+      );
+    }
+
+    // Check if team is public
+    if (!team.isPublic) {
+      return NextResponse.json(
+        { error: "This team is private and cannot be joined directly" },
+        { status: 403 }
       );
     }
 
@@ -37,9 +52,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if player is already in a team
-    const player = await PlayerModel.findOne({ ethAddress: playerAddress.toLowerCase() });
-    console.log('Found player:', player);
+    // Check if player exists and their current team status
+    const player = await PlayerModel.findOne({ ethAddress });
     if (!player) {
       return NextResponse.json(
         { error: "Player not found" },
@@ -55,16 +69,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Add player to team
-    if (!team.players.includes(playerAddress.toLowerCase())) {
-      team.players.push(playerAddress.toLowerCase());
+    if (!team.players.includes(ethAddress)) {
+      team.players.push(ethAddress);
       await team.save();
     }
 
     // Update player's team
-    player.team = teamName;
+    player.team = team.teamName;
     await player.save();
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, team: team.teamName });
   } catch (error) {
     console.error("Error joining team:", error);
     return NextResponse.json(

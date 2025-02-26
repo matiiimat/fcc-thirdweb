@@ -42,6 +42,7 @@ interface MongoTeam {
   matches?: Match[];
   tactics: MongoTactic[];
   stats: ITeamStats;
+  isPublic: boolean;
   jersey?: {
     primaryColor: string;
     secondaryColor: string;
@@ -57,12 +58,14 @@ interface Team {
   players: string[];
   matches?: Match[];
   tactics?: ITactic[];
+  isPublic: boolean;
 }
 
 interface Player {
   playerName: string;
   ethAddress: string;
   team: string;
+  managementCertificate: boolean;
 }
 
 export default function TeamPage() {
@@ -187,6 +190,13 @@ export default function TeamPage() {
       return;
     }
 
+    if (!player?.managementCertificate) {
+      setError(
+        "You need a Management Certificate to create a team. Purchase it from the Store."
+      );
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -229,10 +239,12 @@ export default function TeamPage() {
     try {
       const response = await fetch("/api/teams/join", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ethAddress: wallet.address,
+        },
         body: JSON.stringify({
-          teamName,
-          playerAddress: wallet.address,
+          teamName: teamName,
         }),
       });
 
@@ -274,6 +286,7 @@ export default function TeamPage() {
           <CreateTeamSection
             loading={loading}
             onCreateTeam={handleCreateTeam}
+            hasCertificate={player?.managementCertificate}
           />
           <AvailableTeamsSection
             teams={teams}

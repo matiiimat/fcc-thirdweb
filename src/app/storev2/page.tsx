@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
+import { useActiveWallet, TransactionButton } from "thirdweb/react";
+import { sepolia } from "thirdweb/chains";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import NameChangeModal from "../components/NameChangeModal";
+import { client } from "../client";
 
 interface PlayerData {
   playerId: string;
   money: number;
+  xp: number;
   privateTrainer?: {
     selectedSkill: string | null;
     remainingSessions: number;
@@ -59,7 +62,7 @@ const storeItems: StoreItem[] = [
     id: "management_certificate",
     name: "Management Certificate",
     description: "Team management license",
-    price: 1, //TO DO: Change price to $5 WHEN LIVE
+    price: 1, // TO DO: Change price to $5 WHEN LIVE
     section: "Buy",
   },
 ];
@@ -78,6 +81,8 @@ export default function Store() {
   const [pendingPurchase, setPendingPurchase] = useState<StoreItem | null>(
     null
   );
+  const [txStatus, setTxStatus] = useState<string>("");
+  const recipientAddress = "0xE2A190F13b023f2675bd14B4f3efFEEB1f713641";
 
   useEffect(() => {
     if (!loading && (!wallet || !player)) {
@@ -119,15 +124,9 @@ export default function Store() {
   const handlePurchase = async (item: StoreItem) => {
     if (!player || processing) return;
 
-    if (item.id === "name_change") {
-      setPendingPurchase(item);
-      setShowNameModal(true);
-      return;
-    }
-
-    if (item.id === "private_trainer") {
-      setPendingPurchase(item);
-      setShowSkillModal(true);
+    // For "name_change" and "private_trainer", the purchase flow is triggered
+    // via the TransactionButton success handlers.
+    if (item.id === "name_change" || item.id === "private_trainer") {
       return;
     }
 
@@ -167,6 +166,7 @@ export default function Store() {
         prev
           ? {
               ...prev,
+              xp: data.newBalance,
               playerName: data.newName,
               privateTrainer: data.privateTrainer,
             }
@@ -175,6 +175,7 @@ export default function Store() {
 
       // Reset modal state
       setShowSkillModal(false);
+      setShowNameModal(false);
       setPendingPurchase(null);
       setSelectedSkill(null);
     } catch (err) {
@@ -187,6 +188,36 @@ export default function Store() {
   const handleSkillSelect = async () => {
     if (!pendingPurchase || !selectedSkill) return;
     await processPurchase(pendingPurchase, selectedSkill);
+  };
+
+  // Handler for private trainer transaction success
+  const handleSuccessPrivateTrainer = () => {
+    console.log("Transaction confirmed for private trainer! 🎉");
+    setTxStatus("Transaction confirmed! 🎉");
+    const privateTrainerItem = storeItems.find(
+      (item) => item.id === "private_trainer"
+    );
+    if (privateTrainerItem) {
+      setPendingPurchase(privateTrainerItem);
+      setShowSkillModal(true);
+    }
+  };
+
+  // Handler for name change transaction success
+  const handleSuccessNameChange = () => {
+    console.log("Transaction confirmed for name change! 🎉");
+    setTxStatus("Transaction confirmed for name change! 🎉");
+    const nameChangeItem = storeItems.find((item) => item.id === "name_change");
+    if (nameChangeItem) {
+      setPendingPurchase(nameChangeItem);
+      setShowNameModal(true);
+    }
+  };
+
+  // Handle transaction errors
+  const handleError = (error: Error) => {
+    console.log("ERROR");
+    setTxStatus(`Transaction failed: ${error.message}`);
   };
 
   if (loading) {
@@ -263,31 +294,46 @@ export default function Store() {
                         </p>
                       </div>
                       <div className="flex-shrink-0">
-                        <button
-                          onClick={() => handlePurchase(item)}
-                          disabled={
-                            processing === item.id ||
-                            player.money < item.price ||
-                            (item.id === "private_trainer" &&
-                              (player.privateTrainer?.remainingSessions ?? 0) >
-                                0) ||
-                            (item.id === "management_certificate" &&
-                              player.managementCertificate)
-                          }
-                          className={`gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs ${
-                            processing === item.id ||
-                            player.money < item.price ||
-                            (item.id === "private_trainer" &&
-                              (player.privateTrainer?.remainingSessions ?? 0) >
-                                0)
-                              ? "opacity-50 cursor-not-allowed"
-                              : "active:scale-95"
-                          }`}
-                        >
-                          {processing === item.id
-                            ? "..."
-                            : item.price.toLocaleString()}
-                        </button>
+                        {item.id === "name_change" ? (
+                          <TransactionButton
+                            transaction={async () => ({
+                              to: recipientAddress,
+                              value: 100000000000000n, // 0.0001 ETH in wei
+                              chain: sepolia,
+                              client: client,
+                            })}
+                            onTransactionConfirmed={handleSuccessNameChange}
+                            onError={handleError}
+                          >
+                            BUY
+                          </TransactionButton>
+                        ) : (
+                          <button
+                            onClick={() => handlePurchase(item)}
+                            disabled={
+                              processing === item.id ||
+                              player.money < item.price ||
+                              (item.id === "private_trainer" &&
+                                (player.privateTrainer?.remainingSessions ??
+                                  0) > 0) ||
+                              (item.id === "management_certificate" &&
+                                player.managementCertificate)
+                            }
+                            className={`gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs ${
+                              processing === item.id ||
+                              player.money < item.price ||
+                              (item.id === "private_trainer" &&
+                                (player.privateTrainer?.remainingSessions ??
+                                  0) > 0)
+                                ? "opacity-50 cursor-not-allowed"
+                                : "active:scale-95"
+                            }`}
+                          >
+                            {processing === item.id
+                              ? "..."
+                              : item.price.toLocaleString()}
+                          </button>
+                        )}
                       </div>
                     </div>
                     {item.id === "private_trainer" && player.privateTrainer && (

@@ -6,10 +6,12 @@ import { useActiveWallet } from "thirdweb/react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import HireBotModal from "../components/HireBotModal";
+import HirePlayerModal from "../components/HirePlayerModal";
 import { IPlayerStats } from "../models/Player";
 
 interface Player {
   _id: string;
+  playerId: string;
   playerName: string;
   ethAddress: string;
   stats: IPlayerStats;
@@ -32,6 +34,8 @@ export default function ScoutingPage() {
   const [success, setSuccess] = useState("");
   const [isCaptain, setIsCaptain] = useState(false);
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [teamId, setTeamId] = useState<string>("");
 
   useEffect(() => {
     const checkCaptainStatus = async () => {
@@ -43,17 +47,18 @@ export default function ScoutingPage() {
       try {
         const response = await fetch("/api/teams");
         const teams = await response.json();
-        const isCaptain = teams.some(
+        const captainTeam = teams.find(
           (team: any) =>
             team.captainAddress.toLowerCase() === wallet.address.toLowerCase()
         );
 
-        if (!isCaptain) {
+        if (!captainTeam) {
           router.push("/team");
           return;
         }
 
         setIsCaptain(true);
+        setTeamId(captainTeam._id);
       } catch (err) {
         console.error("Error checking captain status:", err);
         setError("Failed to verify captain status");
@@ -154,6 +159,19 @@ export default function ScoutingPage() {
             </button>
           </div>
 
+          {/* Status Messages */}
+          {(error || success) && (
+            <div
+              className={`mb-4 p-3 rounded-lg text-center ${
+                error
+                  ? "bg-red-500/20 text-red-300"
+                  : "bg-green-500/20 text-green-300"
+              }`}
+            >
+              {error || success}
+            </div>
+          )}
+
           <div className="overflow-x-auto -mx-2 sm:mx-0">
             <table className="w-full">
               <thead>
@@ -192,7 +210,9 @@ export default function ScoutingPage() {
                   ? players.map((player) => (
                       <tr
                         key={player._id}
-                        className="text-gray-300 border-b border-gray-700 active:bg-[#2a2d31]/50 sm:hover:bg-[#2a2d31]/50 transition-colors duration-200"
+                        className="text-gray-300 border-b border-gray-700 active:bg-[#2a2d31]/50 sm:hover:bg-[#2a2d31]/50 transition-colors duration-200 cursor-pointer"
+                        onClick={() => setSelectedPlayer(player)}
+                        style={{ cursor: "pointer" }}
                       >
                         <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
                           {player.playerName}
@@ -263,19 +283,6 @@ export default function ScoutingPage() {
             </table>
           </div>
         </div>
-
-        {/* Status Messages */}
-        {(error || success) && (
-          <div
-            className={`mt-4 p-3 rounded-lg text-center ${
-              error
-                ? "bg-red-500/20 text-red-300"
-                : "bg-green-500/20 text-green-300"
-            }`}
-          >
-            {error || success}
-          </div>
-        )}
 
         {/* Back Button */}
         <div className="mt-6 flex justify-center pb-20">
@@ -350,6 +357,48 @@ export default function ScoutingPage() {
           setSelectedBot(null);
         }}
         botName={selectedBot?.playerName || ""}
+      />
+
+      {/* Hire Player Modal */}
+      <HirePlayerModal
+        isOpen={!!selectedPlayer}
+        onClose={() => setSelectedPlayer(null)}
+        onConfirm={async () => {
+          if (!selectedPlayer || !wallet || !teamId) return;
+
+          try {
+            const response = await fetch("/api/notifications", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ethAddress: wallet.address,
+              },
+              body: JSON.stringify({
+                fromTeamId: teamId,
+                toPlayerId: selectedPlayer.playerId,
+                type: "TEAM_INVITATION",
+              }),
+            });
+
+            if (!response.ok) {
+              const data = await response.json();
+              throw new Error(data.error || "Failed to send invitation");
+            }
+
+            setSuccess(
+              `Successfully sent invitation to ${selectedPlayer.playerName}!`
+            );
+
+            // Remove the invited player from the available players list
+            setPlayers((prevPlayers) =>
+              prevPlayers.filter((p) => p._id !== selectedPlayer._id)
+            );
+          } catch (err: any) {
+            setError(err.message || "Failed to send invitation");
+          }
+          setSelectedPlayer(null);
+        }}
+        playerName={selectedPlayer?.playerName || ""}
       />
     </div>
   );

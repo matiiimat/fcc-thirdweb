@@ -166,7 +166,7 @@ export default function MatchTestPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Match Test" xp={0} />
+        <Header pageName="Match Test" />
         <main className="container mx-auto px-4 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
@@ -180,7 +180,7 @@ export default function MatchTestPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Match Test" xp={0} />
+      <Header pageName="Match Test" />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Mode Toggle */}
