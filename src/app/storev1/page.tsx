@@ -290,6 +290,11 @@ export default function Store() {
                       <div className="flex-shrink-0">
                         {item.id === "name_change" ? (
                           <TransactionButton
+                            onClick={() =>
+                              alert(
+                                "Please confirm: 0.001 ETH will be paid for a name change"
+                              )
+                            }
                             transaction={async () => ({
                               to: recipientAddress,
                               value: 1000000000000000n, // Adjust ETH value as needed
@@ -303,6 +308,11 @@ export default function Store() {
                           </TransactionButton>
                         ) : item.id === "private_trainer" ? (
                           <TransactionButton
+                            onClick={() =>
+                              alert(
+                                "Please confirm: 0.001 ETH will be paid for a private trainer"
+                              )
+                            }
                             transaction={async () => ({
                               to: recipientAddress,
                               value: 1000000000000000n, // Adjust ETH value as needed
