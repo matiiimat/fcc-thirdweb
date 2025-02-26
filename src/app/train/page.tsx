@@ -331,7 +331,7 @@ export default function TrainPage() {
                   !selectedPosition
                     ? "text-green-400"
                     : canPlay
-                    ? "text-green-400"
+                    ? "text-red-400"
                     : "text-red-400"
                 }`}
               >
