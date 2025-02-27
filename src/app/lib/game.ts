@@ -125,16 +125,23 @@ export function calculateTrainingResult(stats: any, forcedStat?: string) {
   // Convert stats to plain object and ensure they're numbers
   const currentStats = toPlainObject(stats);
 
-  // Get trainable stats (exclude workEthic)
+  // Get trainable stats (exclude workEthic and stats at 20)
   const trainableStats = Object.entries(currentStats)
-    .filter(([key]) => key !== 'workEthic' && !key.startsWith('$'))
+    .filter(([key, value]) =>
+      key !== 'workEthic' &&
+      !key.startsWith('$') &&
+      (forcedStat === key || value < 20) // Include if it's the forced stat or not maxed
+    )
     .map(([key]) => key);
 
   if (trainableStats.length === 0) {
-    throw new Error('No valid stats found for training');
+    if (forcedStat) {
+      throw new Error(`Cannot train ${forcedStat} as it's already maxed`);
+    }
+    throw new Error('All trainable stats are maxed');
   }
 
-  // Use forced stat or randomly select one
+  // Use forced stat or randomly select one from non-maxed stats
   const trainedStat = forcedStat || trainableStats[Math.floor(Math.random() * trainableStats.length)];
   const currentValue = currentStats[trainedStat];
 
@@ -147,23 +154,23 @@ export function calculateTrainingResult(stats: any, forcedStat?: string) {
     throw new Error(`Invalid stat for training: ${forcedStat}`);
   }
 
-  // Calculate bonus based on current stat value tier
+  // Calculate bonus based on current stat value tier (divided by 2)
   let bonus;
   if (currentValue < 5) {
-    // 0-5: bonus 0.4 to 0.6
-    bonus = 0.4 + Math.random() * 0.2;
-  } else if (currentValue < 10) {
-    // 5-10: bonus 0.3 to 0.4
-    bonus = 0.3 + Math.random() * 0.1;
-  } else if (currentValue < 16) {
-    // 10-16: bonus 0.2 to 0.3
+    // 0-5: bonus 0.2 to 0.3
     bonus = 0.2 + Math.random() * 0.1;
+  } else if (currentValue < 10) {
+    // 5-10: bonus 0.15 to 0.2
+    bonus = 0.15 + Math.random() * 0.05;
+  } else if (currentValue < 16) {
+    // 10-16: bonus 0.1 to 0.15
+    bonus = 0.1 + Math.random() * 0.05;
   } else if (currentValue < 19) {
-    // 16-19: bonus 0.1 to 0.2
-    bonus = 0.1 + Math.random() * 0.1;
+    // 16-19: bonus 0.05 to 0.1
+    bonus = 0.05 + Math.random() * 0.05;
   } else {
-    // 19-20: fixed 0.1
-    bonus = 0.1;
+    // 19-20: fixed 0.05
+    bonus = 0.05;
   }
 
   return {
