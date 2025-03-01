@@ -228,7 +228,7 @@ export default function TeamOverview({
         {activeTab === "matches" ? (
           <TeamMatchesSection
             teamName={team.teamName}
-            matches={team.matches || []}
+            teamId={team._id}
             tactics={team.tactics || []}
             isTeamCaptain={isTeamCaptain}
             currentTeam={team}

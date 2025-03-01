@@ -2,11 +2,13 @@
   "name": "fcc-thirdweb",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "clear-live-data": "node scripts/clear-live-data.js"
   },
   "dependencies": {
     "@farcaster/frame-sdk": "^0.0.26",
