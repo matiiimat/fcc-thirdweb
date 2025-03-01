@@ -17,6 +17,10 @@ interface PlayerData {
     selectedSkill: string | null;
     remainingSessions: number;
   };
+  leaveOfAbsence?: {
+    expirationDate: string | null;
+    daysRemaining: number;
+  };
   managementCertificate?: boolean;
 }
 
@@ -45,6 +49,13 @@ interface StoreItem {
 
 const storeItems: StoreItem[] = [
   {
+    id: "management_certificate",
+    name: "Management Certificate",
+    description: "Team management license",
+    price: 1, // TO DO: Change price to $5 WHEN LIVE
+    section: "Buy",
+  },
+  {
     id: "name_change",
     name: "Name Change",
     description: "Change your player name",
@@ -59,10 +70,10 @@ const storeItems: StoreItem[] = [
     section: "Buy",
   },
   {
-    id: "management_certificate",
-    name: "Management Certificate",
-    description: "Team management license",
-    price: 1, // TO DO: Change price to $5 WHEN LIVE
+    id: "leave_of_absence",
+    name: "Leave of Absence",
+    description: "Maintain work ethic for 5 days while inactive",
+    price: 10000,
     section: "Buy",
   },
 ];
@@ -150,6 +161,7 @@ export default function Store() {
               ...prev,
               playerName: data.newName,
               privateTrainer: data.privateTrainer,
+              leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
               managementCertificate:
                 data.managementCertificate || prev.managementCertificate,
             }
@@ -206,6 +218,19 @@ export default function Store() {
     if (managementCertificateItem) {
       // Process the purchase to update the database
       processPurchase(managementCertificateItem);
+    }
+  };
+
+  // Handler for leave of absence transaction success:
+  const handleSuccessLeaveOfAbsence = () => {
+    console.log("Transaction confirmed for leave of absence! 🎉");
+    setTxStatus("Transaction confirmed! 🎉");
+    const leaveOfAbsenceItem = storeItems.find(
+      (item) => item.id === "leave_of_absence"
+    );
+    if (leaveOfAbsenceItem) {
+      // Process the purchase to update the database
+      processPurchase(leaveOfAbsenceItem);
     }
   };
 
@@ -289,7 +314,31 @@ export default function Store() {
                         </p>
                       </div>
                       <div className="flex-shrink-0">
-                        {item.id === "name_change" ? (
+                        {item.id === "management_certificate" ? (
+                          player.managementCertificate ? (
+                            <button
+                              disabled
+                              className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs opacity-50 cursor-not-allowed"
+                            >
+                              Owned
+                            </button>
+                          ) : (
+                            <TransactionButton
+                              transaction={async () => ({
+                                to: recipientAddress,
+                                value: 5000000000000000n, // Adjust ETH value as needed
+                                chain: sepolia,
+                                client: client,
+                              })}
+                              onTransactionConfirmed={
+                                handleSuccessManagementCertificate
+                              }
+                              onError={handleError}
+                            >
+                              0.005 ETH
+                            </TransactionButton>
+                          )
+                        ) : item.id === "name_change" ? (
                           <TransactionButton
                             transaction={async () => ({
                               to: recipientAddress,
@@ -315,30 +364,19 @@ export default function Store() {
                           >
                             0.001 ETH
                           </TransactionButton>
-                        ) : item.id === "management_certificate" ? (
-                          player.managementCertificate ? (
-                            <button
-                              disabled
-                              className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs opacity-50 cursor-not-allowed"
-                            >
-                              Owned
-                            </button>
-                          ) : (
-                            <TransactionButton
-                              transaction={async () => ({
-                                to: recipientAddress,
-                                value: 5000000000000000n, // Adjust ETH value as needed
-                                chain: sepolia,
-                                client: client,
-                              })}
-                              onTransactionConfirmed={
-                                handleSuccessManagementCertificate
-                              }
-                              onError={handleError}
-                            >
-                              0.005 ETH
-                            </TransactionButton>
-                          )
+                        ) : item.id === "leave_of_absence" ? (
+                          <TransactionButton
+                            transaction={async () => ({
+                              to: recipientAddress,
+                              value: 1000000000000000n, // 0.001 ETH
+                              chain: sepolia,
+                              client: client,
+                            })}
+                            onTransactionConfirmed={handleSuccessLeaveOfAbsence}
+                            onError={handleError}
+                          >
+                            0.001 ETH
+                          </TransactionButton>
                         ) : (
                           <button
                             onClick={() => {}}
@@ -358,6 +396,13 @@ export default function Store() {
                       player.managementCertificate && (
                         <div className="mt-1 text-xs text-center text-green-400">
                           Certificate already acquired
+                        </div>
+                      )}
+                    {item.id === "leave_of_absence" &&
+                      player.leaveOfAbsence &&
+                      player.leaveOfAbsence.daysRemaining > 0 && (
+                        <div className="mt-1 text-xs text-center text-green-400">
+                          {player.leaveOfAbsence.daysRemaining} days remaining
                         </div>
                       )}
                   </div>

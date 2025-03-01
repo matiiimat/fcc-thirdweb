@@ -101,11 +101,21 @@ export function calculateWorkEthicChange(
     // Player was active today, increase work ethic by 1
     return 1;
   } else {
+    // Calculate days since last training
+    const daysSinceLastTraining = lastTrainingDay
+      ? Math.floor((today.getTime() - lastTrainingDay.getTime()) / oneDayMs)
+      : 0;
+    
     // Calculate days since last connection
     const daysSinceLastConnection = Math.floor((today.getTime() - lastConnectionDay.getTime()) / oneDayMs);
     
-    // Decrease by 1 for each day of inactivity, but never more than 1 per day
-    return Math.max(-1, -daysSinceLastConnection);
+    // If more than 24 hours since last training, decrease work ethic by 1 per day
+    if (daysSinceLastTraining > 1) {
+      return -daysSinceLastTraining;
+    } else {
+      // Otherwise, decrease by 1 for each day of inactivity, but never more than 1 per day
+      return Math.max(-1, -daysSinceLastConnection);
+    }
   }
 }
 

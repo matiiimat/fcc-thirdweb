@@ -5,7 +5,7 @@ import { authenticatePlayer } from '@/app/middleware/auth';
 import { rateLimits } from '@/app/middleware/rateLimit';
 import { validateSchema } from '@/app/lib/schemas';
 import { runTransaction } from '@/app/lib/transactions';
-import { TRAINING_CONSTANTS } from '@/app/lib/constants';
+import { TRAINING_CONSTANTS, PLAYER_CONSTANTS } from '@/app/lib/constants';
 import { z } from 'zod';
 import { generateMatchEvents } from '@/app/components/MatchEvents';
 
@@ -99,12 +99,25 @@ export async function POST(req: NextRequest) {
 
     // 6. Run game logic in transaction
     const result = await runTransaction(async (session) => {
-      // Update player with new game date
+      // Calculate work ethic increase (10% of the rating)
+      const workEthicIncrease = finalRating * 0.1;
+      
+      // Get current work ethic
+      const currentWorkEthic = player.stats.workEthic;
+      
+      // Calculate new work ethic (capped at MAX_STAT_VALUE)
+      const newWorkEthic = Math.min(
+        player.stats.workEthic + workEthicIncrease,
+        PLAYER_CONSTANTS.MAX_STAT_VALUE
+      );
+
+      // Update player with new game date and work ethic
       const updatedPlayer = await Player.findOneAndUpdate(
         { playerId },
         {
           $set: {
-            lastGameDate: now
+            lastGameDate: now,
+            'stats.workEthic': newWorkEthic
           }
         },
         {
@@ -123,7 +136,10 @@ export async function POST(req: NextRequest) {
         success: true,
         player: updatedPlayer,
         matchResult: {
-          rating: finalRating
+          rating: finalRating,
+          workEthicIncrease: workEthicIncrease,
+          previousWorkEthic: currentWorkEthic,
+          newWorkEthic: newWorkEthic
         }
       };
     });

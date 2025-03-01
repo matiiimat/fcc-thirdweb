@@ -69,7 +69,13 @@ export default function TrainPage() {
   );
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [matchResult, setMatchResult] = useState<
-    { rating: number } | undefined
+    | {
+        rating: number;
+        workEthicIncrease?: number;
+        previousWorkEthic?: number;
+        newWorkEthic?: number;
+      }
+    | undefined
   >();
 
   useEffect(() => {
@@ -331,7 +337,7 @@ export default function TrainPage() {
                   !selectedPosition
                     ? "text-green-400"
                     : canPlay
-                    ? "text-red-400"
+                    ? "text-green-400"
                     : "text-red-400"
                 }`}
               >
