@@ -7,53 +7,7 @@ import TeamMatchPopup from "./TeamMatchPopup";
 import MatchScheduler from "./MatchScheduler";
 import { Types } from "mongoose";
 import MatchCard from "./MatchCard";
-
-interface MatchStats {
-  possession: number;
-  shots: number;
-  shotsOnTarget: number;
-  corners: number;
-  fouls: number;
-}
-
-interface PlayerRating {
-  ethAddress: string;
-  rating: number;
-  goals: number;
-  assists: number;
-  saves?: number;
-}
-
-interface MatchEvent {
-  type: string;
-  minute: number;
-  description: string;
-  playerAddress?: string;
-  teamName: string;
-}
-
-interface Match {
-  _id: string;
-  homeTeamId: string;
-  awayTeamId: string;
-  homeTeamName: string;
-  awayTeamName: string;
-  scheduledDate: string;
-  seasonId?: string;
-  matchday?: number;
-  isCompleted: boolean;
-  homeTactic?: ITactic;
-  awayTactic?: ITactic;
-  result?: {
-    homeScore: number;
-    awayScore: number;
-  };
-  homeStats?: MatchStats;
-  awayStats?: MatchStats;
-  homePlayerRatings?: PlayerRating[];
-  awayPlayerRatings?: PlayerRating[];
-  events?: MatchEvent[];
-}
+import { Match } from "../types/match";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;

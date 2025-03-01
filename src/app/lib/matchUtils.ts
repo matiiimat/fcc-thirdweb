@@ -1,4 +1,5 @@
-import { IMatch, ITactic, ITeamStats } from "../models/Team";
+import { ITactic, ITeamStats } from "../models/Team";
+import { Match } from "./match";
 
 export const formatMatchDate = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -27,6 +28,6 @@ export const calculateWinRateChange = (
   );
 };
 
-export const getTeamTactic = (match: IMatch, teamName: string): ITactic | undefined => {
+export const getTeamTactic = (match: Match, teamName: string): ITactic | undefined => {
   return match.homeTeam === teamName ? match.homeTactic : match.awayTactic;
 };

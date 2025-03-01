@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import mongoose, { Types } from "mongoose";
-import TeamModel, { IMatch, ITactic } from "@/app/models/Team";
+import TeamModel, { ITactic } from "@/app/models/Team";
+import { Match } from "@/app/lib/match";
 import PlayerModel from "@/app/models/Player";
 import { matchQueue } from "@/app/lib/matchQueue";
 import connectDB from "../../../lib/mongodb";
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
       end: new Date(matchDate.getTime() + 24 * 60 * 60 * 1000),
     };
 
-    const hasConflict = (matches: IMatch[]) => {
+    const hasConflict = (matches: Match[]) => {
       return matches.some((match) => {
         const existingMatchDate = new Date(match.date);
         return (
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
 
     // Create match record
     const matchId = new Types.ObjectId().toString();
-    const matchData: IMatch = {
+    const matchData: Match = {
       id: matchId,
       homeTeam: homeTeam.teamName,
       awayTeam: awayTeam.teamName,
@@ -216,8 +217,8 @@ export async function GET(request: NextRequest) {
     // Get upcoming matches
     const now = new Date();
     const upcomingMatches = team.matches
-      .filter((match: IMatch) => !match.isCompleted && new Date(match.date) > now)
-      .sort((a: IMatch, b: IMatch) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .filter((match: Match) => !match.isCompleted && new Date(match.date) > now)
+      .sort((a: Match, b: Match) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return NextResponse.json({
       success: true,
