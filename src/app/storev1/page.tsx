@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useActiveWallet, TransactionButton } from "thirdweb/react";
-import { sepolia } from "thirdweb/chains";
+import { base } from "thirdweb/chains";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -293,7 +293,7 @@ export default function Store() {
                             transaction={async () => ({
                               to: recipientAddress,
                               value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: sepolia,
+                              chain: base,
                               client: client,
                             })}
                             onTransactionConfirmed={handleSuccessNameChange}
@@ -306,7 +306,7 @@ export default function Store() {
                             transaction={async () => ({
                               to: recipientAddress,
                               value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: sepolia,
+                              chain: base,
                               client: client,
                             })}
                             onTransactionConfirmed={handleSuccessPrivateTrainer}
@@ -327,7 +327,7 @@ export default function Store() {
                               transaction={async () => ({
                                 to: recipientAddress,
                                 value: 5000000000000000n, // Adjust ETH value as needed
-                                chain: sepolia,
+                                chain: base,
                                 client: client,
                               })}
                               onTransactionConfirmed={
