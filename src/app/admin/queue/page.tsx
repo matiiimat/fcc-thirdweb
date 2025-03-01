@@ -6,10 +6,12 @@ import Footer from "../../components/Footer";
 import TeamMatchPopup from "../../components/TeamMatchPopup";
 
 interface Match {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  date: string;
+  _id: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  scheduledDate: string;
   isCompleted: boolean;
   homeTactic?: any;
   awayTactic?: any;
@@ -17,7 +19,22 @@ interface Match {
     homeScore: number;
     awayScore: number;
   };
+  homeStats?: any;
+  awayStats?: any;
+  homePlayerRatings?: any[];
+  awayPlayerRatings?: any[];
+  events?: any[];
+  stats?: {
+    home: any;
+    away: any;
+  };
   queuePosition?: number;
+
+  // Additional properties needed for TeamMatchPopup
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  date: string;
 }
 
 interface QueueStats {
@@ -49,11 +66,22 @@ export default function QueueMonitorPage() {
       const upcomingData = await upcomingResponse.json();
       const completedData = await completedResponse.json();
 
+      // Map API response data to include required properties for TeamMatchPopup
+      const mapMatch = (match: any) => ({
+        ...match,
+        id: match._id,
+        homeTeam: match.homeTeamName,
+        awayTeam: match.awayTeamName,
+        date: match.scheduledDate,
+      });
+
       setStats({
         totalMatches: upcomingData.queueLength,
-        nextMatch: upcomingData.nextMatch,
-        upcomingMatches: upcomingData.matches,
-        recentlyCompleted: completedData.matches,
+        nextMatch: upcomingData.nextMatch
+          ? mapMatch(upcomingData.nextMatch)
+          : null,
+        upcomingMatches: upcomingData.matches.map(mapMatch),
+        recentlyCompleted: completedData.matches.map(mapMatch),
       });
       setLastRefresh(new Date());
     } catch (error) {
@@ -152,14 +180,15 @@ export default function QueueMonitorPage() {
                 <div className="flex justify-between items-center">
                   <div>
                     <div className="font-medium">
-                      {stats.nextMatch.homeTeam} vs {stats.nextMatch.awayTeam}
+                      {stats.nextMatch.homeTeamName} vs{" "}
+                      {stats.nextMatch.awayTeamName}
                     </div>
                     <div className="text-sm text-gray-400">
-                      {formatDate(stats.nextMatch.date)}
+                      {formatDate(stats.nextMatch.scheduledDate)}
                     </div>
                   </div>
                   <div className="text-green-400 font-bold">
-                    {getTimeUntil(stats.nextMatch.date)}
+                    {getTimeUntil(stats.nextMatch.scheduledDate)}
                   </div>
                 </div>
               </div>
@@ -173,20 +202,20 @@ export default function QueueMonitorPage() {
           <div className="space-y-3">
             {stats?.upcomingMatches.map((match) => (
               <div
-                key={match.id}
+                key={match._id}
                 className="glass-container bg-black/20 p-4 rounded-lg"
               >
                 <div className="flex justify-between items-center">
                   <div>
                     <div className="font-medium">
-                      {match.homeTeam} vs {match.awayTeam}
+                      {match.homeTeamName} vs {match.awayTeamName}
                     </div>
                     <div className="text-sm text-gray-400">
-                      {formatDate(match.date)}
+                      {formatDate(match.scheduledDate)}
                     </div>
                   </div>
                   <div className="text-green-400 font-bold">
-                    {getTimeUntil(match.date)}
+                    {getTimeUntil(match.scheduledDate)}
                   </div>
                 </div>
               </div>
@@ -206,17 +235,17 @@ export default function QueueMonitorPage() {
           <div className="space-y-3">
             {stats?.recentlyCompleted.map((match) => (
               <div
-                key={match.id}
+                key={match._id}
                 className="glass-container bg-black/20 p-4 rounded-lg cursor-pointer hover:bg-black/30 transition-colors"
                 onClick={() => setSelectedMatch(match)}
               >
                 <div className="flex justify-between items-center">
                   <div>
                     <div className="font-medium">
-                      {match.homeTeam} vs {match.awayTeam}
+                      {match.homeTeamName} vs {match.awayTeamName}
                     </div>
                     <div className="text-sm text-gray-400">
-                      {formatDate(match.date)}
+                      {formatDate(match.scheduledDate)}
                     </div>
                   </div>
                   <div className="text-xl font-bold">
