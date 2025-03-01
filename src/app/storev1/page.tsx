@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useActiveWallet, TransactionButton } from "thirdweb/react";
-import { base } from "thirdweb/chains";
+import { sepolia } from "thirdweb/chains";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import NameChangeModal from "../components/NameChangeModal";
 import { client } from "../client";
+import { sep } from "path";
 
 interface PlayerData {
   playerId: string;
@@ -293,7 +294,7 @@ export default function Store() {
                             transaction={async () => ({
                               to: recipientAddress,
                               value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: base,
+                              chain: sepolia,
                               client: client,
                             })}
                             onTransactionConfirmed={handleSuccessNameChange}
@@ -306,7 +307,7 @@ export default function Store() {
                             transaction={async () => ({
                               to: recipientAddress,
                               value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: base,
+                              chain: sepolia,
                               client: client,
                             })}
                             onTransactionConfirmed={handleSuccessPrivateTrainer}
@@ -327,7 +328,7 @@ export default function Store() {
                               transaction={async () => ({
                                 to: recipientAddress,
                                 value: 5000000000000000n, // Adjust ETH value as needed
-                                chain: base,
+                                chain: sepolia,
                                 client: client,
                               })}
                               onTransactionConfirmed={
