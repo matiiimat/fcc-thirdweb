@@ -72,13 +72,31 @@ export default function ManageTeamPage() {
           // Fetch team data
           const teamsResponse = await fetch("/api/teams");
           const teams = await teamsResponse.json();
-          const team = teams.find(
+
+          // First check if user is a captain
+          let team = teams.find(
             (t: any) =>
               t.captainAddress.toLowerCase() === wallet.address.toLowerCase()
           );
 
+          // If not a captain, check if user is a member of any team
+          if (!team) {
+            // Fetch player data to get their team
+            const playerResponse = await fetch(
+              `/api/players/address/${wallet.address}`
+            );
+            if (playerResponse.ok) {
+              const playerData = await playerResponse.json();
+              if (playerData.team && playerData.team !== "No Team") {
+                // Find the team the player belongs to
+                team = teams.find((t: any) => t.teamName === playerData.team);
+              }
+            }
+          }
+
           if (team) {
             setTeamData(team);
+            console.log("Team data loaded:", team);
 
             // Fetch players
             const playersPromises = team.players.map(
