@@ -159,8 +159,8 @@ export default function TeamOverview({
       </div>
 
       <div className="space-y-4">
-        {isTeamCaptain ? (
-          <div className="grid gap-3">
+        <div className="grid gap-3">
+          {isTeamCaptain ? (
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 shadow-lg">
               <div className="grid gap-2">
                 <button
@@ -185,20 +185,28 @@ export default function TeamOverview({
                   onClick={() => setJerseyModalOpen(true)}
                   className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Sponsoring
+                  Customize
                 </button>
               </div>
             </div>
-          </div>
-        ) : (
-          <button
-            onClick={handleLeaveTeam}
-            disabled={loading}
-            className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:transform-none"
-          >
-            {loading ? "Leaving..." : "Leave Team"}
-          </button>
-        )}
+          ) : (
+            <>
+              <button
+                onClick={() => router.push("/manageteam")}
+                className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Players
+              </button>
+              <button
+                onClick={handleLeaveTeam}
+                disabled={loading}
+                className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:transform-none"
+              >
+                {loading ? "Leaving..." : "Leave Team"}
+              </button>
+            </>
+          )}
+        </div>
 
         {/* Tab Navigation */}
         <div className="flex gap-2 mb-4">
