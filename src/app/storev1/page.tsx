@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useActiveWallet, TransactionButton } from "thirdweb/react";
 import { sepolia } from "thirdweb/chains";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ConfettiEffect from "../components/ConfettiEffect";
 import NameChangeModal from "../components/NameChangeModal";
 import { client } from "../client";
 import { sep } from "path";
@@ -105,6 +106,13 @@ export default function Store() {
     null
   );
   const [txStatus, setTxStatus] = useState<string>("");
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const triggerConfetti = useCallback(() => {
+    setShowConfetti(true);
+    // Reset confetti after animation duration
+    setTimeout(() => setShowConfetti(false), 3000);
+  }, []);
   const recipientAddress = "0xE2A190F13b023f2675bd14B4f3efFEEB1f713641";
 
   useEffect(() => {
@@ -191,6 +199,7 @@ export default function Store() {
       setError(err instanceof Error ? err.message : "Failed to purchase item");
     } finally {
       setProcessing("");
+      triggerConfetti(); // Trigger confetti after successful purchase
     }
   };
 
@@ -480,6 +489,7 @@ export default function Store() {
         </div>
       </main>
       <Footer />
+      <ConfettiEffect trigger={showConfetti} />
 
       {/* Skill Selection Modal */}
       {showSkillModal && (
