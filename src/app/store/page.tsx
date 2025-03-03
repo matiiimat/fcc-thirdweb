@@ -14,6 +14,10 @@ interface PlayerData {
     selectedSkill: string | null;
     remainingSessions: number;
   };
+  leaveOfAbsence?: {
+    expirationDate: string | null;
+    daysRemaining: number;
+  };
   managementCertificate?: boolean;
 }
 
@@ -60,6 +64,13 @@ const storeItems: StoreItem[] = [
     name: "Management Certificate",
     description: "Team management license",
     price: 1, //TO DO: Change price to $5 WHEN LIVE
+    section: "Buy",
+  },
+  {
+    id: "leave_of_absence",
+    name: "Leave of Absence",
+    description: "Maintain work ethic for 5 days while inactive",
+    price: 10000,
     section: "Buy",
   },
 ];

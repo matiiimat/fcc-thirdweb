@@ -2,22 +2,57 @@
 
 import { useState } from "react";
 import { ITactic } from "../models/Team";
-import { formatMatchDate, getTeamTactic } from "../lib/matchUtils";
+import { formatMatchDate } from "../lib/matchUtils";
+
+interface MatchStats {
+  possession: number;
+  shots: number;
+  shotsOnTarget: number;
+  corners: number;
+  fouls: number;
+}
+
+interface PlayerRating {
+  ethAddress: string;
+  rating: number;
+  goals: number;
+  assists: number;
+  saves?: number;
+}
+
+interface MatchEvent {
+  type: string;
+  minute: number;
+  description: string;
+  playerAddress?: string;
+  teamName: string;
+}
+
+interface Match {
+  _id: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  scheduledDate: string;
+  seasonId?: string;
+  matchday?: number;
+  isCompleted: boolean;
+  homeTactic?: ITactic;
+  awayTactic?: ITactic;
+  result?: {
+    homeScore: number;
+    awayScore: number;
+  };
+  homeStats?: MatchStats;
+  awayStats?: MatchStats;
+  homePlayerRatings?: PlayerRating[];
+  awayPlayerRatings?: PlayerRating[];
+  events?: MatchEvent[];
+}
 
 interface MatchCardProps {
-  match: {
-    id: string;
-    homeTeam: string;
-    awayTeam: string;
-    date: string;
-    isCompleted: boolean;
-    homeTactic?: ITactic;
-    awayTactic?: ITactic;
-    result?: {
-      homeScore: number;
-      awayScore: number;
-    };
-  };
+  match: Match;
   teamName: string;
   isTeamCaptain: boolean;
   tactics: ITactic[];
@@ -25,6 +60,10 @@ interface MatchCardProps {
   onUpdateTactic?: (tactic: ITactic) => void;
   updating?: boolean;
 }
+
+const getTeamTactic = (match: Match, teamName: string): ITactic | undefined => {
+  return match.homeTeamName === teamName ? match.homeTactic : match.awayTactic;
+};
 
 const MatchCard: React.FC<MatchCardProps> = ({
   match,
@@ -48,10 +87,10 @@ const MatchCard: React.FC<MatchCardProps> = ({
         <div className="flex justify-center items-center mb-1">
           <span
             className={
-              match.homeTeam === teamName ? "text-green-400" : "text-white"
+              match.homeTeamName === teamName ? "text-green-400" : "text-white"
             }
           >
-            {match.homeTeam}
+            {match.homeTeamName}
           </span>
           <span className="text-gray-400 mx-2">
             {match.result
@@ -60,14 +99,17 @@ const MatchCard: React.FC<MatchCardProps> = ({
           </span>
           <span
             className={
-              match.awayTeam === teamName ? "text-green-400" : "text-white"
+              match.awayTeamName === teamName ? "text-green-400" : "text-white"
             }
           >
-            {match.awayTeam}
+            {match.awayTeamName}
           </span>
         </div>
         <div className="text-xs text-gray-400 text-center mb-2">
-          {formatMatchDate(match.date)}
+          {formatMatchDate(match.scheduledDate)}
+          {match.seasonId && match.matchday && (
+            <span className="ml-2">• Matchday {match.matchday}</span>
+          )}
         </div>
       </div>
 

@@ -10,6 +10,9 @@ interface MatchPopupProps {
   onClose: () => void;
   matchResult?: {
     rating: number;
+    workEthicIncrease?: number;
+    previousWorkEthic?: number;
+    newWorkEthic?: number;
   };
 }
 
@@ -94,12 +97,17 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
 
         {/* Match Events */}
         <div className="h-96 overflow-y-auto mb-4 space-y-2 custom-scrollbar">
-          {/* Show rating and XP gained after final whistle */}
+          {/* Show rating and work ethic gained after final whistle */}
           {currentMinute === 90 && matchResult && (
             <div className="mb-4 pb-4 border-b border-gray-700">
-              <div className="text-yellow-400 font-bold text-sm">
+              <div className="text-yellow-400 font-bold text-sm mb-1">
                 Rating: {matchResult.rating.toFixed(1)}
               </div>
+              {matchResult.workEthicIncrease !== undefined && (
+                <div className="text-green-400 text-sm">
+                  +{matchResult.workEthicIncrease.toFixed(2)} Work Ethic
+                </div>
+              )}
             </div>
           )}
           {[...currentEvents].reverse().map((event, index) => (

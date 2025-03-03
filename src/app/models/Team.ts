@@ -1,21 +1,6 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import { PLAYER_CONSTANTS, TEAM_CONSTANTS } from '../lib/constants';
 import { Position } from './Player';
-
-// Interface for match
-export interface IMatch {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  date: string;
-  isCompleted: boolean;
-  homeTactic?: ITactic;
-  awayTactic?: ITactic;
-  result?: {
-    homeScore: number;
-    awayScore: number;
-  };
-}
 
 // Interface for player position in tactic
 export interface IPlayerPosition {
@@ -27,6 +12,7 @@ export interface IPlayerPosition {
 
 // Interface for tactic
 export interface ITactic {
+  _id?: string | Types.ObjectId;
   name: string;
   formation: string;
   tacticalStyle: 'None' | 'Tiki-Taka' | 'Gegenpressing' | 'Kick & Rush' | 'Counter Attacking' | 'Catennacio';
@@ -66,7 +52,6 @@ export interface ITeam extends Document {
   captainAddress: string;
   players: string[]; // Array of player ETH addresses, managed via the Manage Team page
   tactics: ITactic[];
-  matches: IMatch[];
   jersey?: IJersey;
   stats: ITeamStats;
   isPublic: boolean; // Whether the team is visible in available teams section
@@ -181,24 +166,6 @@ const TacticSchema = new Schema({
   playerPositions: [PlayerPositionSchema],
 });
 
-// Schema for match result
-const MatchResultSchema = new Schema({
-  homeScore: Number,
-  awayScore: Number
-}, { _id: false });
-
-// Schema for match
-const MatchSchema = new Schema({
-  id: String,
-  homeTeam: String,
-  awayTeam: String,
-  date: String,
-  isCompleted: Boolean,
-  homeTactic: TacticSchema,
-  awayTactic: TacticSchema,
-  result: MatchResultSchema
-}, { _id: false });
-
 const TeamSchema = new Schema<ITeam>(
   {
     teamName: {
@@ -231,10 +198,6 @@ const TeamSchema = new Schema<ITeam>(
         },
         message: 'Team cannot have more than 3 tactics',
       },
-    },
-    matches: {
-      type: [MatchSchema],
-      default: []
     },
     jersey: {
       type: {
@@ -283,18 +246,18 @@ const TeamSchema = new Schema<ITeam>(
 );
 
 // Pre-save middleware to ensure captain address is lowercase
-TeamSchema.pre('save', function(next) {
+TeamSchema.pre('save', function(this: ITeam & { captainAddress?: string, players?: string[] }, next) {
   if (this.captainAddress) {
     this.captainAddress = this.captainAddress.toLowerCase();
   }
   if (this.players) {
-    this.players = this.players.map(player => player.toLowerCase());
+    this.players = this.players.map((player: string) => player.toLowerCase());
   }
   next();
 });
 
 // Pre-save middleware to validate team size
-TeamSchema.pre('save', function(next) {
+TeamSchema.pre('save', function(this: ITeam & { players?: string[] }, next) {
   if (this.players && this.players.length > TEAM_CONSTANTS.MAX_PLAYERS) {
     next(new Error(`Team cannot have more than ${TEAM_CONSTANTS.MAX_PLAYERS} players`));
     return;

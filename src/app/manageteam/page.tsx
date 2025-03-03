@@ -32,6 +32,7 @@ export default function ManageTeamPage() {
     teamName: string;
     players: string[];
     isPublic: boolean;
+    captainAddress: string;
   } | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
 
@@ -71,13 +72,31 @@ export default function ManageTeamPage() {
           // Fetch team data
           const teamsResponse = await fetch("/api/teams");
           const teams = await teamsResponse.json();
-          const team = teams.find(
+
+          // First check if user is a captain
+          let team = teams.find(
             (t: any) =>
               t.captainAddress.toLowerCase() === wallet.address.toLowerCase()
           );
 
+          // If not a captain, check if user is a member of any team
+          if (!team) {
+            // Fetch player data to get their team
+            const playerResponse = await fetch(
+              `/api/players/address/${wallet.address}`
+            );
+            if (playerResponse.ok) {
+              const playerData = await playerResponse.json();
+              if (playerData.team && playerData.team !== "No Team") {
+                // Find the team the player belongs to
+                team = teams.find((t: any) => t.teamName === playerData.team);
+              }
+            }
+          }
+
           if (team) {
             setTeamData(team);
+            console.log("Team data loaded:", team);
 
             // Fetch players
             const playersPromises = team.players.map(
@@ -137,7 +156,14 @@ export default function ManageTeamPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Manage Team" />
+        <Header
+          pageName={
+            wallet?.address.toLowerCase() ===
+            teamData?.captainAddress.toLowerCase()
+              ? "Manage Team"
+              : "Players"
+          }
+        />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
@@ -155,7 +181,14 @@ export default function ManageTeamPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Manage Team" />
+      <Header
+        pageName={
+          wallet?.address.toLowerCase() ===
+          teamData?.captainAddress.toLowerCase()
+            ? "Manage Team"
+            : "Players"
+        }
+      />
       <main className="flex-1 container max-w-4xl mx-auto px-2 sm:px-6 py-2 sm:py-4 pb-32">
         <div className="glass-container p-3 sm:p-6 rounded-xl">
           <div className="mb-6">
@@ -167,27 +200,30 @@ export default function ManageTeamPage() {
                 {players.length} Players
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleVisibilityToggle}
-                disabled={updating}
-                className="text-sm px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 transition-colors flex items-center gap-2"
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    teamData?.isPublic ? "bg-green-500" : "bg-red-500"
-                  }`}
-                ></span>
-                <span className="text-gray-300">
-                  {teamData?.isPublic ? "Public" : "Private"}
+            {wallet?.address.toLowerCase() ===
+              teamData?.captainAddress.toLowerCase() && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleVisibilityToggle}
+                  disabled={updating}
+                  className="text-sm px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 transition-colors flex items-center gap-2"
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      teamData?.isPublic ? "bg-green-500" : "bg-red-500"
+                    }`}
+                  ></span>
+                  <span className="text-gray-300">
+                    {teamData?.isPublic ? "Public" : "Private"}
+                  </span>
+                </button>
+                <span className="text-xs text-gray-500">
+                  {teamData?.isPublic
+                    ? "Team is visible to other players"
+                    : "Team is hidden from other players"}
                 </span>
-              </button>
-              <span className="text-xs text-gray-500">
-                {teamData?.isPublic
-                  ? "Team is visible to other players"
-                  : "Team is hidden from other players"}
-              </span>
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -264,15 +300,18 @@ export default function ManageTeamPage() {
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 mt-2">
-                  <button className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm">
-                    Action 1
-                  </button>
-                  <button className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm">
-                    Action 2
-                  </button>
-                </div>
+                {/* Action Buttons - Only visible to team captain */}
+                {wallet?.address.toLowerCase() ===
+                  teamData?.captainAddress.toLowerCase() && (
+                  <div className="flex gap-2 mt-2">
+                    <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
+                      Renew Contract
+                    </button>
+                    <button className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm">
+                      Release Player
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

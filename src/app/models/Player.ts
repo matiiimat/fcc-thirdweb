@@ -39,7 +39,15 @@ export interface IPlayer extends Document {
     selectedSkill: keyof IPlayerStats | null;
     remainingSessions: number;
   };
+  leaveOfAbsence: {
+    expirationDate: Date | null;
+    daysRemaining: number;
+  };
   managementCertificate: boolean;
+  energyDrinkPurchases?: {
+    count: number;
+    resetTime: Date | null;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -244,6 +252,28 @@ const PlayerSchema = new Schema<IPlayer>(
         default: 0,
         min: 0,
         max: 5
+      }
+    },
+    leaveOfAbsence: {
+      expirationDate: {
+        type: Date,
+        default: null
+      },
+      daysRemaining: {
+        type: Number,
+        default: 0,
+        min: 0
+      }
+    },
+    energyDrinkPurchases: {
+      count: {
+        type: Number,
+        default: 0,
+        min: 0
+      },
+      resetTime: {
+        type: Date,
+        default: null
       }
     }
   },

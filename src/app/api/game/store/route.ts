@@ -76,9 +76,44 @@ export async function POST(req: NextRequest) {
             managementCertificate: true
           };
           break;
-        case "training_certificate":
-        case "finance_certificate":
-          // These will be used in future features
+        case "leave_of_absence":
+          // Calculate expiration date (5 days from now)
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 5);
+          
+          // If player already has leave of absence, add 5 more days
+          if (player.leaveOfAbsence && player.leaveOfAbsence.expirationDate) {
+            const currentExpiration = new Date(player.leaveOfAbsence.expirationDate);
+            if (currentExpiration > new Date()) {
+              expirationDate.setDate(currentExpiration.getDate() + 5);
+            }
+          }
+          
+          updateData.$set = {
+            'leaveOfAbsence.expirationDate': expirationDate,
+            'leaveOfAbsence.daysRemaining': player.leaveOfAbsence && player.leaveOfAbsence.daysRemaining
+              ? player.leaveOfAbsence.daysRemaining + 5
+              : 5
+          };
+          break;
+        case "energy_drink":
+          const now = new Date();
+          
+          // Check if we need to reset the purchase count (if it's been more than 24 hours or no previous purchases)
+          if (!player.energyDrinkPurchases?.resetTime ||
+              (now.getTime() - new Date(player.energyDrinkPurchases.resetTime).getTime()) >= 24 * 60 * 60 * 1000) {
+            updateData.$set = {
+              lastTrainingDate: null,
+              'energyDrinkPurchases.count': 1,
+              'energyDrinkPurchases.resetTime': now
+            };
+          } else {
+            // Increment the purchase count within the 24-hour window
+            updateData.$set = {
+              lastTrainingDate: null,
+              'energyDrinkPurchases.count': (player.energyDrinkPurchases.count || 0) + 1
+            };
+          }
           break;
         default:
           return {
@@ -105,6 +140,7 @@ export async function POST(req: NextRequest) {
           success: true,
           newName: updatedPlayer.playerName,
           privateTrainer: updatedPlayer.privateTrainer,
+          leaveOfAbsence: updatedPlayer.leaveOfAbsence,
           managementCertificate: updatedPlayer.managementCertificate
         }
       };

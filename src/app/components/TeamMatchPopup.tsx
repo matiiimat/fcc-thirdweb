@@ -1,34 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { IMatch, ITeamStats } from "../models/Team";
+import { ITeamStats } from "../models/Team";
+import { Match, MatchStats, MatchEvent } from "../types/match";
 import { calculateWinRate } from "../lib/teamStats";
 import { calculateWinRateChange } from "../lib/matchUtils";
 import StatBar from "./StatBar";
 import PlayerPerformance from "./PlayerPerformance";
 
-interface MatchStats {
-  possession: number;
-  shots: number;
-  shotsOnTarget: number;
-  passes: number;
-  passAccuracy: number;
-  tackles: number;
-  fouls: number;
-}
-
 interface TeamMatchPopupProps {
-  match: IMatch & {
-    events?: string[];
-    stats?: {
-      home: ITeamStats;
-      away: ITeamStats;
-    };
-    homeStats?: MatchStats;
-    awayStats?: MatchStats;
-    homePlayerRatings?: any[];
-    awayPlayerRatings?: any[];
-  };
+  match: Match;
   onClose: () => void;
 }
 
@@ -269,12 +250,12 @@ const TeamMatchPopup: React.FC<TeamMatchPopupProps> = ({ match, onClose }) => {
               <div className="mt-4">
                 <h3 className="text-lg font-semibold mb-2">Match Events</h3>
                 <div className="glass-container bg-black/20 p-3 rounded-lg space-y-2 max-h-48 overflow-y-auto">
-                  {match.events.map((event, index) => (
+                  {match.events.map((event: MatchEvent, index: number) => (
                     <div
                       key={index}
                       className="text-sm text-gray-300 border-b border-gray-700 last:border-0 pb-2 last:pb-0"
                     >
-                      {event}
+                      {event.description}
                     </div>
                   ))}
                 </div>

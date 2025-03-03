@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../lib/mongodb";
-import TeamModel, { ITeam, IMatch } from "../../models/Team";
+import TeamModel, { ITeam } from "../../models/Team";
 import PlayerModel from "../../models/Player";
-import { generateMatchSchedule } from "../../lib/match";
+import { generateMatchSchedule, Match } from "../../lib/match";
+
+type IScheduleMatch = Match;
 
 interface TeamDocument {
   _id: string;
@@ -10,7 +12,7 @@ interface TeamDocument {
   captainAddress: string;
   players: string[];
   tactics: any[];
-  matches?: IMatch[];
+  matches?: IScheduleMatch[];
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
@@ -37,7 +39,7 @@ async function generateNewSchedule(teams: TeamDocument[]) {
         $set: { matches: newMatches }
       },
       { new: true }
-    ).lean() as (TeamDocument & { matches: IMatch[] }) | null;
+    ).lean() as (TeamDocument & { matches: IScheduleMatch[] }) | null;
     
     return updatedSchedule?.matches || [];
   } else {
@@ -108,7 +110,7 @@ export async function POST(req: NextRequest) {
     // Check if we need to generate a new schedule
     const schedule = await TeamModel.findOne({ 
       teamName: "MatchSchedule" 
-    }).lean() as (TeamDocument & { matches: IMatch[] }) | null;
+    }).lean() as (TeamDocument & { matches: IScheduleMatch[] }) | null;
 
     let needNewSchedule = false;
     if (!schedule || !schedule.matches || schedule.matches.length === 0) {
@@ -151,10 +153,10 @@ export async function GET(req: NextRequest) {
 
     const schedule = await TeamModel.findOne({ 
       teamName: "MatchSchedule" 
-    }).lean() as (TeamDocument & { matches: IMatch[] }) | null;
+    }).lean() as (TeamDocument & { matches: IScheduleMatch[] }) | null;
     
     // Check if we need to generate a new schedule
-    let matches: IMatch[] = [];
+    let matches: IScheduleMatch[] = [];
     let needNewSchedule = false;
 
     if (!schedule || !schedule.matches || schedule.matches.length === 0) {
@@ -179,7 +181,7 @@ export async function GET(req: NextRequest) {
     // Return teams with their matches
     const teamsWithMatches = teams.map(team => {
       // Filter matches for this team
-      const teamMatches = matches.filter((match: IMatch) =>
+      const teamMatches = matches.filter((match: IScheduleMatch) =>
         match.homeTeam === team.teamName || match.awayTeam === team.teamName
       );
       

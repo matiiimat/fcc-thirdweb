@@ -69,7 +69,13 @@ export default function TrainPage() {
   );
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [matchResult, setMatchResult] = useState<
-    { rating: number } | undefined
+    | {
+        rating: number;
+        workEthicIncrease?: number;
+        previousWorkEthic?: number;
+        newWorkEthic?: number;
+      }
+    | undefined
   >();
 
   useEffect(() => {

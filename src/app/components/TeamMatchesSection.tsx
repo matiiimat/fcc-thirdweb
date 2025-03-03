@@ -1,33 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ITactic } from "../models/Team";
 import Image from "next/image";
 import TeamMatchPopup from "./TeamMatchPopup";
 import MatchScheduler from "./MatchScheduler";
 import { Types } from "mongoose";
 import MatchCard from "./MatchCard";
+import { Match } from "../types/match";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
 }
 
-interface Match {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  date: string;
-  isCompleted: boolean;
-  homeTactic?: ITactic;
-  awayTactic?: ITactic;
-  result?: {
-    homeScore: number;
-    awayScore: number;
-  };
-  events?: string[];
-}
-
-interface MongoTeam {
+interface Team {
   _id: string;
   teamName: string;
   tactics: MongoTactic[];
@@ -35,34 +21,66 @@ interface MongoTeam {
 
 interface TeamMatchesSectionProps {
   teamName: string;
-  matches: Match[];
+  teamId: string;
   tactics: ITactic[];
   isTeamCaptain: boolean;
-  currentTeam: MongoTeam;
+  currentTeam: Team;
 }
 
 export default function TeamMatchesSection({
   teamName,
-  matches,
+  teamId,
   tactics,
   isTeamCaptain,
   currentTeam,
 }: TeamMatchesSectionProps) {
+  const [matches, setMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [updating, setUpdating] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch matches on component mount
+  useEffect(() => {
+    fetchMatches();
+  }, [teamId]);
+
+  const fetchMatches = async () => {
+    try {
+      const response = await fetch(`/api/matches?teamId=${teamId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch matches");
+      }
+      const data = await response.json();
+      setMatches(data.matches);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+      // Show a more informative message about seasons
+      setError("No matches available - please wait for the season to start");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Group matches by status (upcoming vs completed)
   const upcomingMatches = matches
     .filter((match) => !match.isCompleted)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.scheduledDate).getTime() -
+        new Date(b.scheduledDate).getTime()
+    );
 
   const completedMatches = matches
     .filter((match) => match.isCompleted)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.scheduledDate).getTime() -
+        new Date(a.scheduledDate).getTime()
+    );
 
   // Get next match
   const nextMatch = upcomingMatches[0];
@@ -76,13 +94,18 @@ export default function TeamMatchesSection({
 
     setUpdating(true);
     try {
-      const response = await fetch("/api/teams/matches", {
-        method: "POST",
+      const response = await fetch(`/api/matches/${match._id}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          matchId: match.id,
-          teamName,
-          tactic,
+          homeTacticId:
+            match.homeTeamId === teamId
+              ? tactic._id?.toString()
+              : match.homeTactic?._id?.toString(),
+          awayTacticId:
+            match.awayTeamId === teamId
+              ? tactic._id?.toString()
+              : match.awayTactic?._id?.toString(),
         }),
       });
 
@@ -92,9 +115,11 @@ export default function TeamMatchesSection({
 
       // Update local state
       const updatedMatch = await response.json();
-      setSelectedMatch(updatedMatch);
+      setSelectedMatch(updatedMatch.match);
+      await fetchMatches(); // Refresh matches
     } catch (error) {
       console.error("Error updating tactic:", error);
+      setError("Failed to update tactic");
     } finally {
       setUpdating(false);
     }
@@ -109,7 +134,21 @@ export default function TeamMatchesSection({
     setSuccess(null);
 
     try {
-      const response = await fetch("/api/teams/schedule", {
+      // First check if there's an active season
+      const seasonsResponse = await fetch("/api/seasons?status=ongoing");
+      if (!seasonsResponse.ok) {
+        throw new Error("Failed to check active season");
+      }
+
+      const seasonsData = await seasonsResponse.json();
+      if (!seasonsData.seasons?.length) {
+        throw new Error(
+          "No active season found. Please wait for the next season to start."
+        );
+      }
+
+      // Schedule the match
+      const scheduleResponse = await fetch("/api/seasons/schedule", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,18 +156,20 @@ export default function TeamMatchesSection({
         body: JSON.stringify(matchData),
       });
 
-      if (!response.ok) {
-        const data = await response.json();
+      if (!scheduleResponse.ok) {
+        const data = await scheduleResponse.json();
         throw new Error(data.error || "Failed to schedule match");
       }
 
-      setSuccess("Match scheduled successfully!");
+      const scheduleResult = await scheduleResponse.json();
+      setSuccess("Match scheduled successfully for the current season!");
       setShowScheduler(false);
-
-      // Refresh the page to show the new match
-      window.location.reload();
+      await fetchMatches(); // Refresh matches
     } catch (error) {
-      throw error;
+      console.error("Error scheduling match:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to schedule match"
+      );
     }
   };
 
@@ -137,6 +178,14 @@ export default function TeamMatchesSection({
       setSelectedMatch(match);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="glass-container p-4 rounded-xl shadow-lg mt-4">
+        <div className="text-center text-gray-400">Loading matches...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-container p-4 rounded-xl shadow-lg mt-4">
@@ -208,7 +257,7 @@ export default function TeamMatchesSection({
               {limitedUpcomingMatches.length > 0 ? (
                 limitedUpcomingMatches.map((match) => (
                   <MatchCard
-                    key={match.id}
+                    key={match._id}
                     match={match}
                     teamName={teamName}
                     isTeamCaptain={isTeamCaptain}
@@ -237,7 +286,7 @@ export default function TeamMatchesSection({
               {limitedCompletedMatches.length > 0 ? (
                 limitedCompletedMatches.map((match) => (
                   <MatchCard
-                    key={match.id}
+                    key={match._id}
                     match={match}
                     teamName={teamName}
                     isTeamCaptain={isTeamCaptain}
