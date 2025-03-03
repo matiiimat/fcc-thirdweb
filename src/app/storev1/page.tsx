@@ -22,6 +22,11 @@ interface PlayerData {
     daysRemaining: number;
   };
   managementCertificate?: boolean;
+  lastEnergyDrinkDate?: string | null;
+  energyDrinkPurchases?: {
+    count: number;
+    resetTime: string | null;
+  };
 }
 
 interface SkillOption {
@@ -53,6 +58,13 @@ const storeItems: StoreItem[] = [
     name: "Management Certificate",
     description: "Team management license",
     price: 1, // TO DO: Change price to $5 WHEN LIVE
+    section: "Buy",
+  },
+  {
+    id: "energy_drink",
+    name: "Energy Drink",
+    description: "Reset training cooldown",
+    price: 1000,
     section: "Buy",
   },
   {
@@ -164,6 +176,9 @@ export default function Store() {
               leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
               managementCertificate:
                 data.managementCertificate || prev.managementCertificate,
+              lastTrainingDate: data.lastTrainingDate,
+              energyDrinkPurchases:
+                data.energyDrinkPurchases || prev.energyDrinkPurchases,
             }
           : null
       );
@@ -232,6 +247,45 @@ export default function Store() {
       // Process the purchase to update the database
       processPurchase(leaveOfAbsenceItem);
     }
+  };
+
+  // Handler for energy drink transaction success:
+  const handleSuccessEnergyDrink = () => {
+    console.log("Transaction confirmed for energy drink! 🎉");
+    setTxStatus("Transaction confirmed! 🎉");
+    const energyDrinkItem = storeItems.find(
+      (item) => item.id === "energy_drink"
+    );
+    if (energyDrinkItem) {
+      processPurchase(energyDrinkItem);
+    }
+  };
+
+  // Calculate energy drink price based on purchase count within 24 hours
+  const getEnergyDrinkPrice = () => {
+    const basePrice = 1000000000000000n; // 0.001 ETH
+
+    if (!player?.energyDrinkPurchases?.resetTime) {
+      return basePrice;
+    }
+
+    const resetTime = new Date(player.energyDrinkPurchases.resetTime);
+    const now = new Date();
+    const hoursSinceReset =
+      (now.getTime() - resetTime.getTime()) / (1000 * 60 * 60);
+
+    // If it's been more than 24 hours, return base price
+    if (hoursSinceReset >= 24) {
+      return basePrice;
+    }
+
+    // Calculate price multiplier: 2^count
+    // For count = 1: 2^1 = 2x price (0.002 ETH)
+    // For count = 2: 2^2 = 4x price (0.004 ETH)
+    // For count = 3: 2^3 = 8x price (0.008 ETH)
+    // For count = 4: 2^4 = 16x price (0.016 ETH)
+    const multiplier = 2n ** BigInt(player.energyDrinkPurchases.count);
+    return basePrice * multiplier;
   };
 
   // Handle transaction errors
@@ -376,6 +430,19 @@ export default function Store() {
                             onError={handleError}
                           >
                             0.001 ETH
+                          </TransactionButton>
+                        ) : item.id === "energy_drink" ? (
+                          <TransactionButton
+                            transaction={async () => ({
+                              to: recipientAddress,
+                              value: getEnergyDrinkPrice(),
+                              chain: sepolia,
+                              client: client,
+                            })}
+                            onTransactionConfirmed={handleSuccessEnergyDrink}
+                            onError={handleError}
+                          >
+                            {`${Number(getEnergyDrinkPrice()) / 1e18} ETH`}
                           </TransactionButton>
                         ) : (
                           <button

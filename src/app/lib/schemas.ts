@@ -32,7 +32,7 @@ export const solomatchSchema = playerIdSchema;
 export const storeSchema = z.object({
   ...playerIdSchema.shape,
   item: z.object({
-    id: z.enum(['name_change', 'private_trainer', 'management_certificate', 'leave_of_absence'])
+    id: z.enum(['name_change', 'private_trainer', 'management_certificate', 'leave_of_absence', 'energy_drink'])
   }),
   newName: z.string()
     .min(4, 'Name must be at least 4 characters')

@@ -96,6 +96,25 @@ export async function POST(req: NextRequest) {
               : 5
           };
           break;
+        case "energy_drink":
+          const now = new Date();
+          
+          // Check if we need to reset the purchase count (if it's been more than 24 hours or no previous purchases)
+          if (!player.energyDrinkPurchases?.resetTime ||
+              (now.getTime() - new Date(player.energyDrinkPurchases.resetTime).getTime()) >= 24 * 60 * 60 * 1000) {
+            updateData.$set = {
+              lastTrainingDate: null,
+              'energyDrinkPurchases.count': 1,
+              'energyDrinkPurchases.resetTime': now
+            };
+          } else {
+            // Increment the purchase count within the 24-hour window
+            updateData.$set = {
+              lastTrainingDate: null,
+              'energyDrinkPurchases.count': (player.energyDrinkPurchases.count || 0) + 1
+            };
+          }
+          break;
         default:
           return {
             error: NextResponse.json(

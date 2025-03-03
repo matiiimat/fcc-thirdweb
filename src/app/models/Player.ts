@@ -44,6 +44,10 @@ export interface IPlayer extends Document {
     daysRemaining: number;
   };
   managementCertificate: boolean;
+  energyDrinkPurchases?: {
+    count: number;
+    resetTime: Date | null;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -259,6 +263,17 @@ const PlayerSchema = new Schema<IPlayer>(
         type: Number,
         default: 0,
         min: 0
+      }
+    },
+    energyDrinkPurchases: {
+      count: {
+        type: Number,
+        default: 0,
+        min: 0
+      },
+      resetTime: {
+        type: Date,
+        default: null
       }
     }
   },
