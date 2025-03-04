@@ -6,6 +6,8 @@ import { client } from "./client";
 import { darkTheme } from "thirdweb/react";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import sdk from "@farcaster/frame-sdk";
 
 const wallets = [
   inAppWallet({
@@ -28,6 +30,27 @@ const wallets = [
 
 export default function Home() {
   const router = useRouter();
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Call ready() to hide the loading screen
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+  // end Farcaster Frame Integration
 
   const goToHome = () => {
     router.push("/home");
