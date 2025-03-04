@@ -5,6 +5,7 @@ import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import sdk from "@farcaster/frame-sdk";
 
 export default function CreatePlayerPage() {
   const activeWallet = useActiveWallet();
@@ -13,6 +14,27 @@ export default function CreatePlayerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(true);
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Call ready() to hide the loading screen
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+  // end Farcaster Frame Integration
 
   useEffect(() => {
     async function checkWalletAndPlayer() {
