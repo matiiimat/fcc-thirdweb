@@ -43,6 +43,23 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/logo.png" />
+        <meta
+          property="fc:frame"
+          content={JSON.stringify({
+            version: "next",
+            imageUrl: "https://fcc-test.netlify.app/logo.pngg",
+            button: {
+              title: "fccFC",
+              action: {
+                type: "launch_frame",
+                name: "Play fccFC",
+                url: "https://fcc-test.netlify.app",
+                splashImageUrl: "https://fcc-test.netlify.app/logo.png",
+                splashBackgroundColor: "#08090a",
+              },
+            },
+          })}
+        />
       </head>
       <body className={inter.className}>
         {/* Content layer */}
