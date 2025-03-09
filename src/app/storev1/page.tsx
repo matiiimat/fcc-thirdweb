@@ -140,7 +140,7 @@ export default function Store() {
     // Reset confetti after animation duration
     setTimeout(() => setShowConfetti(false), 3000);
   }, []);
-  const recipientAddress = "0xE2A190F13b023f2675bd14B4f3efFEEB1f713641";
+  const recipientAddress = "0xe9F99F23D2714faD419233C599a51e86A56c9E17";
 
   useEffect(() => {
     if (!loading && (!isConnected || !address || !player)) {
@@ -239,7 +239,7 @@ export default function Store() {
   const sendManagementCertificateTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
         value: 5000000000000000n, // 0.005 ETH in wei (5 * 10^15)
       },
       {
@@ -269,7 +269,7 @@ export default function Store() {
   const sendNameChangeTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
         value: 1000000000000000n, // 0.001 ETH in wei (10^15)
       },
       {
@@ -299,7 +299,7 @@ export default function Store() {
   const sendLeaveOfAbsenceTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
         value: 1000000000000000n, // 0.001 ETH in wei (10^15)
       },
       {
@@ -356,7 +356,7 @@ export default function Store() {
   const sendEnergyDrinkTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
         value: getEnergyDrinkPrice(), // Dynamic price based on previous purchases
       },
       {
@@ -386,7 +386,7 @@ export default function Store() {
   const sendPrivateTrainerTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
         value: 10000000000000000n, // 0.01 ETH in wei (10^16)
       },
       {
