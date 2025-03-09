@@ -58,7 +58,27 @@ export default function TeamManagementPage() {
   const activeWallet = useActiveWallet();
   const wallet = activeWallet?.getAccount();
   const router = useRouter();
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [loading, setLoading] = useState(true);
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const sdk = await import("@farcaster/frame-sdk");
+        await sdk.default.actions.ready();
+        setContext(await sdk.default.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
   const [teamData, setTeamData] = useState<{
     teamName: string;
     players: string[];
@@ -512,6 +532,7 @@ export default function TeamManagementPage() {
         }
         position={selectedPosition?.position || "D"}
         assignedPlayers={currentTactic.playerPositions.map((p) => p.ethAddress)}
+        context={context}
       />
 
       {/* Tactic Name Modal */}

@@ -236,7 +236,7 @@ export default function ScoutingPage() {
                         style={{ cursor: "pointer" }}
                       >
                         <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
-                          {player.playerName}
+                          {context?.user?.username || player.playerName}
                         </td>
                         <td className="py-2 sm:py-3 px-2 text-center text-xs sm:text-sm">
                           {Math.round(player.stats.strength)}
@@ -272,7 +272,7 @@ export default function ScoutingPage() {
                         style={{ cursor: "pointer" }}
                       >
                         <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
-                          {bot.playerName}
+                          {context?.user?.username || bot.playerName}
                         </td>
                         <td className="py-2 sm:py-3 px-2 text-center text-xs sm:text-sm">
                           {bot.stats.strength}

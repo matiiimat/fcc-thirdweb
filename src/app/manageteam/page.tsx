@@ -254,7 +254,7 @@ export default function ManageTeamPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <div className="font-bold text-white text-lg">
-                      {player.playerName}
+                      {context?.user?.username || player.playerName}
                     </div>
                     <div className="text-sm text-gray-400">
                       {player.isBot ? "Bot Player" : "Human Player"}
