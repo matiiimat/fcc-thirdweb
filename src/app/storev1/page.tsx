@@ -9,13 +9,10 @@ import {
   useDisconnect,
   useSendTransaction,
 } from "wagmi";
-import { TransactionButton } from "thirdweb/react";
-import { sepolia } from "thirdweb/chains";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ConfettiEffect from "../components/ConfettiEffect";
 import NameChangeModal from "../components/NameChangeModal";
-import { client } from "../client";
 import { sep } from "path";
 
 interface PlayerData {
@@ -238,16 +235,152 @@ export default function Store() {
     await processPurchase(pendingPurchase, selectedSkill);
   };
 
-  // Handler for name change transaction success:
-  const handleSuccessNameChange = () => {
-    console.log("Transaction confirmed for name change! 🎉");
-    setTxStatus("Transaction confirmed for name change! 🎉");
-    const nameChangeItem = storeItems.find((item) => item.id === "name_change");
-    if (nameChangeItem) {
-      setPendingPurchase(nameChangeItem);
-      setShowNameModal(true);
+  // Management Certificate transaction using wagmi
+  const sendManagementCertificateTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        value: 5000000000000000n, // 0.005 ETH in wei (5 * 10^15)
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for management certificate! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
+
+          // Find the management certificate item
+          const managementCertificateItem = storeItems.find(
+            (item) => item.id === "management_certificate"
+          );
+
+          if (managementCertificateItem) {
+            // Process the purchase to update the database
+            processPurchase(managementCertificateItem);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
+    );
+  }, [sendTransaction, processPurchase]);
+
+  // Name Change transaction using wagmi
+  const sendNameChangeTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        value: 1000000000000000n, // 0.001 ETH in wei (10^15)
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for name change! 🎉", hash);
+          setTxStatus("Transaction confirmed for name change! 🎉");
+
+          // Find the name change item
+          const nameChangeItem = storeItems.find(
+            (item) => item.id === "name_change"
+          );
+
+          if (nameChangeItem) {
+            setPendingPurchase(nameChangeItem);
+            setShowNameModal(true);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
+    );
+  }, [sendTransaction]);
+
+  // Leave of Absence transaction using wagmi
+  const sendLeaveOfAbsenceTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        value: 1000000000000000n, // 0.001 ETH in wei (10^15)
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for leave of absence! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
+
+          // Find the leave of absence item
+          const leaveOfAbsenceItem = storeItems.find(
+            (item) => item.id === "leave_of_absence"
+          );
+
+          if (leaveOfAbsenceItem) {
+            // Process the purchase to update the database
+            processPurchase(leaveOfAbsenceItem);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
+    );
+  }, [sendTransaction, processPurchase]);
+
+  // Calculate energy drink price based on purchase count within 24 hours
+  const getEnergyDrinkPrice = () => {
+    const basePrice = 1000000000000000n; // 0.001 ETH
+
+    if (!player?.energyDrinkPurchases?.resetTime) {
+      return basePrice;
     }
+
+    const resetTime = new Date(player.energyDrinkPurchases.resetTime);
+    const now = new Date();
+    const hoursSinceReset =
+      (now.getTime() - resetTime.getTime()) / (1000 * 60 * 60);
+
+    // If it's been more than 24 hours, return base price
+    if (hoursSinceReset >= 24) {
+      return basePrice;
+    }
+
+    // Calculate price multiplier: 2^count
+    // For count = 1: 2^1 = 2x price (0.002 ETH)
+    // For count = 2: 2^2 = 4x price (0.004 ETH)
+    // For count = 3: 2^3 = 8x price (0.008 ETH)
+    // For count = 4: 2^4 = 16x price (0.016 ETH)
+    const multiplier = 2n ** BigInt(player.energyDrinkPurchases.count);
+    return basePrice * multiplier;
   };
+
+  // Energy Drink transaction using wagmi
+  const sendEnergyDrinkTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        value: getEnergyDrinkPrice(), // Dynamic price based on previous purchases
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for energy drink! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
+
+          // Find the energy drink item
+          const energyDrinkItem = storeItems.find(
+            (item) => item.id === "energy_drink"
+          );
+
+          if (energyDrinkItem) {
+            // Process the purchase to update the database
+            processPurchase(energyDrinkItem);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
+    );
+  }, [sendTransaction, processPurchase, getEnergyDrinkPrice]);
 
   // Private trainer transaction using wagmi
   const sendPrivateTrainerTx = useCallback(() => {
@@ -281,84 +414,6 @@ export default function Store() {
       }
     );
   }, [sendTransaction]);
-
-  // Handler for private trainer transaction success (legacy):
-  const handleSuccessPrivateTrainer = () => {
-    console.log("Transaction confirmed for private trainer! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const privateTrainerItem = storeItems.find(
-      (item) => item.id === "private_trainer"
-    );
-    if (privateTrainerItem) {
-      setPendingPurchase(privateTrainerItem);
-      setShowSkillModal(true);
-    }
-  };
-
-  // Handler for management certificate transaction success:
-  const handleSuccessManagementCertificate = () => {
-    console.log("Transaction confirmed for management certificate! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const managementCertificateItem = storeItems.find(
-      (item) => item.id === "management_certificate"
-    );
-    if (managementCertificateItem) {
-      // Process the purchase to update the database
-      processPurchase(managementCertificateItem);
-    }
-  };
-
-  // Handler for leave of absence transaction success:
-  const handleSuccessLeaveOfAbsence = () => {
-    console.log("Transaction confirmed for leave of absence! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const leaveOfAbsenceItem = storeItems.find(
-      (item) => item.id === "leave_of_absence"
-    );
-    if (leaveOfAbsenceItem) {
-      // Process the purchase to update the database
-      processPurchase(leaveOfAbsenceItem);
-    }
-  };
-
-  // Handler for energy drink transaction success:
-  const handleSuccessEnergyDrink = () => {
-    console.log("Transaction confirmed for energy drink! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const energyDrinkItem = storeItems.find(
-      (item) => item.id === "energy_drink"
-    );
-    if (energyDrinkItem) {
-      processPurchase(energyDrinkItem);
-    }
-  };
-
-  // Calculate energy drink price based on purchase count within 24 hours
-  const getEnergyDrinkPrice = () => {
-    const basePrice = 1000000000000000n; // 0.001 ETH
-
-    if (!player?.energyDrinkPurchases?.resetTime) {
-      return basePrice;
-    }
-
-    const resetTime = new Date(player.energyDrinkPurchases.resetTime);
-    const now = new Date();
-    const hoursSinceReset =
-      (now.getTime() - resetTime.getTime()) / (1000 * 60 * 60);
-
-    // If it's been more than 24 hours, return base price
-    if (hoursSinceReset >= 24) {
-      return basePrice;
-    }
-
-    // Calculate price multiplier: 2^count
-    // For count = 1: 2^1 = 2x price (0.002 ETH)
-    // For count = 2: 2^2 = 4x price (0.004 ETH)
-    // For count = 3: 2^3 = 8x price (0.008 ETH)
-    // For count = 4: 2^4 = 16x price (0.016 ETH)
-    const multiplier = 2n ** BigInt(player.energyDrinkPurchases.count);
-    return basePrice * multiplier;
-  };
 
   // Handle transaction errors
   const handleError = (error: Error) => {
@@ -449,34 +504,20 @@ export default function Store() {
                               Owned
                             </button>
                           ) : (
-                            <TransactionButton
-                              transaction={async () => ({
-                                to: recipientAddress,
-                                value: 5000000000000000n, // Adjust ETH value as needed
-                                chain: sepolia,
-                                client: client,
-                              })}
-                              onTransactionConfirmed={
-                                handleSuccessManagementCertificate
-                              }
-                              onError={handleError}
+                            <button
+                              onClick={sendManagementCertificateTx}
+                              className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                             >
                               0.005 ETH
-                            </TransactionButton>
+                            </button>
                           )
                         ) : item.id === "name_change" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessNameChange}
-                            onError={handleError}
+                          <button
+                            onClick={sendNameChangeTx}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
                             0.001 ETH
-                          </TransactionButton>
+                          </button>
                         ) : item.id === "private_trainer" ? (
                           <button
                             onClick={sendPrivateTrainerTx}
@@ -485,31 +526,19 @@ export default function Store() {
                             0.01 ETH
                           </button>
                         ) : item.id === "leave_of_absence" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: 1000000000000000n, // 0.001 ETH
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessLeaveOfAbsence}
-                            onError={handleError}
+                          <button
+                            onClick={sendLeaveOfAbsenceTx}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
                             0.001 ETH
-                          </TransactionButton>
+                          </button>
                         ) : item.id === "energy_drink" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: getEnergyDrinkPrice(),
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessEnergyDrink}
-                            onError={handleError}
+                          <button
+                            onClick={sendEnergyDrinkTx}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
                             {`${Number(getEnergyDrinkPrice()) / 1e18} ETH`}
-                          </TransactionButton>
+                          </button>
                         ) : (
                           <button
                             onClick={() => {}}
