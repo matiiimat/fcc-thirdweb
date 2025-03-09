@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useActiveWallet } from "thirdweb/react";
+import sdk from "@farcaster/frame-sdk";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import TeamOverview from "../components/TeamOverview";
 import CreateTeamSection from "../components/CreateTeamSection";
 import AvailableTeamsSection from "../components/AvailableTeamsSection";
@@ -67,17 +68,37 @@ interface Player {
   team: string;
   managementCertificate: boolean;
 }
-
 export default function TeamPage() {
   const router = useRouter();
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentTeam, setCurrentTeam] = useState<MongoTeam | null>(null);
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -145,8 +166,13 @@ export default function TeamPage() {
 
   const fetchPlayerData = useCallback(async () => {
     try {
+      if (!address) {
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(
-        `/api/players/address/${encodeURIComponent(wallet!.address)}`
+        `/api/players/address/${encodeURIComponent(address)}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch player data");
@@ -159,10 +185,10 @@ export default function TeamPage() {
     } finally {
       setLoading(false);
     }
-  }, [wallet, setPlayer, setError, setLoading]);
+  }, [address, setPlayer, setError, setLoading]);
 
   useEffect(() => {
-    if (wallet) {
+    if (isConnected && address) {
       // Reset states when component mounts
       setCurrentTeam(null);
       setPlayer(null);
@@ -172,7 +198,7 @@ export default function TeamPage() {
     } else {
       setLoading(false);
     }
-  }, [wallet, fetchPlayerData, setLoading]);
+  }, [isConnected, address, fetchPlayerData, setLoading]);
 
   useEffect(() => {
     if (player) {
@@ -185,7 +211,7 @@ export default function TeamPage() {
   }, [player, fetchCurrentTeam, fetchTeams]);
 
   const handleCreateTeam = async () => {
-    if (!wallet) {
+    if (!isConnected || !address) {
       setError("Please connect your wallet");
       return;
     }
@@ -203,14 +229,14 @@ export default function TeamPage() {
 
     try {
       // Generate team name from captain's address
-      const { name: teamName } = generateTeamName(wallet.address);
+      const { name: teamName } = generateTeamName(address);
 
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           teamName,
-          captainAddress: wallet.address,
+          captainAddress: address,
         }),
       });
 
@@ -227,7 +253,7 @@ export default function TeamPage() {
   };
 
   const handleJoinTeam = async (teamName: string) => {
-    if (!wallet) {
+    if (!isConnected || !address) {
       setError("Please connect your wallet");
       return;
     }
@@ -241,7 +267,7 @@ export default function TeamPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ethAddress: wallet.address,
+          ethAddress: address,
         },
         body: JSON.stringify({
           teamName: teamName,
@@ -265,7 +291,7 @@ export default function TeamPage() {
     setCurrentTeam(null);
   };
 
-  if (!wallet) {
+  if (!isConnected || !address) {
     return <NoWalletState />;
   }
 
@@ -278,7 +304,7 @@ export default function TeamPage() {
       {currentTeam ? (
         <TeamOverview
           team={currentTeam}
-          playerAddress={wallet.address}
+          playerAddress={address}
           onLeaveTeam={handleLeaveTeam}
         />
       ) : (
@@ -291,7 +317,7 @@ export default function TeamPage() {
           <AvailableTeamsSection
             teams={teams}
             loading={loading}
-            playerAddress={wallet.address}
+            playerAddress={address}
             onJoinTeam={handleJoinTeam}
           />
         </>
