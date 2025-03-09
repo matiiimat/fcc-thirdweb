@@ -6,107 +6,222 @@ import { client } from "./client";
 import { darkTheme } from "thirdweb/react";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import sdk from "@farcaster/frame-sdk";
+import { useEffect, useCallback, useState } from "react";
+import sdk, { Context } from "@farcaster/frame-sdk";
 
-const wallets = [
-  inAppWallet({
-    auth: {
-      options: [
-        "google",
-        "discord",
-        "telegram",
-        "farcaster",
-        "x",
-        "passkey",
-        "apple",
-      ],
-    },
-  }),
-  createWallet("io.metamask"),
-  createWallet("com.coinbase.wallet"),
-  createWallet("me.rainbow"),
-];
+export type FrameContext = Context.FrameContext;
+export type SafeAreaInsets = Context.SafeAreaInsets;
 
-export default function Home() {
-  const router = useRouter();
+import {
+  useAccount,
+  useSendTransaction,
+  useSignMessage,
+  useSignTypedData,
+  useWaitForTransactionReceipt,
+  useDisconnect,
+  useConnect,
+} from "wagmi";
+
+import { config } from "./components/providers/WagmiProvider";
+import { Button } from "@/components/ui/Button";
+
+export default function Demo() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<any>();
+  const [context, setContext] = useState<FrameContext>();
+  const [txHash, setTxHash] = useState<string | null>(null);
 
-  // Farcaster Frame Integration
+  const { address, isConnected } = useAccount();
+  const {
+    sendTransaction,
+    error: sendTxError,
+    isError: isSendTxError,
+    isPending: isSendTxPending,
+  } = useSendTransaction();
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash: txHash as `0x${string}`,
+    });
+
+  const { disconnect } = useDisconnect();
+  const { connect } = useConnect();
+
   useEffect(() => {
     const load = async () => {
-      try {
-        // Call ready() to hide the loading screen
-        await sdk.actions.ready();
-        setContext(await sdk.context);
-      } catch (error) {
-        console.error("Error initializing Farcaster Frame SDK:", error);
-      }
+      setContext(await sdk.context);
+      sdk.actions.ready();
     };
-
-    if (!isSDKLoaded) {
+    if (sdk && !isSDKLoaded) {
       setIsSDKLoaded(true);
       load();
     }
   }, [isSDKLoaded]);
-  // end Farcaster Frame Integration
 
-  const goToHome = () => {
-    router.push("/home");
+  const sendTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        data: "0x9846cd9efc000023c0",
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+        },
+      }
+    );
+  }, [sendTransaction]);
+
+  const renderError = (error: Error | null) => {
+    if (!error) return null;
+    return <div className="text-red-500 text-xs mt-1">{error.message}</div>;
   };
 
+  if (!isSDKLoaded) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21] flex items-center justify-center">
-      <div className="w-full max-w-md mx-auto p-4 sm:p-6">
-        <div className="glass-container p-6 sm:p-8 rounded-xl sm:rounded-2xl space-y-6 sm:space-y-8">
-          {/* Logo (centered) */}
-          <div className="flex justify-center">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              width={240}
-              height={240}
-              className="mx-auto"
-              priority
-            />
+    <div className="w-[300px] mx-auto py-4 px-2">
+      <h1 className="text-2xl font-bold text-center mb-4">Frames v2 Demo</h1>
+
+      {/* Context and actions omitted. */}
+
+      <div>
+        <h2 className="font-2xl font-bold">Wallet</h2>
+
+        {address && (
+          <div className="my-2 text-xs">
+            Address: <pre className="inline">{address}</pre>
           </div>
+        )}
 
-          {/* Title */}
-          {/* <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
-            fcc/FC
-          </h1> */}
-
-          {/* Instructions */}
-          <div className="text-gray-300 text-center text-sm sm:text-base">
-            Connect to your web3 wallet and click on the play button to get
-            started.
-          </div>
-
-          {/* Connect Button */}
-          <div className="flex justify-center">
-            <ConnectButton
-              client={client}
-              wallets={wallets}
-              theme={darkTheme({
-                colors: { accentText: "hsl(140, 100%, 26%)" },
-              })}
-              connectModal={{
-                size: "compact",
-                showThirdwebBranding: false,
-              }}
-            />
-          </div>
-
-          {/* PLAY Button */}
-          <button
-            onClick={goToHome}
-            className="w-full gradient-button py-2.5 px-6 rounded-lg text-base transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
+        <div className="mb-4">
+          <Button
+            onClick={() =>
+              isConnected
+                ? disconnect()
+                : connect({ connector: config.connectors[0] })
+            }
           >
-            PLAY
-          </button>
+            {isConnected ? "Disconnect" : "Connect"}
+          </Button>
         </div>
+
+        {isConnected && (
+          <>
+            <div className="mb-4">
+              <Button
+                onClick={sendTx}
+                disabled={!isConnected || isSendTxPending}
+                isLoading={isSendTxPending}
+              >
+                Send Transaction
+              </Button>
+              {isSendTxError && renderError(sendTxError)}
+              {txHash && (
+                <div className="mt-2 text-xs">
+                  <div>Hash: {txHash}</div>
+                  <div>
+                    Status:{" "}
+                    {isConfirming
+                      ? "Confirming..."
+                      : isConfirmed
+                      ? "Confirmed!"
+                      : "Pending"}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
-    </main>
+    </div>
   );
 }
+
+//   return (
+//     <main className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21] flex items-center justify-center">
+//       <div className="w-full max-w-md mx-auto p-4 sm:p-6">
+//         <div className="glass-container p-6 sm:p-8 rounded-xl sm:rounded-2xl space-y-6 sm:space-y-8">
+//           {/* Logo (centered) */}
+//           <div className="flex justify-center">
+//             <Image
+//               src="/logo.png"
+//               alt="Logo"
+//               width={240}
+//               height={240}
+//               className="mx-auto"
+//               priority
+//             />
+//           </div>
+
+//           {/* Title */}
+//           {/* <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
+//             fcc/FC
+//           </h1> */}
+
+//           {/* Instructions */}
+//           <div className="text-gray-300 text-center text-sm sm:text-base">
+//             Connect to your web3 wallet and click on the play button to get
+//             started.
+//           </div>
+
+//           {/* Connect Button */}
+//           <div className="flex justify-center">
+//             <ConnectButton
+//               client={client}
+//               wallets={wallets}
+//               theme={darkTheme({
+//                 colors: { accentText: "hsl(140, 100%, 26%)" },
+//               })}
+//               connectModal={{
+//                 size: "compact",
+//                 showThirdwebBranding: false,
+//               }}
+//             />
+//           </div>
+
+//           {/* PLAY Button */}
+//           <button
+//             onClick={goToHome}
+//             className="w-full gradient-button py-2.5 px-6 rounded-lg text-base transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
+//           >
+//             PLAY
+//           </button>
+//         </div>
+//       </div>
+//     </main>
+//   );
+// }
+//           <div className="text-gray-300 text-center text-sm sm:text-base">
+//             Connect to your web3 wallet and click on the play button to get
+//             started.
+//           </div>
+
+//           {/* Connect Button */}
+//           <div className="flex justify-center">
+//             <ConnectButton
+//               client={client}
+//               wallets={wallets}
+//               theme={darkTheme({
+//                 colors: { accentText: "hsl(140, 100%, 26%)" },
+//               })}
+//               connectModal={{
+//                 size: "compact",
+//                 showThirdwebBranding: false,
+//               }}
+//             />
+//           </div>
+
+//           {/* PLAY Button */}
+//           <button
+//             onClick={goToHome}
+//             className="w-full gradient-button py-2.5 px-6 rounded-lg text-base transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
+//           >
+//             PLAY
+//           </button>
+//         </div>
+//       </div>
+//     </main>
+//   );
+// }

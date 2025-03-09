@@ -4,7 +4,14 @@ import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
 import Header from "./components/Header";
 
+import { Providers } from "./providers";
+
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "fcc/FC",
+  description: "A Farcaster Frames v2 frame for fcc/FC",
+};
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -12,20 +19,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: "#000000",
-};
-
-export const metadata: Metadata = {
-  title: "fcc/FC",
-  description: "Online football management game on the Farcaster",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "fcc/FC",
-  },
-  formatDetection: {
-    telephone: false,
-  },
 };
 
 export default function RootLayout({
@@ -47,7 +40,7 @@ export default function RootLayout({
           property="fc:frame"
           content={JSON.stringify({
             version: "next",
-            imageUrl: "https://fcc-test.netlify.app/logo.pngg",
+            imageUrl: "https://fcc-test.netlify.app/logo.png",
             button: {
               title: "fccFC",
               action: {
@@ -62,10 +55,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        {/* Content layer */}
-        <div className="relative z-20">
-          <ThirdwebProvider>{children}</ThirdwebProvider>
-        </div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
