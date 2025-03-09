@@ -549,11 +549,14 @@ export default function Store() {
                         )}
                       </div>
                     </div>
-                    {item.id === "private_trainer" && player.privateTrainer && (
-                      <div className="mt-1 text-xs text-center text-gray-400">
-                        {player.privateTrainer.remainingSessions} sessions left
-                      </div>
-                    )}
+                    {item.id === "private_trainer" &&
+                      player.privateTrainer &&
+                      player.privateTrainer.remainingSessions > 0 && (
+                        <div className="mt-1 text-xs text-center text-gray-400">
+                          {player.privateTrainer.remainingSessions} sessions
+                          left
+                        </div>
+                      )}
                     {item.id === "management_certificate" &&
                       player.managementCertificate && (
                         <div className="mt-1 text-xs text-center text-green-400">
