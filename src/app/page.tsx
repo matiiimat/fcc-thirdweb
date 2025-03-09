@@ -119,12 +119,15 @@ export default function Demo() {
 
         {address && (
           <div className="my-2 text-xs">
-            Address: <pre className="inline">{address}</pre>
-            Username:{" "}
+            <div>
+              Address: <pre className="inline">{address}</pre>
+            </div>
+            <div>Username: </div>
             <pre className="inline">{context?.user?.username || "N/A"}</pre>
           </div>
         )}
 
+        {/* Button to connect / disconnect  */}
         <div className="mb-4">
           <Button
             onClick={() =>
@@ -137,6 +140,7 @@ export default function Demo() {
           </Button>
         </div>
 
+        {/* Button to send transactions  */}
         {isConnected && (
           <>
             <div className="mb-4">
@@ -168,90 +172,3 @@ export default function Demo() {
     </div>
   );
 }
-
-//   return (
-//     <main className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21] flex items-center justify-center">
-//       <div className="w-full max-w-md mx-auto p-4 sm:p-6">
-//         <div className="glass-container p-6 sm:p-8 rounded-xl sm:rounded-2xl space-y-6 sm:space-y-8">
-//           {/* Logo (centered) */}
-//           <div className="flex justify-center">
-//             <Image
-//               src="/logo.png"
-//               alt="Logo"
-//               width={240}
-//               height={240}
-//               className="mx-auto"
-//               priority
-//             />
-//           </div>
-
-//           {/* Title */}
-//           {/* <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-center">
-//             fcc/FC
-//           </h1> */}
-
-//           {/* Instructions */}
-//           <div className="text-gray-300 text-center text-sm sm:text-base">
-//             Connect to your web3 wallet and click on the play button to get
-//             started.
-//           </div>
-
-//           {/* Connect Button */}
-//           <div className="flex justify-center">
-//             <ConnectButton
-//               client={client}
-//               wallets={wallets}
-//               theme={darkTheme({
-//                 colors: { accentText: "hsl(140, 100%, 26%)" },
-//               })}
-//               connectModal={{
-//                 size: "compact",
-//                 showThirdwebBranding: false,
-//               }}
-//             />
-//           </div>
-
-//           {/* PLAY Button */}
-//           <button
-//             onClick={goToHome}
-//             className="w-full gradient-button py-2.5 px-6 rounded-lg text-base transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
-//           >
-//             PLAY
-//           </button>
-//         </div>
-//       </div>
-//     </main>
-//   );
-// }
-//           <div className="text-gray-300 text-center text-sm sm:text-base">
-//             Connect to your web3 wallet and click on the play button to get
-//             started.
-//           </div>
-
-//           {/* Connect Button */}
-//           <div className="flex justify-center">
-//             <ConnectButton
-//               client={client}
-//               wallets={wallets}
-//               theme={darkTheme({
-//                 colors: { accentText: "hsl(140, 100%, 26%)" },
-//               })}
-//               connectModal={{
-//                 size: "compact",
-//                 showThirdwebBranding: false,
-//               }}
-//             />
-//           </div>
-
-//           {/* PLAY Button */}
-//           <button
-//             onClick={goToHome}
-//             className="w-full gradient-button py-2.5 px-6 rounded-lg text-base transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
-//           >
-//             PLAY
-//           </button>
-//         </div>
-//       </div>
-//     </main>
-//   );
-// }
