@@ -282,31 +282,6 @@ export default function Home() {
               </div>
             </div>
           </div>
-
-          {/* Frame Context (hidden by default) */}
-          <div className="w-full mt-4">
-            <button
-              onClick={toggleContext}
-              className="flex items-center gap-2 transition-colors text-sm text-gray-400"
-            >
-              <span
-                className={`transform transition-transform ${
-                  isContextOpen ? "rotate-90" : ""
-                }`}
-              >
-                ➤
-              </span>
-              Frame Context
-            </button>
-
-            {isContextOpen && (
-              <div className="p-4 mt-2 bg-gray-800 rounded-lg">
-                <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-full overflow-x-auto">
-                  {JSON.stringify(context, null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
         </div>
       </main>
       <Footer />

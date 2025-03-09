@@ -3,22 +3,11 @@
 import { ConnectButton } from "thirdweb/react";
 import { client } from "../client";
 import { useRouter } from "next/navigation";
-import { inAppWallet, createWallet } from "thirdweb/wallets";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { base } from "thirdweb/chains";
 import { useEffect, useState } from "react";
 import sdk from "@farcaster/frame-sdk";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
-
-const wallets = [
-  inAppWallet({
-    auth: {
-      options: ["farcaster"],
-    },
-  }),
-  createWallet("com.coinbase.wallet"),
-];
 
 interface PlayerData {}
 export default function SettingsPage() {
@@ -106,16 +95,6 @@ export default function SettingsPage() {
 
           {/* Connect Button */}
           <div className="flex flex-col items-center space-y-4 sm:space-y-6">
-            <ConnectButton
-              client={client}
-              chain={base}
-              wallets={wallets}
-              connectModal={{ size: "compact" }}
-              appMetadata={{
-                name: "Home",
-                url: "https://example.com",
-              }}
-            />
             <button
               onClick={() => router.back()}
               className="gradient-button py-2.5 px-6 rounded-lg text-base w-full transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
