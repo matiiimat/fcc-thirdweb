@@ -174,30 +174,6 @@ export default function Home() {
               <div className="mt-4 text-xs text-gray-400">
                 <p>Username: {context?.user?.username || "N/A"}</p>
               </div>
-
-              <div className="mt-4">
-                <button
-                  onClick={toggleContext}
-                  className="flex items-center gap-2 transition-colors text-sm text-gray-400"
-                >
-                  <span
-                    className={`transform transition-transform ${
-                      isContextOpen ? "rotate-90" : ""
-                    }`}
-                  >
-                    ➤
-                  </span>
-                  Frame Context
-                </button>
-
-                {isContextOpen && (
-                  <div className="p-4 mt-2 bg-gray-800 rounded-lg text-left">
-                    <pre className="font-mono text-xs whitespace-pre-wrap break-words max-w-full overflow-x-auto">
-                      {JSON.stringify(context, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         </main>
@@ -240,9 +216,20 @@ export default function Home() {
           />
 
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
-            <h2 className="text-center text-xl sm:text-2xl mb-1">
-              {context?.user?.username}
-            </h2>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              {context?.user?.pfpUrl ? (
+                <div className="w-8 h-8 rounded-full overflow-hidden">
+                  <img
+                    src={context.user.pfpUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-gray-600"></div>
+              )}
+              <h2 className="text-xl sm:text-2xl">{context?.user?.username}</h2>
+            </div>
             <div className="text-lg sm:text-2xl mb-3 text-center">
               {getStarRating(calculatePlayerRating(player.stats))}
             </div>
