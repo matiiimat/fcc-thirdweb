@@ -77,13 +77,13 @@ export default function Demo() {
     return <div className="text-red-500 text-xs mt-1">{error.message}</div>;
   };
 
-  if (!isSDKLoaded) {
-    return <div>Loading...</div>;
-  }
-
   const toggleContext = useCallback(() => {
     setIsContextOpen((prev) => !prev);
   }, []);
+
+  if (!isSDKLoaded) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="w-[300px] mx-auto py-4 px-2">
