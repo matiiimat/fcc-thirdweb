@@ -3,7 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import sdk from "@farcaster/frame-sdk";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useSendTransaction,
+} from "wagmi";
 import { TransactionButton } from "thirdweb/react";
 import { sepolia } from "thirdweb/chains";
 import Header from "../components/Header";
@@ -113,6 +118,8 @@ export default function Store() {
   );
   const [txStatus, setTxStatus] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const { sendTransaction } = useSendTransaction();
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -242,7 +249,40 @@ export default function Store() {
     }
   };
 
-  // Handler for private trainer transaction success:
+  // Private trainer transaction using wagmi
+  const sendPrivateTrainerTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0x4bBFD120d9f352A0BEd7a014bd67913a2007a878",
+        value: 10000000000000000n, // 0.01 ETH in wei (10^16)
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for private trainer! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
+
+          // Find the private trainer item
+          const privateTrainerItem = storeItems.find(
+            (item) => item.id === "private_trainer"
+          );
+
+          if (privateTrainerItem) {
+            // Set the pending purchase and show the skill selection modal
+            // When the user selects a skill and confirms, handleSkillSelect will call
+            // processPurchase to apply the bonus to the player
+            setPendingPurchase(privateTrainerItem);
+            setShowSkillModal(true);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
+    );
+  }, [sendTransaction]);
+
+  // Handler for private trainer transaction success (legacy):
   const handleSuccessPrivateTrainer = () => {
     console.log("Transaction confirmed for private trainer! 🎉");
     setTxStatus("Transaction confirmed! 🎉");
@@ -438,18 +478,12 @@ export default function Store() {
                             0.001 ETH
                           </TransactionButton>
                         ) : item.id === "private_trainer" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessPrivateTrainer}
-                            onError={handleError}
+                          <button
+                            onClick={sendPrivateTrainerTx}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
-                            0.001 ETH
-                          </TransactionButton>
+                            0.01 ETH
+                          </button>
                         ) : item.id === "leave_of_absence" ? (
                           <TransactionButton
                             transaction={async () => ({
