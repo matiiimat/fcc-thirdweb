@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
+import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import sdk from "@farcaster/frame-sdk";
+import { Button } from "@/components/ui/Button";
 
 export default function CreatePlayerPage() {
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
+  const { address, isConnected } = useAccount();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,22 +39,21 @@ export default function CreatePlayerPage() {
   useEffect(() => {
     async function checkWalletAndPlayer() {
       try {
-        if (!wallet) {
+        if (!isConnected || !address) {
           router.push("/");
           return;
         }
 
-        const walletAddress = wallet.address;
-        console.log("Checking wallet address:", walletAddress);
+        console.log("Checking wallet address:", address);
 
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(walletAddress)}`
+          `/api/players/address/${encodeURIComponent(address)}`
         );
         console.log("Check player response status:", response.status);
 
         if (response.ok) {
           console.log("Player already exists, redirecting to home");
-          router.push("/home");
+          router.push("/");
           return;
         } else if (response.status !== 404) {
           const errorData = await response.json();
@@ -68,10 +67,10 @@ export default function CreatePlayerPage() {
     }
 
     checkWalletAndPlayer();
-  }, [wallet, router]);
+  }, [address, isConnected, router]);
 
   const handleCreatePlayer = async () => {
-    if (!wallet) {
+    if (!isConnected || !address) {
       router.push("/");
       return;
     }
@@ -80,17 +79,16 @@ export default function CreatePlayerPage() {
     setError(null);
 
     try {
-      const walletAddress = wallet.address;
-      console.log("Creating player for wallet:", walletAddress);
+      console.log("Creating player for wallet:", address);
 
       const response = await fetch("/api/players", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": walletAddress,
+          "x-wallet-address": address,
         },
         body: JSON.stringify({
-          ethAddress: walletAddress,
+          ethAddress: address,
           team: "Unassigned",
           managementCertificate: false,
         }),
@@ -111,7 +109,7 @@ export default function CreatePlayerPage() {
         address: data.ethAddress,
       });
 
-      router.push("/home");
+      router.push("/");
     } catch (err) {
       console.error("Create player error:", err);
       setError(err instanceof Error ? err.message : "Failed to create player");
@@ -135,7 +133,7 @@ export default function CreatePlayerPage() {
     );
   }
 
-  if (!wallet) {
+  if (!isConnected || !address) {
     return null;
   }
 
@@ -160,20 +158,14 @@ export default function CreatePlayerPage() {
               </div>
             )}
 
-            <button
+            <Button
               onClick={handleCreatePlayer}
+              isLoading={loading}
               disabled={loading}
-              className={`
-                gradient-button py-2.5 px-6 rounded-lg text-base w-full transition-all duration-300
-                ${
-                  loading
-                    ? "opacity-50 cursor-not-allowed"
-                    : "active:scale-95 sm:hover:scale-[1.02]"
-                }
-              `}
+              className="w-full py-2.5 px-6"
             >
               {loading ? "Creating Player..." : "CREATE PLAYER"}
-            </button>
+            </Button>
 
             <div className="space-y-2">
               <div className="text-sm text-gray-400">
@@ -181,7 +173,7 @@ export default function CreatePlayerPage() {
                 access to this wallet means losing access to your player.
               </div>
               <div className="text-xs text-gray-500 break-all">
-                Connected Wallet: {wallet.address}
+                Connected Wallet: {address}
               </div>
             </div>
           </div>
