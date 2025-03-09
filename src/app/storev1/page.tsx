@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useActiveWallet, TransactionButton } from "thirdweb/react";
-import { sepolia } from "thirdweb/chains";
 import { useRouter } from "next/navigation";
+import sdk from "@farcaster/frame-sdk";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { TransactionButton } from "thirdweb/react";
+import { sepolia } from "thirdweb/chains";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ConfettiEffect from "../components/ConfettiEffect";
@@ -92,9 +94,13 @@ const storeItems: StoreItem[] = [
 ];
 
 export default function Store() {
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
   const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,6 +114,23 @@ export default function Store() {
   const [txStatus, setTxStatus] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+
   const triggerConfetti = useCallback(() => {
     setShowConfetti(true);
     // Reset confetti after animation duration
@@ -116,20 +139,20 @@ export default function Store() {
   const recipientAddress = "0xE2A190F13b023f2675bd14B4f3efFEEB1f713641";
 
   useEffect(() => {
-    if (!loading && (!wallet || !player)) {
+    if (!loading && (!isConnected || !address || !player)) {
       router.push("/");
     }
-  }, [loading, wallet, player, router]);
+  }, [loading, isConnected, address, player, router]);
 
   useEffect(() => {
     async function fetchPlayer() {
-      if (!wallet) {
+      if (!isConnected || !address) {
         setLoading(false);
         return;
       }
       try {
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(wallet.address)}`
+          `/api/players/address/${encodeURIComponent(address)}`
         );
         if (!response.ok) {
           if (response.status === 404) {
@@ -147,14 +170,14 @@ export default function Store() {
       }
     }
     fetchPlayer();
-  }, [wallet, router]);
+  }, [isConnected, address, router]);
 
   const processPurchase = async (
     item: StoreItem,
     selectedSkill?: string,
     newName?: string
   ) => {
-    if (!wallet) return;
+    if (!isConnected || !address) return;
     setError(null);
     setProcessing(item.id);
     try {
@@ -162,7 +185,7 @@ export default function Store() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": wallet.address,
+          "x-wallet-address": address,
         },
         body: JSON.stringify({
           playerId: player?.playerId,
@@ -316,7 +339,7 @@ export default function Store() {
     );
   }
 
-  if (!wallet || !player) {
+  if (!isConnected || !address || !player) {
     return null;
   }
 
