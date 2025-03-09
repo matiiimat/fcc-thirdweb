@@ -241,7 +241,7 @@ export default function Home() {
 
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
             <h2 className="text-center text-xl sm:text-2xl mb-1">
-              {player.playerName}
+              {context?.user?.username}
             </h2>
             <div className="text-lg sm:text-2xl mb-3 text-center">
               {getStarRating(calculatePlayerRating(player.stats))}
