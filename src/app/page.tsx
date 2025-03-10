@@ -204,12 +204,6 @@ export default function Home() {
       <Header pageName="Home" />
       <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
         <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
-          <div className="w-full flex justify-end mb-2">
-            <Button onClick={() => disconnect()} className="px-3 py-1 text-xs">
-              Disconnect
-            </Button>
-          </div>
-
           <NotificationBanner
             playerId={player.playerId}
             ethAddress={player.ethAddress}

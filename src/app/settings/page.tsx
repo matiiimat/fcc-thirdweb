@@ -101,6 +101,12 @@ export default function SettingsPage() {
             >
               Back
             </button>
+            <button
+              onClick={() => disconnect()}
+              className="gradient-button py-2.5 px-6 rounded-lg text-base w-full transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
+            >
+              Disconnect
+            </button>
           </div>
         </div>
       </main>

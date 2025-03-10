@@ -12,7 +12,6 @@ import {
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ConfettiEffect from "../components/ConfettiEffect";
-import NameChangeModal from "../components/NameChangeModal";
 import { sep } from "path";
 
 interface PlayerData {
@@ -73,13 +72,6 @@ const storeItems: StoreItem[] = [
     section: "Buy",
   },
   {
-    id: "name_change",
-    name: "Name Change",
-    description: "Change your player name",
-    price: 10000,
-    section: "Buy",
-  },
-  {
     id: "private_trainer",
     name: "Private Trainer",
     description: "Train specific skill for 5 sessions",
@@ -108,7 +100,6 @@ export default function Store() {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<string>("");
   const [showSkillModal, setShowSkillModal] = useState(false);
-  const [showNameModal, setShowNameModal] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [pendingPurchase, setPendingPurchase] = useState<StoreItem | null>(
     null
@@ -176,11 +167,7 @@ export default function Store() {
     fetchPlayer();
   }, [isConnected, address, router]);
 
-  const processPurchase = async (
-    item: StoreItem,
-    selectedSkill?: string,
-    newName?: string
-  ) => {
+  const processPurchase = async (item: StoreItem, selectedSkill?: string) => {
     if (!isConnected || !address) return;
     setError(null);
     setProcessing(item.id);
@@ -195,7 +182,6 @@ export default function Store() {
           playerId: player?.playerId,
           item,
           selectedSkill,
-          newName,
         }),
       });
       const data = await response.json();
@@ -206,7 +192,6 @@ export default function Store() {
         prev
           ? {
               ...prev,
-              playerName: data.newName,
               privateTrainer: data.privateTrainer,
               leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
               managementCertificate:
@@ -219,7 +204,6 @@ export default function Store() {
       );
       // Reset modal state
       setShowSkillModal(false);
-      setShowNameModal(false);
       setPendingPurchase(null);
       setSelectedSkill(null);
     } catch (err) {
@@ -264,36 +248,6 @@ export default function Store() {
       }
     );
   }, [sendTransaction, processPurchase]);
-
-  // Name Change transaction using wagmi
-  const sendNameChangeTx = useCallback(() => {
-    sendTransaction(
-      {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
-        value: 1000000000000000n, // 0.001 ETH in wei (10^15)
-      },
-      {
-        onSuccess: (hash) => {
-          setTxHash(hash);
-          console.log("Transaction sent for name change! 🎉", hash);
-          setTxStatus("Transaction confirmed for name change! 🎉");
-
-          // Find the name change item
-          const nameChangeItem = storeItems.find(
-            (item) => item.id === "name_change"
-          );
-
-          if (nameChangeItem) {
-            setPendingPurchase(nameChangeItem);
-            setShowNameModal(true);
-          }
-        },
-        onError: (error) => {
-          handleError(error);
-        },
-      }
-    );
-  }, [sendTransaction]);
 
   // Leave of Absence transaction using wagmi
   const sendLeaveOfAbsenceTx = useCallback(() => {
@@ -456,23 +410,6 @@ export default function Store() {
           </div>
         )}
 
-        {/* Name Change Modal */}
-        {showNameModal && (
-          <NameChangeModal
-            isOpen={showNameModal}
-            onClose={() => {
-              setShowNameModal(false);
-              setPendingPurchase(null);
-            }}
-            onConfirm={async (newName) => {
-              if (!pendingPurchase) return;
-              await processPurchase(pendingPurchase, undefined, newName);
-              setShowNameModal(false);
-            }}
-            processing={processing !== ""}
-          />
-        )}
-
         {/* Store Items */}
         <div className="glass-container p-2 sm:p-6 rounded-lg sm:rounded-2xl shadow-lg">
           <div className="grid grid-cols-1 gap-2">
@@ -511,13 +448,6 @@ export default function Store() {
                               0.005 ETH
                             </button>
                           )
-                        ) : item.id === "name_change" ? (
-                          <button
-                            onClick={sendNameChangeTx}
-                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
-                          >
-                            0.001 ETH
-                          </button>
                         ) : item.id === "private_trainer" ? (
                           <button
                             onClick={sendPrivateTrainerTx}
