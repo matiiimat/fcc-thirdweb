@@ -116,53 +116,7 @@ export default function TeamPage() {
     }
   }, [setTeams, setError, setLoading]);
 
-  const fetchCurrentTeam = useCallback(async () => {
-    if (!player?.team || player.team === "No Team") {
-      return;
-    }
-
-    try {
-      // Fetch team data
-      const teamResponse = await fetch("/api/teams");
-      const teams = await teamResponse.json();
-      if (!teamResponse.ok) throw new Error("Failed to fetch teams");
-
-      const team = teams.find((t: Team) => t.teamName === player.team);
-      if (team) {
-        // Fetch team tactics
-        const tacticsResponse = await fetch(
-          `/api/teams/tactics?teamName=${team.teamName}`
-        );
-        if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
-        const tactics = await tacticsResponse.json();
-
-        // Initialize default stats if not present
-        const defaultStats: ITeamStats = {
-          gamesPlayed: 0,
-          wins: 0,
-          draws: 0,
-          losses: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-          cleanSheets: 0,
-          tacticsUsed: [],
-        };
-
-        setCurrentTeam({
-          ...team,
-          tactics: tactics,
-          stats: team.stats || defaultStats,
-        } as MongoTeam);
-        setLoading(false);
-      } else {
-        setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
-        fetchTeams();
-      }
-    } catch (error) {
-      console.error("Error fetching current team:", error);
-      setError("Failed to fetch team data");
-    }
-  }, [player, setCurrentTeam, setLoading, setPlayer, setError, fetchTeams]);
+  // fetchCurrentTeam is now integrated into fetchPlayerData for more efficient loading
 
   const fetchPlayerData = useCallback(async () => {
     try {
@@ -171,6 +125,7 @@ export default function TeamPage() {
         return;
       }
 
+      // Fetch player data
       const response = await fetch(
         `/api/players/address/${encodeURIComponent(address)}`
       );
@@ -179,13 +134,63 @@ export default function TeamPage() {
       }
       const data = await response.json();
       setPlayer(data);
+
+      // Initialize default stats if needed for team
+      const defaultStats: ITeamStats = {
+        gamesPlayed: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        cleanSheets: 0,
+        tacticsUsed: [],
+      };
+
+      // If player has a team, fetch team data in the same function
+      if (data.team && data.team !== "No Team") {
+        try {
+          // Fetch teams data
+          const teamResponse = await fetch("/api/teams");
+          const teams = await teamResponse.json();
+          if (!teamResponse.ok) throw new Error("Failed to fetch teams");
+
+          const team = teams.find((t: Team) => t.teamName === data.team);
+          if (team) {
+            // Fetch team tactics
+            const tacticsResponse = await fetch(
+              `/api/teams/tactics?teamName=${team.teamName}`
+            );
+            if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
+            const tactics = await tacticsResponse.json();
+
+            setCurrentTeam({
+              ...team,
+              tactics: tactics,
+              stats: team.stats || defaultStats,
+            } as MongoTeam);
+          } else {
+            // Team not found, set player to "No Team"
+            setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
+            await fetchTeams();
+          }
+        } catch (teamError) {
+          console.error("Error fetching team data:", teamError);
+          setError("Failed to fetch team data");
+          await fetchTeams();
+        }
+      } else {
+        // Player has no team, fetch available teams
+        await fetchTeams();
+      }
     } catch (error) {
       console.error("Error fetching player:", error);
       setError("Failed to fetch player data");
     } finally {
+      // Only set loading to false after ALL data is fetched
       setLoading(false);
     }
-  }, [address, setPlayer, setError, setLoading]);
+  }, [address, setPlayer, setError, setLoading, fetchTeams]);
 
   useEffect(() => {
     if (isConnected && address) {
@@ -199,16 +204,6 @@ export default function TeamPage() {
       setLoading(false);
     }
   }, [isConnected, address, fetchPlayerData, setLoading]);
-
-  useEffect(() => {
-    if (player) {
-      if (player.team && player.team !== "No Team") {
-        fetchCurrentTeam();
-      } else {
-        fetchTeams();
-      }
-    }
-  }, [player, fetchCurrentTeam, fetchTeams]);
 
   const handleCreateTeam = async () => {
     if (!isConnected || !address) {
@@ -244,6 +239,7 @@ export default function TeamPage() {
       if (!response.ok) throw new Error(data.error);
 
       setSuccess("Team created successfully!");
+      setLoading(true);
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to create team");
@@ -278,6 +274,7 @@ export default function TeamPage() {
       if (!response.ok) throw new Error(data.error);
 
       setSuccess("Successfully joined team!");
+      setLoading(true);
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to join team");
@@ -287,8 +284,9 @@ export default function TeamPage() {
   };
 
   const handleLeaveTeam = async () => {
+    setLoading(true);
+    setCurrentTeam(null); // Important to update the database with null value
     await fetchPlayerData();
-    setCurrentTeam(null);
   };
 
   if (!isConnected || !address) {
