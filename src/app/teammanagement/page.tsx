@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import FormationDisplay from "../components/FormationDisplay";
@@ -55,9 +55,11 @@ interface Player {
 }
 
 export default function TeamManagementPage() {
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
   const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<any>();
   const [loading, setLoading] = useState(true);
@@ -108,14 +110,13 @@ export default function TeamManagementPage() {
 
   useEffect(() => {
     const init = async () => {
-      if (wallet) {
+      if (isConnected && address) {
         try {
           // Fetch team data
           const teamsResponse = await fetch("/api/teams");
           const teams = await teamsResponse.json();
           const team = teams.find(
-            (t: any) =>
-              t.captainAddress.toLowerCase() === wallet.address.toLowerCase()
+            (t: any) => t.captainAddress.toLowerCase() === address.toLowerCase()
           );
 
           if (team) {
@@ -184,9 +185,8 @@ export default function TeamManagementPage() {
         router.push("/");
       }
     };
-
     init();
-  }, [wallet, router]);
+  }, [isConnected, address, router]);
 
   const handleFormationChange = (formation: Formation) => {
     setSelectedFormation(formation);
@@ -249,12 +249,12 @@ export default function TeamManagementPage() {
   };
 
   const handleDeleteTactic = async () => {
-    if (!teamData || !wallet || !currentTactic.name) return;
+    if (!teamData || !isConnected || !address || !currentTactic.name) return;
 
     setSavingTactic(true);
     try {
       const response = await fetch(
-        `/api/teams/tactics?teamName=${teamData.teamName}&tacticName=${currentTactic.name}&captainAddress=${wallet.address}`,
+        `/api/teams/tactics?teamName=${teamData.teamName}&tacticName=${currentTactic.name}&captainAddress=${address}`,
         {
           method: "DELETE",
         }
@@ -291,7 +291,7 @@ export default function TeamManagementPage() {
   };
 
   const handleSaveTacticWithName = async (name: string) => {
-    if (!teamData || !wallet) return;
+    if (!teamData || !isConnected || !address) return;
 
     setSavingTactic(true);
     try {
@@ -305,7 +305,7 @@ export default function TeamManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           teamName: teamData.teamName,
-          captainAddress: wallet.address,
+          captainAddress: address,
           tactic: tacticToSave,
         }),
       });
@@ -344,7 +344,7 @@ export default function TeamManagementPage() {
     );
   }
 
-  if (!wallet || !teamData) {
+  if (!isConnected || !address || !teamData) {
     return null;
   }
 
