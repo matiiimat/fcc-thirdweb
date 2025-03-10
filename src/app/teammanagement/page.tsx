@@ -41,6 +41,7 @@ const TACTICAL_STYLES: TacticalStyle[] = [
 interface Player {
   ethAddress: string;
   playerName: string;
+  username?: string;
   isBot?: boolean;
   stats?: {
     strength: number;
@@ -155,6 +156,7 @@ export default function TeamManagementPage() {
                   return {
                     ethAddress: data.ethAddress,
                     playerName: data.playerName,
+                    username: data.username,
                     stats: data.stats,
                     isBot: false,
                   };

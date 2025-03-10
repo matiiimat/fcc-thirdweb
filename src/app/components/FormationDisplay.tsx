@@ -15,7 +15,11 @@ interface FormationDisplayProps {
   formation: string;
   playerPositions: PlayerPosition[];
   onPositionClick: (x: number, y: number, position: Position) => void;
-  availablePlayers: { ethAddress: string; playerName: string }[];
+  availablePlayers: {
+    ethAddress: string;
+    playerName: string;
+    username?: string;
+  }[];
 }
 
 const FormationDisplay: React.FC<FormationDisplayProps> = ({
@@ -120,9 +124,14 @@ const FormationDisplay: React.FC<FormationDisplayProps> = ({
               {player ? (
                 <div className="text-center">
                   <div className="text-xs">
-                    {availablePlayers
-                      .find((p) => p.ethAddress === player.ethAddress)
-                      ?.playerName?.slice(0, 6) || "..."}
+                    {(() => {
+                      const foundPlayer = availablePlayers.find(
+                        (p) => p.ethAddress === player.ethAddress
+                      );
+                      const displayName =
+                        foundPlayer?.username || foundPlayer?.playerName;
+                      return displayName?.slice(0, 6) || "...";
+                    })()}
                   </div>
                   <div className="text-[10px] opacity-75">{pos.position}</div>
                 </div>

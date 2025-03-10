@@ -27,6 +27,7 @@ export interface IGameResult {
 export interface IPlayer extends Document {
   playerId: string;
   playerName: string;
+  username: string;
   ethAddress: string;
   team: string;
   stats: IPlayerStats;
@@ -191,6 +192,11 @@ const PlayerSchema = new Schema<IPlayer>(
       trim: true,
       minlength: PLAYER_CONSTANTS.MIN_NAME_LENGTH,
       maxlength: PLAYER_CONSTANTS.MAX_NAME_LENGTH,
+    },
+    username: {
+      type: String,
+      trim: true,
+      default: '',
     },
     ethAddress: {
       type: String,

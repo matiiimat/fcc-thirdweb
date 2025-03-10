@@ -91,6 +91,7 @@ export default function CreatePlayerPage() {
           ethAddress: address,
           team: "Unassigned",
           managementCertificate: false,
+          username: context?.user?.username || "",
         }),
       });
 

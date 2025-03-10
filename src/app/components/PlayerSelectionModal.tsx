@@ -7,6 +7,7 @@ import { Position } from "../models/Player";
 interface Player {
   ethAddress: string;
   playerName: string;
+  username?: string;
   isBot?: boolean;
   stats?: {
     strength: number;
@@ -124,7 +125,7 @@ export default function PlayerSelectionModal({
                         <div className="font-medium">
                           {player.isBot
                             ? player.playerName
-                            : context?.user?.username || player.playerName}
+                            : player.username || player.playerName}
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[0.7rem] leading-none">
