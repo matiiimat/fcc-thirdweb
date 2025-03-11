@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import FormationDisplay from "../components/FormationDisplay";
@@ -41,6 +41,7 @@ const TACTICAL_STYLES: TacticalStyle[] = [
 interface Player {
   ethAddress: string;
   playerName: string;
+  username?: string;
   isBot?: boolean;
   stats?: {
     strength: number;
@@ -55,10 +56,32 @@ interface Player {
 }
 
 export default function TeamManagementPage() {
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
   const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [loading, setLoading] = useState(true);
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const sdk = await import("@farcaster/frame-sdk");
+        await sdk.default.actions.ready();
+        setContext(await sdk.default.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
   const [teamData, setTeamData] = useState<{
     teamName: string;
     players: string[];
@@ -88,14 +111,13 @@ export default function TeamManagementPage() {
 
   useEffect(() => {
     const init = async () => {
-      if (wallet) {
+      if (isConnected && address) {
         try {
           // Fetch team data
           const teamsResponse = await fetch("/api/teams");
           const teams = await teamsResponse.json();
           const team = teams.find(
-            (t: any) =>
-              t.captainAddress.toLowerCase() === wallet.address.toLowerCase()
+            (t: any) => t.captainAddress.toLowerCase() === address.toLowerCase()
           );
 
           if (team) {
@@ -134,6 +156,7 @@ export default function TeamManagementPage() {
                   return {
                     ethAddress: data.ethAddress,
                     playerName: data.playerName,
+                    username: data.username,
                     stats: data.stats,
                     isBot: false,
                   };
@@ -164,9 +187,8 @@ export default function TeamManagementPage() {
         router.push("/");
       }
     };
-
     init();
-  }, [wallet, router]);
+  }, [isConnected, address, router]);
 
   const handleFormationChange = (formation: Formation) => {
     setSelectedFormation(formation);
@@ -229,12 +251,12 @@ export default function TeamManagementPage() {
   };
 
   const handleDeleteTactic = async () => {
-    if (!teamData || !wallet || !currentTactic.name) return;
+    if (!teamData || !isConnected || !address || !currentTactic.name) return;
 
     setSavingTactic(true);
     try {
       const response = await fetch(
-        `/api/teams/tactics?teamName=${teamData.teamName}&tacticName=${currentTactic.name}&captainAddress=${wallet.address}`,
+        `/api/teams/tactics?teamName=${teamData.teamName}&tacticName=${currentTactic.name}&captainAddress=${address}`,
         {
           method: "DELETE",
         }
@@ -271,7 +293,7 @@ export default function TeamManagementPage() {
   };
 
   const handleSaveTacticWithName = async (name: string) => {
-    if (!teamData || !wallet) return;
+    if (!teamData || !isConnected || !address) return;
 
     setSavingTactic(true);
     try {
@@ -285,7 +307,7 @@ export default function TeamManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           teamName: teamData.teamName,
-          captainAddress: wallet.address,
+          captainAddress: address,
           tactic: tacticToSave,
         }),
       });
@@ -324,7 +346,7 @@ export default function TeamManagementPage() {
     );
   }
 
-  if (!wallet || !teamData) {
+  if (!isConnected || !address || !teamData) {
     return null;
   }
 
@@ -512,6 +534,7 @@ export default function TeamManagementPage() {
         }
         position={selectedPosition?.position || "D"}
         assignedPlayers={currentTactic.playerPositions.map((p) => p.ethAddress)}
+        context={context}
       />
 
       {/* Tactic Name Modal */}

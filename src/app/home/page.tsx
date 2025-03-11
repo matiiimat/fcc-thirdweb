@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import StatsRadarChart from "../components/StatsRadarChart";
 import NotificationBanner from "../components/NotificationBanner";
 import { useEffect, useState } from "react";
+import sdk from "@farcaster/frame-sdk";
 import {
   calculatePlayerRating,
   getStarRating,
@@ -45,6 +46,27 @@ export default function HomePage() {
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Call ready() to hide the loading screen
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+  // end Farcaster Frame Integration
 
   useEffect(() => {
     async function fetchPlayer() {
@@ -132,7 +154,7 @@ export default function HomePage() {
           />
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
             <h2 className="text-center text-xl sm:text-2xl mb-1">
-              {player.playerName}
+              {context?.user?.username}
             </h2>
             <div className="text-lg sm:text-2xl mb-3 text-center">
               {getStarRating(calculatePlayerRating(player.stats))}

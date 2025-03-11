@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ITactic } from "../models/Team";
 import Image from "next/image";
 import TeamMatchPopup from "./TeamMatchPopup";
@@ -43,12 +43,7 @@ export default function TeamMatchesSection({
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch matches on component mount
-  useEffect(() => {
-    fetchMatches();
-  }, [teamId]);
-
-  const fetchMatches = async () => {
+  const fetchMatches = useCallback(async () => {
     try {
       const response = await fetch(`/api/matches?teamId=${teamId}`);
       if (!response.ok) {
@@ -63,7 +58,12 @@ export default function TeamMatchesSection({
     } finally {
       setLoading(false);
     }
-  };
+  }, [teamId]);
+
+  // Fetch matches on component mount
+  useEffect(() => {
+    fetchMatches();
+  }, [fetchMatches]);
 
   // Group matches by status (upcoming vs completed)
   const upcomingMatches = matches

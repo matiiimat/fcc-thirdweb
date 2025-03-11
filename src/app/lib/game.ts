@@ -48,7 +48,7 @@ export function getActionCooldown(lastActionDate: Date | null, isPlaying: boolea
   remainingTime: string;
 } {
   if (!lastActionDate) {
-    return { onCooldown: false, remainingTime: "00:00" };
+    return { onCooldown: false, remainingTime: "00h 00m" };
   }
 
   const now = new Date();
@@ -59,7 +59,7 @@ export function getActionCooldown(lastActionDate: Date | null, isPlaying: boolea
   const timeSinceAction = now.getTime() - lastActionDate.getTime();
   
   if (timeSinceAction >= cooldownMs) {
-    return { onCooldown: false, remainingTime: "00:00" };
+    return { onCooldown: false, remainingTime: "00h 00m" };
   }
 
   const remainingMs = cooldownMs - timeSinceAction;
@@ -68,7 +68,7 @@ export function getActionCooldown(lastActionDate: Date | null, isPlaying: boolea
   
   return {
     onCooldown: true,
-    remainingTime: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+    remainingTime: `${hours.toString().padStart(2, '0')}h ${minutes.toString().padStart(2, '0')}m`
   };
 }
 

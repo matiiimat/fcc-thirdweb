@@ -14,6 +14,8 @@ interface PlayerRating {
   position: string;
   rating: number;
   stats: PlayerStats;
+  playerName?: string;
+  username?: string;
 }
 
 interface PlayerPerformanceProps {
@@ -38,7 +40,9 @@ const PlayerPerformance: React.FC<PlayerPerformanceProps> = ({
             <div className="flex justify-between items-center mb-2">
               <div>
                 <span className="font-medium">
-                  {player.ethAddress.slice(0, 6)}...
+                  {player.username ||
+                    player.playerName ||
+                    player.ethAddress.slice(0, 6) + "..."}
                 </span>
                 <span className="text-gray-400 text-sm ml-2">
                   {player.position}

@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useActiveWallet, TransactionButton } from "thirdweb/react";
-import { sepolia } from "thirdweb/chains";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import sdk from "@farcaster/frame-sdk";
+import {
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useSendTransaction,
+} from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import NameChangeModal from "../components/NameChangeModal";
-import { client } from "../client";
+import ConfettiEffect from "../components/ConfettiEffect";
 import { sep } from "path";
 
 interface PlayerData {
@@ -68,13 +72,6 @@ const storeItems: StoreItem[] = [
     section: "Buy",
   },
   {
-    id: "name_change",
-    name: "Name Change",
-    description: "Change your player name",
-    price: 10000,
-    section: "Buy",
-  },
-  {
     id: "private_trainer",
     name: "Private Trainer",
     description: "Train specific skill for 5 sessions",
@@ -91,37 +88,66 @@ const storeItems: StoreItem[] = [
 ];
 
 export default function Store() {
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
   const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<string>("");
   const [showSkillModal, setShowSkillModal] = useState(false);
-  const [showNameModal, setShowNameModal] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [pendingPurchase, setPendingPurchase] = useState<StoreItem | null>(
     null
   );
   const [txStatus, setTxStatus] = useState<string>("");
-  const recipientAddress = "0xE2A190F13b023f2675bd14B4f3efFEEB1f713641";
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const { sendTransaction } = useSendTransaction();
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+
+  const triggerConfetti = useCallback(() => {
+    setShowConfetti(true);
+    // Reset confetti after animation duration
+    setTimeout(() => setShowConfetti(false), 3000);
+  }, []);
+  const recipientAddress = "0xe9F99F23D2714faD419233C599a51e86A56c9E17";
 
   useEffect(() => {
-    if (!loading && (!wallet || !player)) {
+    if (!loading && (!isConnected || !address || !player)) {
       router.push("/");
     }
-  }, [loading, wallet, player, router]);
+  }, [loading, isConnected, address, player, router]);
 
   useEffect(() => {
     async function fetchPlayer() {
-      if (!wallet) {
+      if (!isConnected || !address) {
         setLoading(false);
         return;
       }
       try {
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(wallet.address)}`
+          `/api/players/address/${encodeURIComponent(address)}`
         );
         if (!response.ok) {
           if (response.status === 404) {
@@ -139,14 +165,10 @@ export default function Store() {
       }
     }
     fetchPlayer();
-  }, [wallet, router]);
+  }, [isConnected, address, router]);
 
-  const processPurchase = async (
-    item: StoreItem,
-    selectedSkill?: string,
-    newName?: string
-  ) => {
-    if (!wallet) return;
+  const processPurchase = async (item: StoreItem, selectedSkill?: string) => {
+    if (!isConnected || !address) return;
     setError(null);
     setProcessing(item.id);
     try {
@@ -154,13 +176,12 @@ export default function Store() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": wallet.address,
+          "x-wallet-address": address,
         },
         body: JSON.stringify({
           playerId: player?.playerId,
           item,
           selectedSkill,
-          newName,
         }),
       });
       const data = await response.json();
@@ -171,7 +192,6 @@ export default function Store() {
         prev
           ? {
               ...prev,
-              playerName: data.newName,
               privateTrainer: data.privateTrainer,
               leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
               managementCertificate:
@@ -184,13 +204,13 @@ export default function Store() {
       );
       // Reset modal state
       setShowSkillModal(false);
-      setShowNameModal(false);
       setPendingPurchase(null);
       setSelectedSkill(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to purchase item");
     } finally {
       setProcessing("");
+      triggerConfetti(); // Trigger confetti after successful purchase
     }
   };
 
@@ -199,67 +219,66 @@ export default function Store() {
     await processPurchase(pendingPurchase, selectedSkill);
   };
 
-  // Handler for name change transaction success:
-  const handleSuccessNameChange = () => {
-    console.log("Transaction confirmed for name change! 🎉");
-    setTxStatus("Transaction confirmed for name change! 🎉");
-    const nameChangeItem = storeItems.find((item) => item.id === "name_change");
-    if (nameChangeItem) {
-      setPendingPurchase(nameChangeItem);
-      setShowNameModal(true);
-    }
-  };
+  // Management Certificate transaction using wagmi
+  const sendManagementCertificateTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        //value: 5000000000000000n, // 0.005 ETH in wei (5 * 10^15)
+        value: 1000000000000000n, // add one-two zero if not enough for .187 cents
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for management certificate! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
 
-  // Handler for private trainer transaction success:
-  const handleSuccessPrivateTrainer = () => {
-    console.log("Transaction confirmed for private trainer! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const privateTrainerItem = storeItems.find(
-      (item) => item.id === "private_trainer"
-    );
-    if (privateTrainerItem) {
-      setPendingPurchase(privateTrainerItem);
-      setShowSkillModal(true);
-    }
-  };
+          // Find the management certificate item
+          const managementCertificateItem = storeItems.find(
+            (item) => item.id === "management_certificate"
+          );
 
-  // Handler for management certificate transaction success:
-  const handleSuccessManagementCertificate = () => {
-    console.log("Transaction confirmed for management certificate! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const managementCertificateItem = storeItems.find(
-      (item) => item.id === "management_certificate"
+          if (managementCertificateItem) {
+            // Process the purchase to update the database
+            processPurchase(managementCertificateItem);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
     );
-    if (managementCertificateItem) {
-      // Process the purchase to update the database
-      processPurchase(managementCertificateItem);
-    }
-  };
+  }, [sendTransaction, processPurchase]);
 
-  // Handler for leave of absence transaction success:
-  const handleSuccessLeaveOfAbsence = () => {
-    console.log("Transaction confirmed for leave of absence! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const leaveOfAbsenceItem = storeItems.find(
-      (item) => item.id === "leave_of_absence"
-    );
-    if (leaveOfAbsenceItem) {
-      // Process the purchase to update the database
-      processPurchase(leaveOfAbsenceItem);
-    }
-  };
+  // Leave of Absence transaction using wagmi
+  const sendLeaveOfAbsenceTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        value: 1000000000000000n, // 0.001 ETH in wei (10^15)
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for leave of absence! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
 
-  // Handler for energy drink transaction success:
-  const handleSuccessEnergyDrink = () => {
-    console.log("Transaction confirmed for energy drink! 🎉");
-    setTxStatus("Transaction confirmed! 🎉");
-    const energyDrinkItem = storeItems.find(
-      (item) => item.id === "energy_drink"
+          // Find the leave of absence item
+          const leaveOfAbsenceItem = storeItems.find(
+            (item) => item.id === "leave_of_absence"
+          );
+
+          if (leaveOfAbsenceItem) {
+            // Process the purchase to update the database
+            processPurchase(leaveOfAbsenceItem);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
     );
-    if (energyDrinkItem) {
-      processPurchase(energyDrinkItem);
-    }
-  };
+  }, [sendTransaction, processPurchase]);
 
   // Calculate energy drink price based on purchase count within 24 hours
   const getEnergyDrinkPrice = () => {
@@ -288,6 +307,69 @@ export default function Store() {
     return basePrice * multiplier;
   };
 
+  // Energy Drink transaction using wagmi
+  const sendEnergyDrinkTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        value: getEnergyDrinkPrice(), // Dynamic price based on previous purchases
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for energy drink! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
+
+          // Find the energy drink item
+          const energyDrinkItem = storeItems.find(
+            (item) => item.id === "energy_drink"
+          );
+
+          if (energyDrinkItem) {
+            // Process the purchase to update the database
+            processPurchase(energyDrinkItem);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
+    );
+  }, [sendTransaction, processPurchase, getEnergyDrinkPrice]);
+
+  // Private trainer transaction using wagmi
+  const sendPrivateTrainerTx = useCallback(() => {
+    sendTransaction(
+      {
+        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        value: 10000000000000000n, // 0.01 ETH in wei (10^16)
+      },
+      {
+        onSuccess: (hash) => {
+          setTxHash(hash);
+          console.log("Transaction sent for private trainer! 🎉", hash);
+          setTxStatus("Transaction confirmed! 🎉");
+
+          // Find the private trainer item
+          const privateTrainerItem = storeItems.find(
+            (item) => item.id === "private_trainer"
+          );
+
+          if (privateTrainerItem) {
+            // Set the pending purchase and show the skill selection modal
+            // When the user selects a skill and confirms, handleSkillSelect will call
+            // processPurchase to apply the bonus to the player
+            setPendingPurchase(privateTrainerItem);
+            setShowSkillModal(true);
+          }
+        },
+        onError: (error) => {
+          handleError(error);
+        },
+      }
+    );
+  }, [sendTransaction]);
+
   // Handle transaction errors
   const handleError = (error: Error) => {
     console.log("ERROR", error);
@@ -307,7 +389,7 @@ export default function Store() {
     );
   }
 
-  if (!wallet || !player) {
+  if (!isConnected || !address || !player) {
     return null;
   }
 
@@ -327,23 +409,6 @@ export default function Store() {
           <div className="glass-container border-red-500/50 text-red-400 px-3 py-2 mb-2 rounded-lg text-sm">
             {error}
           </div>
-        )}
-
-        {/* Name Change Modal */}
-        {showNameModal && (
-          <NameChangeModal
-            isOpen={showNameModal}
-            onClose={() => {
-              setShowNameModal(false);
-              setPendingPurchase(null);
-            }}
-            onConfirm={async (newName) => {
-              if (!pendingPurchase) return;
-              await processPurchase(pendingPurchase, undefined, newName);
-              setShowNameModal(false);
-            }}
-            processing={processing !== ""}
-          />
         )}
 
         {/* Store Items */}
@@ -377,73 +442,35 @@ export default function Store() {
                               Owned
                             </button>
                           ) : (
-                            <TransactionButton
-                              transaction={async () => ({
-                                to: recipientAddress,
-                                value: 5000000000000000n, // Adjust ETH value as needed
-                                chain: sepolia,
-                                client: client,
-                              })}
-                              onTransactionConfirmed={
-                                handleSuccessManagementCertificate
-                              }
-                              onError={handleError}
+                            <button
+                              onClick={sendManagementCertificateTx}
+                              className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                             >
-                              0.005 ETH
-                            </TransactionButton>
+                              FREE
+                              {/* 0.005 ETH */}
+                            </button>
                           )
-                        ) : item.id === "name_change" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessNameChange}
-                            onError={handleError}
-                          >
-                            0.001 ETH
-                          </TransactionButton>
                         ) : item.id === "private_trainer" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: 1000000000000000n, // Adjust ETH value as needed
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessPrivateTrainer}
-                            onError={handleError}
+                          <button
+                            onClick={sendPrivateTrainerTx}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
-                            0.001 ETH
-                          </TransactionButton>
+                            0.01 ETH
+                          </button>
                         ) : item.id === "leave_of_absence" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: 1000000000000000n, // 0.001 ETH
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessLeaveOfAbsence}
-                            onError={handleError}
+                          <button
+                            onClick={sendLeaveOfAbsenceTx}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
                             0.001 ETH
-                          </TransactionButton>
+                          </button>
                         ) : item.id === "energy_drink" ? (
-                          <TransactionButton
-                            transaction={async () => ({
-                              to: recipientAddress,
-                              value: getEnergyDrinkPrice(),
-                              chain: sepolia,
-                              client: client,
-                            })}
-                            onTransactionConfirmed={handleSuccessEnergyDrink}
-                            onError={handleError}
+                          <button
+                            onClick={sendEnergyDrinkTx}
+                            className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
                             {`${Number(getEnergyDrinkPrice()) / 1e18} ETH`}
-                          </TransactionButton>
+                          </button>
                         ) : (
                           <button
                             onClick={() => {}}
@@ -454,11 +481,14 @@ export default function Store() {
                         )}
                       </div>
                     </div>
-                    {item.id === "private_trainer" && player.privateTrainer && (
-                      <div className="mt-1 text-xs text-center text-gray-400">
-                        {player.privateTrainer.remainingSessions} sessions left
-                      </div>
-                    )}
+                    {item.id === "private_trainer" &&
+                      player.privateTrainer &&
+                      player.privateTrainer.remainingSessions > 0 && (
+                        <div className="mt-1 text-xs text-center text-gray-400">
+                          {player.privateTrainer.remainingSessions} sessions
+                          left
+                        </div>
+                      )}
                     {item.id === "management_certificate" &&
                       player.managementCertificate && (
                         <div className="mt-1 text-xs text-center text-green-400">
@@ -480,6 +510,7 @@ export default function Store() {
         </div>
       </main>
       <Footer />
+      <ConfettiEffect trigger={showConfetti} />
 
       {/* Skill Selection Modal */}
       {showSkillModal && (

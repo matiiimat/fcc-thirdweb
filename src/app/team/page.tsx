@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useActiveWallet } from "thirdweb/react";
+import sdk from "@farcaster/frame-sdk";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import TeamOverview from "../components/TeamOverview";
 import CreateTeamSection from "../components/CreateTeamSection";
 import AvailableTeamsSection from "../components/AvailableTeamsSection";
@@ -67,17 +68,37 @@ interface Player {
   team: string;
   managementCertificate: boolean;
 }
-
 export default function TeamPage() {
   const router = useRouter();
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [teams, setTeams] = useState<Team[]>([]);
   const [currentTeam, setCurrentTeam] = useState<MongoTeam | null>(null);
   const [player, setPlayer] = useState<Player | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -95,74 +116,86 @@ export default function TeamPage() {
     }
   }, [setTeams, setError, setLoading]);
 
-  const fetchCurrentTeam = useCallback(async () => {
-    if (!player?.team || player.team === "No Team") {
-      return;
-    }
-
-    try {
-      // Fetch team data
-      const teamResponse = await fetch("/api/teams");
-      const teams = await teamResponse.json();
-      if (!teamResponse.ok) throw new Error("Failed to fetch teams");
-
-      const team = teams.find((t: Team) => t.teamName === player.team);
-      if (team) {
-        // Fetch team tactics
-        const tacticsResponse = await fetch(
-          `/api/teams/tactics?teamName=${team.teamName}`
-        );
-        if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
-        const tactics = await tacticsResponse.json();
-
-        // Initialize default stats if not present
-        const defaultStats: ITeamStats = {
-          gamesPlayed: 0,
-          wins: 0,
-          draws: 0,
-          losses: 0,
-          goalsFor: 0,
-          goalsAgainst: 0,
-          cleanSheets: 0,
-          tacticsUsed: [],
-        };
-
-        setCurrentTeam({
-          ...team,
-          tactics: tactics,
-          stats: team.stats || defaultStats,
-        } as MongoTeam);
-        setLoading(false);
-      } else {
-        setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
-        fetchTeams();
-      }
-    } catch (error) {
-      console.error("Error fetching current team:", error);
-      setError("Failed to fetch team data");
-    }
-  }, [player, setCurrentTeam, setLoading, setPlayer, setError, fetchTeams]);
+  // fetchCurrentTeam is now integrated into fetchPlayerData for more efficient loading
 
   const fetchPlayerData = useCallback(async () => {
     try {
+      if (!address) {
+        setLoading(false);
+        return;
+      }
+
+      // Fetch player data
       const response = await fetch(
-        `/api/players/address/${encodeURIComponent(wallet!.address)}`
+        `/api/players/address/${encodeURIComponent(address)}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch player data");
       }
       const data = await response.json();
       setPlayer(data);
+
+      // Initialize default stats if needed for team
+      const defaultStats: ITeamStats = {
+        gamesPlayed: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        cleanSheets: 0,
+        tacticsUsed: [],
+      };
+
+      // If player has a team, fetch team data in the same function
+      if (data.team && data.team !== "Unassigned") {
+        try {
+          // Fetch teams data
+          const teamResponse = await fetch("/api/teams");
+          const teams = await teamResponse.json();
+          if (!teamResponse.ok) throw new Error("Failed to fetch teams");
+
+          const team = teams.find((t: Team) => t.teamName === data.team);
+          if (team) {
+            // Fetch team tactics
+            const tacticsResponse = await fetch(
+              `/api/teams/tactics?teamName=${team.teamName}`
+            );
+            if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
+            const tactics = await tacticsResponse.json();
+
+            setCurrentTeam({
+              ...team,
+              tactics: tactics,
+              stats: team.stats || defaultStats,
+            } as MongoTeam);
+          } else {
+            // Team not found, set player to "Unassigned"
+            setPlayer((prev) =>
+              prev ? { ...prev, team: "Unassigned" } : null
+            );
+            await fetchTeams();
+          }
+        } catch (teamError) {
+          console.error("Error fetching team data:", teamError);
+          setError("Failed to fetch team data");
+          await fetchTeams();
+        }
+      } else {
+        // Player has no team, fetch available teams
+        await fetchTeams();
+      }
     } catch (error) {
       console.error("Error fetching player:", error);
       setError("Failed to fetch player data");
     } finally {
+      // Only set loading to false after ALL data is fetched
       setLoading(false);
     }
-  }, [wallet, setPlayer, setError, setLoading]);
+  }, [address, setPlayer, setError, setLoading, fetchTeams]);
 
   useEffect(() => {
-    if (wallet) {
+    if (isConnected && address) {
       // Reset states when component mounts
       setCurrentTeam(null);
       setPlayer(null);
@@ -172,20 +205,10 @@ export default function TeamPage() {
     } else {
       setLoading(false);
     }
-  }, [wallet, fetchPlayerData, setLoading]);
-
-  useEffect(() => {
-    if (player) {
-      if (player.team && player.team !== "No Team") {
-        fetchCurrentTeam();
-      } else {
-        fetchTeams();
-      }
-    }
-  }, [player, fetchCurrentTeam, fetchTeams]);
+  }, [isConnected, address, fetchPlayerData, setLoading]);
 
   const handleCreateTeam = async () => {
-    if (!wallet) {
+    if (!isConnected || !address) {
       setError("Please connect your wallet");
       return;
     }
@@ -203,14 +226,14 @@ export default function TeamPage() {
 
     try {
       // Generate team name from captain's address
-      const { name: teamName } = generateTeamName(wallet.address);
+      const { name: teamName } = generateTeamName(address);
 
       const response = await fetch("/api/teams", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           teamName,
-          captainAddress: wallet.address,
+          captainAddress: address,
         }),
       });
 
@@ -218,6 +241,7 @@ export default function TeamPage() {
       if (!response.ok) throw new Error(data.error);
 
       setSuccess("Team created successfully!");
+      setLoading(true);
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to create team");
@@ -227,7 +251,7 @@ export default function TeamPage() {
   };
 
   const handleJoinTeam = async (teamName: string) => {
-    if (!wallet) {
+    if (!isConnected || !address) {
       setError("Please connect your wallet");
       return;
     }
@@ -241,7 +265,7 @@ export default function TeamPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ethAddress: wallet.address,
+          ethAddress: address,
         },
         body: JSON.stringify({
           teamName: teamName,
@@ -252,6 +276,7 @@ export default function TeamPage() {
       if (!response.ok) throw new Error(data.error);
 
       setSuccess("Successfully joined team!");
+      setLoading(true);
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to join team");
@@ -261,11 +286,12 @@ export default function TeamPage() {
   };
 
   const handleLeaveTeam = async () => {
+    setLoading(true);
+    setCurrentTeam(null); // Important to update the database with null value
     await fetchPlayerData();
-    setCurrentTeam(null);
   };
 
-  if (!wallet) {
+  if (!isConnected || !address) {
     return <NoWalletState />;
   }
 
@@ -278,7 +304,7 @@ export default function TeamPage() {
       {currentTeam ? (
         <TeamOverview
           team={currentTeam}
-          playerAddress={wallet.address}
+          playerAddress={address}
           onLeaveTeam={handleLeaveTeam}
         />
       ) : (
@@ -291,7 +317,7 @@ export default function TeamPage() {
           <AvailableTeamsSection
             teams={teams}
             loading={loading}
-            playerAddress={wallet.address}
+            playerAddress={address}
             onJoinTeam={handleJoinTeam}
           />
         </>

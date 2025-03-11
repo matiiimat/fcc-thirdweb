@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import sdk from "@farcaster/frame-sdk";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { config } from "../components/providers/WagmiProvider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import {
@@ -21,6 +23,7 @@ import { Position } from "../models/Player";
 interface PlayerData {
   playerId: string;
   playerName: string;
+  username: string;
   ethAddress: string;
   stats: {
     strength: number;
@@ -52,9 +55,13 @@ interface TrainingResult {
 }
 
 export default function TrainPage() {
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
   const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,24 +84,45 @@ export default function TrainPage() {
       }
     | undefined
   >();
+  const [isContextOpen, setIsContextOpen] = useState(false);
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+
+  const toggleContext = useCallback(() => {
+    setIsContextOpen((prev) => !prev);
+  }, []);
 
   useEffect(() => {
-    if (!loading && (!wallet || !player)) {
+    if (!loading && (!isConnected || !player)) {
       router.push("/");
     }
-  }, [loading, wallet, player, router]);
+  }, [loading, isConnected, player, router]);
 
   useEffect(() => {
     async function fetchPlayer() {
-      if (!wallet) {
+      if (!address) {
         setLoading(false);
         return;
       }
 
       try {
-        const walletAddress = wallet.address;
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(walletAddress)}`
+          `/api/players/address/${encodeURIComponent(address)}`
         );
         if (!response.ok) {
           if (response.status === 404) {
@@ -134,10 +162,10 @@ export default function TrainPage() {
     }
 
     fetchPlayer();
-  }, [wallet]);
+  }, [address]);
 
   const handleTrain = async () => {
-    if (!player || !wallet || training) return;
+    if (!player || !isConnected || !address || training) return;
 
     setTraining(true);
     setTrainingResult(null);
@@ -148,7 +176,7 @@ export default function TrainPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": wallet.address,
+          "x-wallet-address": address,
         },
         body: JSON.stringify({ playerId: player.playerId }),
       });
@@ -195,7 +223,8 @@ export default function TrainPage() {
   };
 
   const handlePlay = async () => {
-    if (!player || !wallet || playing || !selectedPosition) return;
+    if (!player || !isConnected || !address || playing || !selectedPosition)
+      return;
 
     setPlaying(true);
     setError(null);
@@ -205,7 +234,7 @@ export default function TrainPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-wallet-address": wallet.address,
+          "x-wallet-address": address,
         },
         body: JSON.stringify({
           playerId: player.playerId,
@@ -254,7 +283,7 @@ export default function TrainPage() {
     );
   }
 
-  if (!wallet || !player) {
+  if (!isConnected || !address || !player) {
     return null;
   }
 
@@ -443,6 +472,7 @@ export default function TrainPage() {
         <MatchPopup
           selectedPosition={selectedPosition}
           playerName={player.playerName}
+          username={player.username}
           onClose={handleMatchEnd}
           matchResult={matchResult}
         />

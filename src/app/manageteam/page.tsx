@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
 import { useRouter } from "next/navigation";
+import sdk from "@farcaster/frame-sdk";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
 interface Player {
   ethAddress: string;
   playerName: string;
+  username?: string;
   isBot?: boolean;
   stats?: {
     strength: number;
@@ -21,11 +23,14 @@ interface Player {
     workEthic: number;
   };
 }
-
 export default function ManageTeamPage() {
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
   const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [teamData, setTeamData] = useState<{
@@ -36,8 +41,25 @@ export default function ManageTeamPage() {
   } | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
 
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+
   const handleVisibilityToggle = async () => {
-    if (!teamData) return;
+    if (!teamData || !address) return;
 
     try {
       setUpdating(true);
@@ -46,7 +68,7 @@ export default function ManageTeamPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           teamName: teamData.teamName,
-          captainAddress: wallet?.address,
+          captainAddress: address,
           isPublic: !teamData.isPublic,
         }),
       });
@@ -67,7 +89,7 @@ export default function ManageTeamPage() {
 
   useEffect(() => {
     const init = async () => {
-      if (wallet) {
+      if (isConnected && address) {
         try {
           // Fetch team data
           const teamsResponse = await fetch("/api/teams");
@@ -75,19 +97,18 @@ export default function ManageTeamPage() {
 
           // First check if user is a captain
           let team = teams.find(
-            (t: any) =>
-              t.captainAddress.toLowerCase() === wallet.address.toLowerCase()
+            (t: any) => t.captainAddress.toLowerCase() === address.toLowerCase()
           );
 
           // If not a captain, check if user is a member of any team
           if (!team) {
             // Fetch player data to get their team
             const playerResponse = await fetch(
-              `/api/players/address/${wallet.address}`
+              `/api/players/address/${address}`
             );
             if (playerResponse.ok) {
               const playerData = await playerResponse.json();
-              if (playerData.team && playerData.team !== "No Team") {
+              if (playerData.team && playerData.team !== "Unassigned") {
                 // Find the team the player belongs to
                 team = teams.find((t: any) => t.teamName === playerData.team);
               }
@@ -131,6 +152,7 @@ export default function ManageTeamPage() {
                   return {
                     ethAddress: data.ethAddress,
                     playerName: data.playerName,
+                    username: data.username,
                     stats: data.stats,
                     isBot: false,
                   };
@@ -151,15 +173,14 @@ export default function ManageTeamPage() {
     };
 
     init();
-  }, [wallet, router]);
+  }, [isConnected, address, router]);
 
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header
           pageName={
-            wallet?.address.toLowerCase() ===
-            teamData?.captainAddress.toLowerCase()
+            address?.toLowerCase() === teamData?.captainAddress.toLowerCase()
               ? "Manage Team"
               : "Players"
           }
@@ -175,7 +196,7 @@ export default function ManageTeamPage() {
     );
   }
 
-  if (!wallet || !teamData) {
+  if (!isConnected || !address || !teamData) {
     return null;
   }
 
@@ -183,8 +204,7 @@ export default function ManageTeamPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header
         pageName={
-          wallet?.address.toLowerCase() ===
-          teamData?.captainAddress.toLowerCase()
+          address?.toLowerCase() === teamData?.captainAddress.toLowerCase()
             ? "Manage Team"
             : "Players"
         }
@@ -200,7 +220,7 @@ export default function ManageTeamPage() {
                 {players.length} Players
               </span>
             </div>
-            {wallet?.address.toLowerCase() ===
+            {address?.toLowerCase() ===
               teamData?.captainAddress.toLowerCase() && (
               <div className="flex items-center gap-2">
                 <button
@@ -236,7 +256,9 @@ export default function ManageTeamPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <div className="font-bold text-white text-lg">
-                      {player.playerName}
+                      {player.isBot
+                        ? player.playerName
+                        : player.username || player.playerName}
                     </div>
                     <div className="text-sm text-gray-400">
                       {player.isBot ? "Bot Player" : "Human Player"}
@@ -301,7 +323,7 @@ export default function ManageTeamPage() {
                 )}
 
                 {/* Action Buttons - Only visible to team captain */}
-                {wallet?.address.toLowerCase() ===
+                {address?.toLowerCase() ===
                   teamData?.captainAddress.toLowerCase() && (
                   <div className="flex gap-2 mt-2">
                     <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">

@@ -28,9 +28,9 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { ethAddress, team } = body;
+    const { ethAddress, team, username } = body;
 
-    console.log('Creating player with data:', { ethAddress, team }); // Debug log
+    console.log('Creating player with data:', { ethAddress, team, username }); // Debug log
 
     // Validate required fields
     if (!ethAddress || !team) {
@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
       const playerData = {
         playerId: randomUUID(),
         playerName: playerName, // Explicitly set playerName
+        username: username || "", // Set username from Farcaster context
         ethAddress: normalizedAddress,
         team,
         money: 1000, // Default starting money

@@ -3,41 +3,51 @@
 import { ConnectButton } from "thirdweb/react";
 import { client } from "../client";
 import { useRouter } from "next/navigation";
-import { inAppWallet, createWallet } from "thirdweb/wallets";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { base } from "thirdweb/chains";
 import { useEffect, useState } from "react";
-import { useActiveWallet } from "thirdweb/react";
-
-const wallets = [
-  inAppWallet({
-    auth: {
-      options: ["farcaster"],
-    },
-  }),
-  createWallet("com.coinbase.wallet"),
-];
+import sdk from "@farcaster/frame-sdk";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 
 interface PlayerData {}
-
 export default function SettingsPage() {
   const router = useRouter();
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+
   useEffect(() => {
     async function fetchPlayer() {
-      if (!wallet) {
+      if (!isConnected || !address) {
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(wallet.address)}`
+          `/api/players/address/${encodeURIComponent(address)}`
         );
         if (!response.ok) {
           if (response.status === 404) {
@@ -57,7 +67,7 @@ export default function SettingsPage() {
     }
 
     fetchPlayer();
-  }, [wallet, router]);
+  }, [isConnected, address, router]);
 
   if (loading) {
     return (
@@ -85,21 +95,17 @@ export default function SettingsPage() {
 
           {/* Connect Button */}
           <div className="flex flex-col items-center space-y-4 sm:space-y-6">
-            <ConnectButton
-              client={client}
-              chain={base}
-              wallets={wallets}
-              connectModal={{ size: "compact" }}
-              appMetadata={{
-                name: "Home",
-                url: "https://example.com",
-              }}
-            />
             <button
               onClick={() => router.back()}
               className="gradient-button py-2.5 px-6 rounded-lg text-base w-full transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
             >
               Back
+            </button>
+            <button
+              onClick={() => disconnect()}
+              className="gradient-button py-2.5 px-6 rounded-lg text-base w-full transition-all duration-300 active:scale-95 sm:hover:scale-[1.02]"
+            >
+              Disconnect
             </button>
           </div>
         </div>

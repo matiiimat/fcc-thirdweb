@@ -7,6 +7,7 @@ import { Position } from "../models/Player";
 interface Player {
   ethAddress: string;
   playerName: string;
+  username?: string;
   isBot?: boolean;
   stats?: {
     strength: number;
@@ -41,6 +42,7 @@ interface PlayerSelectionModalProps {
   selectedPlayer?: Player;
   position: Position;
   assignedPlayers: string[];
+  context?: any;
 }
 
 export default function PlayerSelectionModal({
@@ -51,6 +53,7 @@ export default function PlayerSelectionModal({
   selectedPlayer,
   position,
   assignedPlayers,
+  context,
 }: PlayerSelectionModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -119,7 +122,11 @@ export default function PlayerSelectionModal({
                       `}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="font-medium">{player.playerName}</div>
+                        <div className="font-medium">
+                          {player.isBot
+                            ? player.playerName
+                            : player.username || player.playerName}
+                        </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[0.7rem] leading-none">
                             {player.stats

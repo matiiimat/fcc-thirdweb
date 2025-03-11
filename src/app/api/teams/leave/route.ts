@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     // Update player's team status
     await PlayerModel.findOneAndUpdate(
       { ethAddress: playerAddress },
-      { team: "No Team" }
+      { team: "Unassigned" }
     );
 
     return NextResponse.json({ success: true });

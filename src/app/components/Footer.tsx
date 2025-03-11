@@ -36,8 +36,8 @@ export default function Footer() {
       <div className="flex justify-around items-center max-w-screen-lg mx-auto">
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/home")}
-            className={getButtonClass("/home")}
+            onClick={() => router.push("/")}
+            className={getButtonClass("/")}
           >
             <Image
               src="/icons/player-icon.png"
@@ -48,7 +48,7 @@ export default function Footer() {
               className="transition-transform group-hover:scale-110"
             />
           </button>
-          <span className={getTextClass("/home")}>Player</span>
+          <span className={getTextClass("/")}>Player</span>
         </div>
         <div className="flex flex-col items-center">
           <button

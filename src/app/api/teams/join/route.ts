@@ -61,7 +61,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    if (player.team !== "No Team" && player.team !== "Unassigned") {
+    // Check if player is already in a team
+    // We check for both "No Team" and "Unassigned" for backward compatibility,
+    // but "Unassigned" is the standard value going forward
+    if (player.team !== "Unassigned" && player.team !== "No Team") {
       return NextResponse.json(
         { error: "Player is already in a team" },
         { status: 400 }

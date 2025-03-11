@@ -4,7 +4,14 @@ import "./globals.css";
 import { ThirdwebProvider } from "thirdweb/react";
 import Header from "./components/Header";
 
+import { Providers } from "./providers";
+
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "fcc/FC",
+  description: "A Farcaster Frames v2 frame for fcc/FC",
+};
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -12,20 +19,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: "#000000",
-};
-
-export const metadata: Metadata = {
-  title: "fcc/FC",
-  description: "Online football management game on the Farcaster",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "fcc/FC",
-  },
-  formatDetection: {
-    telephone: false,
-  },
 };
 
 export default function RootLayout({
@@ -43,12 +36,26 @@ export default function RootLayout({
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/logo.png" />
+        <meta
+          property="fc:frame"
+          content={JSON.stringify({
+            version: "next",
+            imageUrl: "https://fcc-test.netlify.app/logo.png",
+            button: {
+              title: "fccFC",
+              action: {
+                type: "launch_frame",
+                name: "Play fccFC",
+                url: "https://fcc-test.netlify.app",
+                splashImageUrl: "https://fcc-test.netlify.app/logo.png",
+                splashBackgroundColor: "#08090a",
+              },
+            },
+          })}
+        />
       </head>
       <body className={inter.className}>
-        {/* Content layer */}
-        <div className="relative z-20">
-          <ThirdwebProvider>{children}</ThirdwebProvider>
-        </div>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

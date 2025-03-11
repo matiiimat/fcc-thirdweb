@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useActiveWallet } from "thirdweb/react";
+import sdk from "@farcaster/frame-sdk";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import HireBotModal from "../components/HireBotModal";
@@ -13,6 +14,7 @@ interface Player {
   _id: string;
   playerId: string;
   playerName: string;
+  username?: string;
   ethAddress: string;
   stats: IPlayerStats;
   team: string;
@@ -21,11 +23,14 @@ interface Player {
 interface Bot extends Omit<Player, "_id"> {
   isBot: true;
 }
-
 export default function ScoutingPage() {
   const router = useRouter();
-  const activeWallet = useActiveWallet();
-  const wallet = activeWallet?.getAccount();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
+
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<any>();
   const [activeTab, setActiveTab] = useState("players");
   const [players, setPlayers] = useState<Player[]>([]);
   const [bots, setBots] = useState<Bot[]>([]);
@@ -37,9 +42,26 @@ export default function ScoutingPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [teamId, setTeamId] = useState<string>("");
 
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await sdk.actions.ready();
+        setContext(await sdk.context);
+      } catch (error) {
+        console.error("Error initializing Farcaster Frame SDK:", error);
+      }
+    };
+
+    if (!isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
+
   useEffect(() => {
     const checkCaptainStatus = async () => {
-      if (!wallet) {
+      if (!isConnected || !address) {
         router.push("/");
         return;
       }
@@ -49,7 +71,7 @@ export default function ScoutingPage() {
         const teams = await response.json();
         const captainTeam = teams.find(
           (team: any) =>
-            team.captainAddress.toLowerCase() === wallet.address.toLowerCase()
+            team.captainAddress.toLowerCase() === address.toLowerCase()
         );
 
         if (!captainTeam) {
@@ -66,7 +88,7 @@ export default function ScoutingPage() {
     };
 
     checkCaptainStatus();
-  }, [wallet, router]);
+  }, [isConnected, address, router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -215,7 +237,7 @@ export default function ScoutingPage() {
                         style={{ cursor: "pointer" }}
                       >
                         <td className="py-2 sm:py-3 px-2 text-xs sm:text-sm">
-                          {player.playerName}
+                          {player.username || player.playerName}
                         </td>
                         <td className="py-2 sm:py-3 px-2 text-center text-xs sm:text-sm">
                           {Math.round(player.stats.strength)}
@@ -301,7 +323,7 @@ export default function ScoutingPage() {
         isOpen={!!selectedBot}
         onClose={() => setSelectedBot(null)}
         onConfirm={async () => {
-          if (!selectedBot || !wallet) return;
+          if (!selectedBot || !isConnected || !address) return;
 
           try {
             const response = await fetch("/api/teams/hire-bot", {
@@ -309,7 +331,7 @@ export default function ScoutingPage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 botAddress: selectedBot.ethAddress,
-                captainAddress: wallet.address,
+                captainAddress: address,
               }),
             });
 
@@ -328,7 +350,7 @@ export default function ScoutingPage() {
             const teamsData = await teamsResponse.json();
             const captainTeam = teamsData.find(
               (t: any) =>
-                t.captainAddress.toLowerCase() === wallet.address.toLowerCase()
+                t.captainAddress.toLowerCase() === address.toLowerCase()
             );
 
             if (!captainTeam) {
@@ -364,14 +386,14 @@ export default function ScoutingPage() {
         isOpen={!!selectedPlayer}
         onClose={() => setSelectedPlayer(null)}
         onConfirm={async () => {
-          if (!selectedPlayer || !wallet || !teamId) return;
+          if (!selectedPlayer || !isConnected || !address || !teamId) return;
 
           try {
             const response = await fetch("/api/notifications", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                ethAddress: wallet.address,
+                ethAddress: address,
               },
               body: JSON.stringify({
                 fromTeamId: teamId,

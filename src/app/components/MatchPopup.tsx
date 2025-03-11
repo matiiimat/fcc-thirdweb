@@ -7,6 +7,7 @@ import { generateMatchEvents, MatchEvent } from "./MatchEvents";
 interface MatchPopupProps {
   selectedPosition: Position;
   playerName: string;
+  username?: string;
   onClose: () => void;
   matchResult?: {
     rating: number;
@@ -19,6 +20,7 @@ interface MatchPopupProps {
 const MatchPopup: React.FC<MatchPopupProps> = ({
   selectedPosition,
   playerName,
+  username,
   onClose,
   matchResult,
 }) => {
@@ -29,9 +31,13 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const eventsRef = useRef<MatchEvent[]>([]);
 
+  // Use username if available, otherwise fall back to playerName
+  const displayName =
+    username && username.trim() !== "" ? username : playerName;
+
   useEffect(() => {
     // Generate match events immediately
-    const matchEvents = generateMatchEvents(selectedPosition, playerName);
+    const matchEvents = generateMatchEvents(selectedPosition, displayName);
     eventsRef.current = matchEvents;
     setEvents(matchEvents);
 
@@ -56,7 +62,7 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
         clearInterval(timerRef.current);
       }
     };
-  }, [selectedPosition, playerName]); // Add required dependencies
+  }, [selectedPosition, displayName]); // Updated dependency
 
   // Update score when new events occur
   useEffect(() => {
@@ -88,7 +94,7 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
         {/* Score */}
         <div className="text-center mb-4">
           <div className="text-2xl font-bold text-white mb-2">
-            {playerName}&apos;s Team {score.player} - {score.opponent} Opponent
+            {displayName}&apos;s Team {score.player} - {score.opponent} Opponent
           </div>
           <span className="text-2xl font-bold text-white">
             {currentMinute}&apos;
