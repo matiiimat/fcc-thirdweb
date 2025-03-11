@@ -148,7 +148,7 @@ export default function TeamPage() {
       };
 
       // If player has a team, fetch team data in the same function
-      if (data.team && data.team !== "No Team") {
+      if (data.team && data.team !== "Unassigned") {
         try {
           // Fetch teams data
           const teamResponse = await fetch("/api/teams");
@@ -170,8 +170,10 @@ export default function TeamPage() {
               stats: team.stats || defaultStats,
             } as MongoTeam);
           } else {
-            // Team not found, set player to "No Team"
-            setPlayer((prev) => (prev ? { ...prev, team: "No Team" } : null));
+            // Team not found, set player to "Unassigned"
+            setPlayer((prev) =>
+              prev ? { ...prev, team: "Unassigned" } : null
+            );
             await fetchTeams();
           }
         } catch (teamError) {

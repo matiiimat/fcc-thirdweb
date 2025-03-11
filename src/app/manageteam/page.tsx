@@ -108,7 +108,7 @@ export default function ManageTeamPage() {
             );
             if (playerResponse.ok) {
               const playerData = await playerResponse.json();
-              if (playerData.team && playerData.team !== "No Team") {
+              if (playerData.team && playerData.team !== "Unassigned") {
                 // Find the team the player belongs to
                 team = teams.find((t: any) => t.teamName === playerData.team);
               }
