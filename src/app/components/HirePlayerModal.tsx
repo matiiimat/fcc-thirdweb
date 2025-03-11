@@ -5,6 +5,7 @@ interface HirePlayerModalProps {
   onClose: () => void;
   onConfirm: () => void;
   playerName: string;
+  username?: string;
 }
 
 export default function HirePlayerModal({
@@ -12,7 +13,11 @@ export default function HirePlayerModal({
   onClose,
   onConfirm,
   playerName,
+  username,
 }: HirePlayerModalProps) {
+  // Use username if available, otherwise fall back to playerName
+  const displayName =
+    username && username.trim() !== "" ? username : playerName;
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
@@ -22,8 +27,8 @@ export default function HirePlayerModal({
             Invite Player
           </Dialog.Title>
           <p className="text-gray-300 mb-6">
-            Send a team invitation to {playerName}? They will need to accept the
-            invitation to join your team.
+            Send a team invitation to {displayName}? They will need to accept
+            the invitation to join your team.
           </p>
           <div className="flex justify-end gap-3">
             <button
