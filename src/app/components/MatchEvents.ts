@@ -7,7 +7,7 @@ export interface MatchEvent {
   team?: "player" | "opponent";
 }
 
-const generateGoalEvents = (playerName: string): MatchEvent[] => {
+const generateGoalEvents = (displayName: string): MatchEvent[] => {
   // Generate 0-5 goals
   const numGoals = Math.floor(Math.random() * 6); // 0 to 5 goals
   const events: MatchEvent[] = [];
@@ -36,13 +36,13 @@ const generateGoalEvents = (playerName: string): MatchEvent[] => {
       // For player team goals, 50% chance to be scored by player
       const isPlayerGoal = Math.random() < 0.5;
       const scenarios = isPlayerGoal ? [
-        `GOAL! ${playerName} scores a brilliant goal!`,
-        `GOAL! ${playerName} finds the back of the net!`,
-        `GOAL! Incredible finish by ${playerName}!`
+        `GOAL! ${displayName} scores a brilliant goal!`,
+        `GOAL! ${displayName} finds the back of the net!`,
+        `GOAL! Incredible finish by ${displayName}!`
       ] : [
-        `GOAL! ${playerName}'s teammate finds the back of the net!`,
+        `GOAL! ${displayName}'s teammate finds the back of the net!`,
         `GOAL! Beautiful team play by the home team leads to a goal!`,
-        `GOAL! The home crowd erupts as ${playerName}'s team scores!`
+        `GOAL! The home crowd erupts as ${displayName}'s team scores!`
       ];
       events.push({
         minute,
@@ -69,42 +69,42 @@ const generateGoalEvents = (playerName: string): MatchEvent[] => {
   return events;
 };
 
-const getRandomTeamAction = (position: Position, playerName: string): string => {
+const getRandomTeamAction = (position: Position, displayName: string): string => {
   // 50% chance to involve player in team actions
   const includePlayer = Math.random() < 0.5;
   
   const teamActions = {
     GK: includePlayer ? [
-      `${playerName} organizes the defense from the back`,
-      `${playerName} shows great communication with the backline`,
-      `${playerName} positions the wall perfectly`
+      `${displayName} organizes the defense from the back`,
+      `${displayName} shows great communication with the backline`,
+      `${displayName} positions the wall perfectly`
     ] : [
       "The goalkeeper commands their area well",
       "Great organization from the back",
       "The keeper's distribution is excellent"
     ],
     D: includePlayer ? [
-      `${playerName}'s defensive partner makes a crucial block`,
-      `${playerName} combines with teammates to clear the danger`,
-      `${playerName} organizes the defensive line`
+      `${displayName}'s defensive partner makes a crucial block`,
+      `${displayName} combines with teammates to clear the danger`,
+      `${displayName} organizes the defensive line`
     ] : [
       "The home team's defense stands firm",
       "A brilliant defensive display by the back line",
       "The defensive unit stays organized"
     ],
     M: includePlayer ? [
-      `${playerName} orchestrates a flowing team move`,
-      `${playerName} combines with the midfield`,
-      `${playerName} leads the press`
+      `${displayName} orchestrates a flowing team move`,
+      `${displayName} combines with the midfield`,
+      `${displayName} leads the press`
     ] : [
       "The midfield trio combines beautifully",
       "The home team controls possession",
       "Quick one-touch passing in midfield"
     ],
     F: includePlayer ? [
-      `${playerName} links up with the striker`,
-      `${playerName} creates space for teammates`,
-      `${playerName} leads the counter-attack`
+      `${displayName} links up with the striker`,
+      `${displayName} creates space for teammates`,
+      `${displayName} leads the counter-attack`
     ] : [
       "The forward line pressures high",
       "The attacking trio creates chaos",
@@ -144,11 +144,11 @@ const getRandomOpponentAction = (position: Position): string => {
   return opponentActions[position][Math.floor(Math.random() * opponentActions[position].length)];
 };
 
-export const generateMatchEvents = (selectedPosition: Position, playerName: string): MatchEvent[] => {
+export const generateMatchEvents = (selectedPosition: Position, displayName: string): MatchEvent[] => {
   const events: MatchEvent[] = [{ minute: 0, text: "Kick off!", type: "system" }];
 
   // Add goal events
-  const goalEvents = generateGoalEvents(playerName);
+  const goalEvents = generateGoalEvents(displayName);
   events.push(...goalEvents);
 
   // Generate random events based on position
@@ -194,10 +194,10 @@ export const generateMatchEvents = (selectedPosition: Position, playerName: stri
       const success = Math.random() > 0.3; // 70% chance of success
       const positionEvents = possibleEvents[selectedPosition];
       eventText = success
-        ? `${playerName} ${positionEvents[Math.floor(Math.random() * positionEvents.length)]}`
-        : `${playerName} loses possession`;
+        ? `${displayName} ${positionEvents[Math.floor(Math.random() * positionEvents.length)]}`
+        : `${displayName} loses possession`;
     } else if (eventType < 0.7) { // 30% chance for team action
-      eventText = getRandomTeamAction(selectedPosition, playerName);
+      eventText = getRandomTeamAction(selectedPosition, displayName);
     } else { // 30% chance for opponent action
       eventText = getRandomOpponentAction(selectedPosition);
     }

@@ -23,6 +23,7 @@ import { Position } from "../models/Player";
 interface PlayerData {
   playerId: string;
   playerName: string;
+  username: string;
   ethAddress: string;
   stats: {
     strength: number;
@@ -471,6 +472,7 @@ export default function TrainPage() {
         <MatchPopup
           selectedPosition={selectedPosition}
           playerName={player.playerName}
+          username={player.username}
           onClose={handleMatchEnd}
           matchResult={matchResult}
         />
