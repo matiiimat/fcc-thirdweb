@@ -339,20 +339,8 @@ export default function ManageTeamPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-6 flex justify-center gap-4">
-          {/* View Tactics Button - Only visible to players (not captains) */}
-          {address?.toLowerCase() !==
-            teamData?.captainAddress.toLowerCase() && (
-            <button
-              onClick={() => router.push("/playertactics")}
-              className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
-            >
-              View Team Tactics
-            </button>
-          )}
-
-          {/* Back Button */}
+        {/* Back Button */}
+        <div className="mt-6 flex justify-center">
           <button
             onClick={() => router.push("/team")}
             className="px-6 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
