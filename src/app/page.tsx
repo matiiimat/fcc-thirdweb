@@ -7,6 +7,25 @@ import sdk, { Context } from "@farcaster/frame-sdk";
 export type FrameContext = Context.FrameContext;
 export type SafeAreaInsets = Context.SafeAreaInsets;
 
+export type FrameNotificationDetails = {
+  url: string;
+  token: string;
+};
+
+export type AddFrameRejectedReason =
+  | "invalid_domain_manifest"
+  | "rejected_by_user";
+
+export type AddFrameResult =
+  | {
+      added: true;
+      notificationDetails?: FrameNotificationDetails;
+    }
+  | {
+      added: false;
+      reason: AddFrameRejectedReason;
+    };
+
 import {
   useAccount,
   useSendTransaction,
@@ -60,6 +79,9 @@ export default function Home() {
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addFrameResult, setAddFrameResult] = useState<AddFrameResult | null>(
+    null
+  );
 
   // Wagmi hooks
   const { address, isConnected } = useAccount();
@@ -72,6 +94,26 @@ export default function Home() {
       try {
         setContext(await sdk.context);
         sdk.actions.ready();
+
+        // Automatically prompt user to add frame to their Farcaster client
+        try {
+          // Use type assertion to ensure TypeScript understands the structure
+          const result = (await sdk.actions.addFrame()) as AddFrameResult;
+          setAddFrameResult(result);
+
+          // Use type guards to safely check properties
+          if ("added" in result && result.added === true) {
+            console.log("Frame added successfully", result.notificationDetails);
+          } else if (
+            "added" in result &&
+            result.added === false &&
+            "reason" in result
+          ) {
+            console.log("Frame not added", result.reason);
+          }
+        } catch (addFrameError) {
+          console.error("Error adding frame:", addFrameError);
+        }
       } catch (error) {
         console.error("Error initializing Farcaster Frame SDK:", error);
       }
