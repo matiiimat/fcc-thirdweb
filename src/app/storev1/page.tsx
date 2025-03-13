@@ -255,7 +255,7 @@ export default function Store() {
     sendTransaction(
       {
         to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
-        value: 1000000000000000n, // 0.001 ETH in wei (10^15)
+        value: 5000000000000000n, // 0.005 ETH in wei (10^15)
       },
       {
         onSuccess: (hash) => {
@@ -342,7 +342,7 @@ export default function Store() {
     sendTransaction(
       {
         to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
-        value: 10000000000000000n, // 0.01 ETH in wei (10^16)
+        value: 5000000000000000n, // 0.005 ETH in wei (10^16)
       },
       {
         onSuccess: (hash) => {
