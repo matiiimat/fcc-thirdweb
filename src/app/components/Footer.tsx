@@ -84,19 +84,19 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/storev1")}
-            className={getButtonClass("/store")}
+            onClick={() => router.push("/league")}
+            className={getButtonClass("/league")}
           >
             <Image
-              src="/icons/store-icon.png"
-              alt="Store"
+              src="/icons/leaderboard-icon.png"
+              alt="League"
               width={20}
               height={20}
               priority
               className="transition-transform group-hover:scale-110"
             />
           </button>
-          <span className={getTextClass("/store")}>Store</span>
+          <span className={getTextClass("/league")}>League</span>
         </div>
       </div>
     </footer>
