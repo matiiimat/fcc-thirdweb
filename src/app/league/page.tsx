@@ -141,8 +141,8 @@ export default function LeaguePage() {
                   </ul>
                   <p>
                     The reward for each team is then evenly divided among all
-                    registered players in that team at the end of the season's
-                    final match.
+                    registered players in that team at the end of the
+                    season&apos;s final match.
                   </p>
                   <p className="mt-2">
                     Payouts are automatic and sent directly to the Farcaster
