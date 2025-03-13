@@ -14,6 +14,9 @@ export default function LeaguePage() {
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
 
+  // State for tooltip visibility
+  const [showTooltip, setShowTooltip] = useState(false);
+
   // Fetch the balance of the rewards address
   const {
     data: balanceData,
@@ -87,10 +90,19 @@ export default function LeaguePage() {
             </h2>
 
             {/* Rewards Section */}
-            <div className="bg-gradient-to-r from-green-900/30 to-green-700/30 p-3 rounded-lg mb-4">
-              <h3 className="text-green-400 font-medium text-sm mb-1">
-                Current Prize Pool
-              </h3>
+            <div className="bg-gradient-to-r from-green-900/30 to-green-700/30 p-3 rounded-lg mb-4 relative">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-green-400 font-medium text-sm">
+                  Current Prize Pool
+                </h3>
+                <button
+                  className="w-5 h-5 rounded-full bg-gray-700 text-gray-300 flex items-center justify-center text-xs"
+                  onClick={() => setShowTooltip(!showTooltip)}
+                  aria-label="Prize pool information"
+                >
+                  i
+                </button>
+              </div>
 
               {isBalanceLoading ? (
                 <div className="flex items-center justify-center py-2">
@@ -104,23 +116,44 @@ export default function LeaguePage() {
                   Error loading prize pool data
                 </p>
               ) : (
-                <div className="flex flex-col">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-300 text-sm">Total Pool:</span>
-                    <span className="text-white font-medium">
-                      {balanceData
-                        ? `${balanceData.formatted} ${balanceData.symbol}`
-                        : "0 ETH"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-gray-300 text-sm">
-                      Rewards (90%):
-                    </span>
-                    <span className="text-green-400 font-semibold">
-                      {rewardsAmount.toFixed(6)} ETH
-                    </span>
-                  </div>
+                <div className="flex items-center justify-center">
+                  <span className="text-green-400 font-semibold text-xl">
+                    {rewardsAmount.toFixed(3)} ETH
+                  </span>
+                </div>
+              )}
+
+              {/* Tooltip */}
+              {showTooltip && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-gray-800 rounded-lg p-3 z-10 shadow-lg text-xs text-gray-300 leading-relaxed">
+                  <p className="mb-2">
+                    The total prize pool is funded by all in-game store
+                    purchases, with 10% deducted for development costs. The
+                    remaining amount is distributed as rewards after the final
+                    game of the season, following these rules:
+                  </p>
+                  <ul className="space-y-1 mb-2">
+                    <li>🥇 1st place team: 30% of the prize pool</li>
+                    <li>🥈 2nd place team: 25%</li>
+                    <li>🥉 3rd place team: 20%</li>
+                    <li>🔹 4th place team: 15%</li>
+                    <li>🔹 5th place team: 10%</li>
+                  </ul>
+                  <p>
+                    The reward for each team is then evenly divided among all
+                    registered players in that team at the end of the season's
+                    final match.
+                  </p>
+                  <p className="mt-2">
+                    Payouts are automatic and sent directly to the Farcaster
+                    wallet linked to each player.
+                  </p>
+                  <button
+                    className="mt-2 text-green-400 font-medium"
+                    onClick={() => setShowTooltip(false)}
+                  >
+                    Close
+                  </button>
                 </div>
               )}
             </div>
