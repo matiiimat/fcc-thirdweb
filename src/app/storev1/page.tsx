@@ -455,14 +455,14 @@ export default function Store() {
                             onClick={sendPrivateTrainerTx}
                             className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
-                            0.01 ETH
+                            0.005 ETH
                           </button>
                         ) : item.id === "leave_of_absence" ? (
                           <button
                             onClick={sendLeaveOfAbsenceTx}
                             className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
-                            0.001 ETH
+                            0.005 ETH
                           </button>
                         ) : item.id === "energy_drink" ? (
                           <button

@@ -26,9 +26,9 @@ export default function LeaguePage() {
     address: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
   });
 
-  // Calculate rewards (total ETH - 10%)
+  // Calculate rewards (total ETH - 20%)
   const rewardsAmount = balanceData
-    ? parseFloat(balanceData.formatted) * 0.9 // 90% of the total (subtracting 10%)
+    ? parseFloat(balanceData.formatted) * 0.8 // 80% of the total (subtracting 20%)
     : 0;
 
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
@@ -128,7 +128,7 @@ export default function LeaguePage() {
                 <div className="absolute left-0 right-0 top-full mt-2 bg-gray-800 rounded-lg p-3 z-10 shadow-lg text-xs text-gray-300 leading-relaxed">
                   <p className="mb-2">
                     The total prize pool is funded by all in-game store
-                    purchases, with 10% deducted for development costs. The
+                    purchases, with 20% deducted for development costs. The
                     remaining amount is distributed as rewards after the final
                     game of the season, following these rules:
                   </p>
