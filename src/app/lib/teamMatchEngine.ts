@@ -399,13 +399,13 @@ const generateMatchSequence = (
   awayTacticBonus: number
 ): MatchEvent[] => {
   const events: MatchEvent[] = [];
-  const matchDuration = 240; // 4 minutes in seconds
-  const eventInterval = 15; // Generate an event every 15 seconds
+  const matchDuration = 90; // 90 minutes in a football match
+  const eventInterval = 3; // Generate an event approximately every 5 minutes
   const numEvents = matchDuration / eventInterval;
   
   // Generate events at regular intervals
   for (let i = 0; i < numEvents; i++) {
-    const minute = Math.floor((i * eventInterval) / 60) + 1; // Convert to match minutes (1-4)
+    const minute = Math.min(i * eventInterval + 1, 90); // Calculate match minute (1-90)
     
     // Determine which team has possession based on team ratings
     const homeAttackRating = homeRatings.attack * (1 + homeTacticBonus);
@@ -760,9 +760,9 @@ export const simulateTeamMatch = async (
   matchEvents.push(...sequenceEvents);
   
   // Add final whistle event
-  matchEvents.push({ 
-    minute: 4, 
-    type: "system", 
+  matchEvents.push({
+    minute: 90,
+    type: "system",
     description: systemEvents.finalWhistle,
     teamName: "System"
   });
@@ -848,7 +848,7 @@ export const simulateTeamMatch = async (
 
   // Add summary events
   matchEvents.push({
-    minute: 4,
+    minute: 90,
     type: "system",
     description: formatDescription(systemEvents.possession, {
       homeTeam: homeTeamData.team.teamName,
@@ -860,7 +860,7 @@ export const simulateTeamMatch = async (
   });
   
   matchEvents.push({
-    minute: 4,
+    minute: 90,
     type: "system",
     description: formatDescription(systemEvents.shots, {
       homeTeam: homeTeamData.team.teamName,
@@ -874,7 +874,7 @@ export const simulateTeamMatch = async (
   });
   
   matchEvents.push({
-    minute: 4,
+    minute: 90,
     type: "system",
     description: formatDescription(systemEvents.finalScore, {
       homeTeam: homeTeamData.team.teamName,

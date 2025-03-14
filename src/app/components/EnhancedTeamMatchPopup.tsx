@@ -246,8 +246,9 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
   >("events");
   const [currentMinute, setCurrentMinute] = useState(0);
   const [isLiveMode, setIsLiveMode] = useState(true);
-  const [autoplaySpeed, setAutoplaySpeed] = useState(500); // milliseconds per minute
+  const [autoplaySpeed, setAutoplaySpeed] = useState(667); // ~667ms per minute = 90 minutes in ~60 seconds
   const [matchCompleted, setMatchCompleted] = useState(false);
+  const MATCH_DURATION = 90; // Football matches last 90 minutes
 
   // Initialize match
   useEffect(() => {
@@ -259,25 +260,31 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
 
   // Auto-advance the match time in live mode
   useEffect(() => {
-    if (!isLiveMode || currentMinute >= 4) {
-      if (currentMinute >= 4 && !matchCompleted) {
+    if (!isLiveMode || currentMinute >= MATCH_DURATION) {
+      if (currentMinute >= MATCH_DURATION && !matchCompleted) {
         setMatchCompleted(true);
       }
       return;
     }
 
     const timer = setTimeout(() => {
-      const newMinute = Math.min(currentMinute + 1, 4);
+      const newMinute = Math.min(currentMinute + 1, MATCH_DURATION);
       setCurrentMinute(newMinute);
 
       // Set match as completed when we reach the end
-      if (newMinute >= 4) {
+      if (newMinute >= MATCH_DURATION) {
         setMatchCompleted(true);
       }
     }, autoplaySpeed);
 
     return () => clearTimeout(timer);
-  }, [currentMinute, isLiveMode, autoplaySpeed, matchCompleted]);
+  }, [
+    currentMinute,
+    isLiveMode,
+    autoplaySpeed,
+    matchCompleted,
+    MATCH_DURATION,
+  ]);
 
   // Get events up to current minute (for live mode)
   const visibleEvents =
@@ -499,9 +506,9 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
                     onChange={(e) => setAutoplaySpeed(Number(e.target.value))}
                     className="bg-gray-800 text-white text-sm rounded px-2 py-1"
                   >
-                    <option value="1000">Slow</option>
-                    <option value="500">Normal</option>
-                    <option value="250">Fast</option>
+                    <option value="1000">Slow (90s)</option>
+                    <option value="667">Normal (60s)</option>
+                    <option value="333">Fast (30s)</option>
                   </select>
                 </div>
               )}
@@ -516,7 +523,9 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
                 <div className="w-full bg-gray-700 h-2 rounded-full mt-2">
                   <div
                     className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(currentMinute / 4) * 100}%` }}
+                    style={{
+                      width: `${(currentMinute / MATCH_DURATION) * 100}%`,
+                    }}
                   ></div>
                 </div>
               </div>
