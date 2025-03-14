@@ -7,6 +7,7 @@ import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
 import { config } from "../components/providers/WagmiProvider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import EnhancedTeamMatchPopup from "../components/EnhancedTeamMatchPopup";
 
 export default function LeaguePage() {
   const router = useRouter();
@@ -35,6 +36,9 @@ export default function LeaguePage() {
   const [context, setContext] = useState<any>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [matchData, setMatchData] = useState<any>(null);
+  const [showMatchPopup, setShowMatchPopup] = useState(false);
+  const [simulatingMatch, setSimulatingMatch] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -61,6 +65,50 @@ export default function LeaguePage() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Function to simulate a match between two teams
+  const simulateMatch = async () => {
+    setSimulatingMatch(true);
+    setError(null);
+
+    try {
+      // Team and tactic IDs provided by the user
+      const homeTeamId = "67d44eab8a79d9fbbf83b3d6";
+      const awayTeamId = "67d44eab8a79d9fbbf83b3d5";
+      const homeTacticId = "67d44eab8a79d9fbbf83b3d4";
+      const awayTacticId = "67d44eab8a79d9fbbf83b3d3";
+
+      const response = await fetch("/api/teams/teammatch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          homeTeamId,
+          awayTeamId,
+          homeTacticId,
+          awayTacticId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to simulate match");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setMatchData(data);
+        setShowMatchPopup(true);
+      } else {
+        throw new Error(data.error || "Failed to simulate match");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to simulate match");
+    } finally {
+      setSimulatingMatch(false);
+    }
+  };
 
   // Show loading state if either the page is loading or balance is loading
   if (loading || isBalanceLoading) {
@@ -159,8 +207,24 @@ export default function LeaguePage() {
             </div>
 
             <div className="text-center mb-3">
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-300 text-sm mb-4">
                 League content will be added soon.
+              </p>
+
+              {/* Test Match Button */}
+              <button
+                onClick={simulateMatch}
+                className={`gradient-button py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
+                  simulatingMatch
+                    ? "opacity-50 cursor-not-allowed"
+                    : "active:scale-95"
+                }`}
+                disabled={simulatingMatch}
+              >
+                {simulatingMatch ? "Simulating..." : "Simulate Test Match"}
+              </button>
+              <p className="text-xs text-gray-400 mt-1">
+                This button is for testing purposes and will be removed later.
               </p>
             </div>
           </div>
@@ -176,6 +240,15 @@ export default function LeaguePage() {
         )}
       </main>
       <Footer />
+
+      {/* Match Popup */}
+      {showMatchPopup && matchData && (
+        <EnhancedTeamMatchPopup
+          match={matchData.match}
+          teamStats={matchData.stats}
+          onClose={() => setShowMatchPopup(false)}
+        />
+      )}
     </div>
   );
 }
