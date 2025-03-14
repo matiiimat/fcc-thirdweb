@@ -25,6 +25,48 @@ export async function GET(
   }
 }
 
+// PATCH /api/teams/[id] - Update a team by ID
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await connectDB();
+
+    const body = await req.json();
+    
+    // Find the team
+    const team = await Team.findById(params.id);
+    if (!team) {
+      return NextResponse.json({ error: "Team not found" }, { status: 404 });
+    }
+
+    // Update the team with the provided data
+    if (body.stats) {
+      team.stats = body.stats;
+    }
+
+    // Add other fields that can be updated here
+    if (body.matches) {
+      team.matches = body.matches;
+    }
+
+    // Save the updated team
+    await team.save();
+
+    return NextResponse.json({ 
+      message: "Team updated successfully",
+      team
+    });
+  } catch (error) {
+    console.error("Error updating team:", error);
+    return NextResponse.json(
+      { error: "Failed to update team" },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE /api/teams/[id] - Delete a team by ID
 export async function DELETE(
   req: NextRequest,

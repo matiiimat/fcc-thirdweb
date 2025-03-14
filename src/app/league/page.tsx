@@ -8,6 +8,9 @@ import { config } from "../components/providers/WagmiProvider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import EnhancedTeamMatchPopup from "../components/EnhancedTeamMatchPopup";
+import TeamLeaderboard from "../components/TeamLeaderboard";
+import MatchModel from "../models/Match";
+import SeasonModel from "../models/Season";
 
 export default function LeaguePage() {
   const router = useRouter();
@@ -78,6 +81,7 @@ export default function LeaguePage() {
       const homeTacticId = "67d44eab8a79d9fbbf83b3d4";
       const awayTacticId = "67d44eab8a79d9fbbf83b3d3";
 
+      // Step 1: Simulate the match
       const response = await fetch("/api/teams/teammatch", {
         method: "POST",
         headers: {
@@ -97,12 +101,66 @@ export default function LeaguePage() {
       }
 
       const data = await response.json();
-      if (data.success) {
-        setMatchData(data);
-        setShowMatchPopup(true);
-      } else {
+      if (!data.success) {
         throw new Error(data.error || "Failed to simulate match");
       }
+
+      // Step 2: Save the match to the database
+      const saveResponse = await fetch("/api/matches/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          homeTeamId: homeTeamId,
+          awayTeamId: awayTeamId,
+          homeTeamName: data.match.homeTeam,
+          awayTeamName: data.match.awayTeam,
+          homeTactic: data.match.homeTactic,
+          awayTactic: data.match.awayTactic,
+          result: data.match.result,
+          homeStats: data.match.homeStats,
+          awayStats: data.match.awayStats,
+          homePlayerRatings: data.match.homePlayerRatings,
+          awayPlayerRatings: data.match.awayPlayerRatings,
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        const saveErrorData = await saveResponse.json();
+        console.warn("Failed to save match:", saveErrorData.error);
+        // Continue even if saving fails, as we still want to show the match popup
+      }
+
+      // Step 3: Update team stats in the database
+      const updateHomeTeamResponse = await fetch(`/api/teams/${homeTeamId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          stats: data.stats.home,
+        }),
+      });
+
+      const updateAwayTeamResponse = await fetch(`/api/teams/${awayTeamId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          stats: data.stats.away,
+        }),
+      });
+
+      if (!updateHomeTeamResponse.ok || !updateAwayTeamResponse.ok) {
+        console.warn("Failed to update team stats");
+        // Continue even if updating stats fails
+      }
+
+      // Show the match popup
+      setMatchData(data);
+      setShowMatchPopup(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to simulate match");
     } finally {
@@ -206,12 +264,13 @@ export default function LeaguePage() {
               )}
             </div>
 
-            <div className="text-center mb-3">
-              <p className="text-gray-300 text-sm mb-4">
-                League content will be added soon.
-              </p>
+            {/* Team Leaderboard */}
+            <div className="mb-6">
+              <TeamLeaderboard />
+            </div>
 
-              {/* Test Match Button */}
+            {/* Test Match Button */}
+            <div className="text-center mb-3">
               <button
                 onClick={simulateMatch}
                 className={`gradient-button py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
