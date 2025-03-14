@@ -29,10 +29,14 @@ const StatBar: React.FC<StatBarProps> = ({
           {homeValue}
           {unit}
         </span>
-        <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden">
+        <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden relative">
           <div
-            className="h-full bg-green-500 rounded-r-none rounded-full"
+            className="h-full bg-green-500 absolute left-0 top-0 rounded-r-none rounded-full"
             style={{ width: `${homePercent}%` }}
+          />
+          <div
+            className="h-full bg-blue-500 absolute right-0 top-0 rounded-l-none rounded-full"
+            style={{ width: `${100 - homePercent}%` }}
           />
         </div>
         <span className="text-blue-400 w-12">

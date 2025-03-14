@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // MongoDB connection string - will be replaced by the actual URI
-const uri = "mongodb+srv://mathieulr21:CHBTkLgXd9Hq2llV@fcc-test-cluster.ofxet.mongodb.net/?retryWrites=true&w=majority&appName=fcc-test-cluster";
+const uri = "mongodb+srv://username:pass@url/?retryWrites=true&w=majority&appName=name";
 
 // Bot player stats configurations
 const TEAM1_PLAYER_STATS = {

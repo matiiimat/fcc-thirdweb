@@ -179,11 +179,19 @@ const TeamStats = ({
 const MatchStatsComparison = ({
   homeStats,
   awayStats,
+  homeGoals,
+  awayGoals,
 }: {
   homeStats: EnhancedMatch["homeStats"];
   awayStats: EnhancedMatch["awayStats"];
+  homeGoals: number;
+  awayGoals: number;
 }) => {
   if (!homeStats || !awayStats) return null;
+
+  // Add goals to shot count
+  const homeTotalShots = homeStats.shots + homeGoals;
+  const awayTotalShots = awayStats.shots + awayGoals;
 
   return (
     <div className="space-y-4">
@@ -198,9 +206,11 @@ const MatchStatsComparison = ({
           />
           <StatBar
             label="Shots"
-            homeValue={homeStats.shots}
-            awayValue={awayStats.shots}
-            subLabel={`(${homeStats.shotsOnTarget} on target - ${awayStats.shotsOnTarget} on target)`}
+            homeValue={homeTotalShots}
+            awayValue={awayTotalShots}
+            subLabel={`(${homeStats.shotsOnTarget + homeGoals} on target - ${
+              awayStats.shotsOnTarget + awayGoals
+            } on target)`}
           />
           <StatBar
             label="Passes"
@@ -233,27 +243,56 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<
     "overview" | "stats" | "players" | "events"
-  >("overview");
+  >("events");
   const [currentMinute, setCurrentMinute] = useState(0);
   const [isLiveMode, setIsLiveMode] = useState(true);
   const [autoplaySpeed, setAutoplaySpeed] = useState(500); // milliseconds per minute
+  const [matchCompleted, setMatchCompleted] = useState(false);
+
+  // Initialize match
+  useEffect(() => {
+    // Start at minute 0
+    setCurrentMinute(0);
+    setMatchCompleted(false);
+    setIsLiveMode(true);
+  }, [match.id]); // Reset when match changes
 
   // Auto-advance the match time in live mode
   useEffect(() => {
-    if (!isLiveMode || currentMinute >= 4) return;
+    if (!isLiveMode || currentMinute >= 4) {
+      if (currentMinute >= 4 && !matchCompleted) {
+        setMatchCompleted(true);
+      }
+      return;
+    }
 
     const timer = setTimeout(() => {
-      setCurrentMinute((prev) => Math.min(prev + 1, 4));
+      const newMinute = Math.min(currentMinute + 1, 4);
+      setCurrentMinute(newMinute);
+
+      // Set match as completed when we reach the end
+      if (newMinute >= 4) {
+        setMatchCompleted(true);
+      }
     }, autoplaySpeed);
 
     return () => clearTimeout(timer);
-  }, [currentMinute, isLiveMode, autoplaySpeed]);
+  }, [currentMinute, isLiveMode, autoplaySpeed, matchCompleted]);
 
   // Get events up to current minute (for live mode)
   const visibleEvents =
-    match.events?.filter((event) =>
-      isLiveMode ? event.minute <= currentMinute : true
-    ) || [];
+    match.events?.filter((event) => {
+      if (!isLiveMode) return true;
+
+      // For live mode, only show events up to the current minute
+      // Convert event minute to a number to ensure proper comparison
+      const eventMinute =
+        typeof event.minute === "string"
+          ? parseInt(event.minute, 10)
+          : event.minute;
+
+      return eventMinute <= currentMinute;
+    }) || [];
 
   // Group events by minute for better display
   const eventsByMinute = visibleEvents.reduce((acc, event) => {
@@ -300,16 +339,21 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
 
         {/* Tab Navigation */}
         <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            onClick={() => setActiveTab("overview")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-              activeTab === "overview"
-                ? "bg-green-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-          >
-            Overview
-          </button>
+          {/* Only show Overview tab when match is completed */}
+          {matchCompleted && (
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === "overview"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              }`}
+            >
+              Overview
+            </button>
+          )}
+
+          {/* Match Events tab is always visible */}
           <button
             onClick={() => setActiveTab("events")}
             className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -320,7 +364,9 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
           >
             Match Events
           </button>
-          {match.homeStats && (
+
+          {/* Only show Statistics tab when match is completed */}
+          {matchCompleted && match.homeStats && (
             <button
               onClick={() => setActiveTab("stats")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -332,7 +378,9 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
               Statistics
             </button>
           )}
-          {match.homePlayerRatings && (
+
+          {/* Only show Players tab when match is completed */}
+          {matchCompleted && match.homePlayerRatings && (
             <button
               onClick={() => setActiveTab("players")}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -540,6 +588,8 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
           <MatchStatsComparison
             homeStats={match.homeStats}
             awayStats={match.awayStats}
+            homeGoals={match.result?.homeScore || 0}
+            awayGoals={match.result?.awayScore || 0}
           />
         )}
 
