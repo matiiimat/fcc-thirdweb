@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import TeamMatchesSection from "./TeamMatchesSection";
 import TeamStatsDisplay from "./TeamStatsDisplay";
@@ -120,8 +120,40 @@ export default function TeamOverview({
     }
   };
 
+  const [playerData, setPlayerData] = useState<any>(null);
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [contractAmount, setContractAmount] = useState<number>(0.02);
+  const [contractDuration, setContractDuration] = useState<number>(2);
+  const [contractLoading, setContractLoading] = useState(false);
+  const [contractError, setContractError] = useState<string | null>(null);
+
+  // Fetch player data including contract information
+  useEffect(() => {
+    const fetchPlayerData = async () => {
+      try {
+        const response = await fetch(`/api/players/address/${playerAddress}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPlayerData(data);
+        }
+      } catch (error) {
+        console.error("Error fetching player data:", error);
+      }
+    };
+
+    if (playerAddress) {
+      fetchPlayerData();
+    }
+  }, [playerAddress]);
+
   const handleLeaveTeam = async () => {
     try {
+      // Check if player has an active contract
+      if (playerData?.contract?.status === "active") {
+        setError("You cannot leave the team while under contract");
+        return;
+      }
+
       setLoading(true);
       setError("");
 
@@ -145,6 +177,46 @@ export default function TeamOverview({
       setError(error instanceof Error ? error.message : "Failed to leave team");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleContractRequest = async () => {
+    try {
+      setContractLoading(true);
+      setContractError(null);
+
+      const response = await fetch("/api/contracts/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-wallet-address": playerAddress,
+        },
+        body: JSON.stringify({
+          requestedAmount: contractAmount,
+          durationInSeasons: contractDuration,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to request contract");
+      }
+
+      // Update player data with new contract
+      setPlayerData({
+        ...playerData,
+        contract: data.contract,
+      });
+
+      setShowContractModal(false);
+    } catch (error) {
+      console.error("Error requesting contract:", error);
+      setContractError(
+        error instanceof Error ? error.message : "Failed to request contract"
+      );
+    } finally {
+      setContractLoading(false);
     }
   };
 
@@ -253,6 +325,191 @@ export default function TeamOverview({
           </div>
         )}
       </div>
+
+      {/* Contract Section - Only visible to non-captains */}
+      {!isTeamCaptain && (
+        <div className="mt-4 glass-container p-4 rounded-xl shadow-lg">
+          <h3 className="text-lg font-semibold text-white mb-3">
+            Player Contract
+          </h3>
+
+          {playerData?.contract ? (
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-400">Status:</span>
+                <span
+                  className={`font-medium ${
+                    playerData.contract.status === "active"
+                      ? "text-green-400"
+                      : playerData.contract.status === "pending"
+                      ? "text-yellow-400"
+                      : playerData.contract.status === "rejected"
+                      ? "text-red-400"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {playerData.contract.status.charAt(0).toUpperCase() +
+                    playerData.contract.status.slice(1)}
+                </span>
+              </div>
+
+              {playerData.contract.status === "active" && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Amount:</span>
+                    <span className="text-white">
+                      {playerData.contract.requestedAmount} ETH
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Duration:</span>
+                    <span className="text-white">
+                      {playerData.contract.durationInSeasons} seasons
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Expires:</span>
+                    <span className="text-white">
+                      Season {playerData.contract.seasonEnds}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              {playerData.contract.status === "pending" && (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Requested:</span>
+                    <span className="text-white">
+                      {playerData.contract.requestedAmount} ETH
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Duration:</span>
+                    <span className="text-white">
+                      {playerData.contract.durationInSeasons} seasons
+                    </span>
+                  </div>
+                  <div className="text-center mt-2 text-yellow-400 text-sm">
+                    Waiting for captain approval
+                  </div>
+                </>
+              )}
+
+              {playerData.contract.status === "rejected" && (
+                <div className="text-center mt-2">
+                  <p className="text-red-400 text-sm mb-2">
+                    Your contract request was rejected
+                  </p>
+                  <button
+                    onClick={() => setShowContractModal(true)}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors"
+                  >
+                    Request New Contract
+                  </button>
+                </div>
+              )}
+
+              {playerData.contract.status === "expired" && (
+                <div className="text-center mt-2">
+                  <p className="text-gray-400 text-sm mb-2">
+                    Your contract has expired
+                  </p>
+                  <button
+                    onClick={() => setShowContractModal(true)}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors"
+                  >
+                    Request New Contract
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-gray-400 text-sm mb-3">
+                You don't have a contract with this team. Request one to secure
+                your position and earn ETH.
+              </p>
+              <button
+                onClick={() => setShowContractModal(true)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm transition-colors"
+              >
+                Request Contract
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Contract Request Modal */}
+      {showContractModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="glass-container p-4 w-[90%] max-w-md rounded-xl shadow-lg">
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Request Contract
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">
+                  Contract Amount (ETH)
+                </label>
+                <input
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  value={contractAmount}
+                  onChange={(e) =>
+                    setContractAmount(parseFloat(e.target.value))
+                  }
+                  className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-sm mb-1">
+                  Duration (Seasons)
+                </label>
+                <select
+                  value={contractDuration}
+                  onChange={(e) =>
+                    setContractDuration(parseInt(e.target.value))
+                  }
+                  className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
+                >
+                  <option value={1}>1 Season</option>
+                  <option value={2}>2 Seasons</option>
+                  <option value={3}>3 Seasons</option>
+                  <option value={4}>4 Seasons</option>
+                  <option value={5}>5 Seasons</option>
+                </select>
+              </div>
+
+              {contractError && (
+                <div className="text-red-400 text-sm">{contractError}</div>
+              )}
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setShowContractModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleContractRequest}
+                  disabled={contractLoading}
+                  className={`flex-1 px-4 py-2 bg-green-600 text-white rounded-lg ${
+                    contractLoading ? "opacity-50" : "hover:bg-green-700"
+                  }`}
+                >
+                  {contractLoading ? "Submitting..." : "Submit Request"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Jersey Customization Modal */}
       <JerseyCustomizationModal

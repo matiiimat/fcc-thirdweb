@@ -24,6 +24,7 @@ export interface ISeason extends Document {
   matchDayInterval: number; // Days between match days
   currentMatchDay: number;
   totalMatchDays: number;
+  seasonNumber: number; // Current season number
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,6 +118,10 @@ const SeasonSchema = new Schema<ISeason>({
   totalMatchDays: {
     type: Number,
     default: 0,
+  },
+  seasonNumber: {
+    type: Number,
+    default: 1,
   },
 }, {
   timestamps: true,
@@ -218,6 +223,64 @@ SeasonSchema.methods.generateSchedule = async function() {
   this.currentMatchDay = 1;
   this.totalMatchDays = rounds;
   await this.save();
+};
+
+// Method to activate a new season
+SeasonSchema.methods.activateSeason = async function() {
+  const TeamModel = mongoose.model('Team');
+  const SeasonModel = mongoose.model('Season');
+  
+  // Find the previous active season
+  const previousSeason = await SeasonModel.findOne({
+    status: { $in: ['ongoing', 'completed'] }
+  }).sort({ seasonNumber: -1 });
+  
+  // Increment season number
+  if (previousSeason) {
+    this.seasonNumber = previousSeason.seasonNumber + 1;
+  } else {
+    this.seasonNumber = 1;
+  }
+  
+  // Reset team standings in the league
+  // This resets all the stats that are displayed in the TeamLeaderboard component
+  await TeamModel.updateMany({}, {
+    $set: {
+      'stats.gamesPlayed': 0,
+      'stats.wins': 0,
+      'stats.draws': 0,
+      'stats.losses': 0,
+      'stats.goalsFor': 0,
+      'stats.goalsAgainst': 0,
+      'stats.goalDifference': 0,
+      'stats.points': 0,
+      'stats.cleanSheets': 0,
+    }
+  });
+  
+  // Reset all registered teams in the season
+  this.registeredTeams.forEach((team: ISeasonTeam) => {
+    team.points = 0;
+    team.gamesPlayed = 0;
+    team.wins = 0;
+    team.draws = 0;
+    team.losses = 0;
+    team.goalsFor = 0;
+    team.goalsAgainst = 0;
+    team.goalDifference = 0;
+  });
+  
+  // Mark previous season as completed
+  if (previousSeason && previousSeason.status === 'ongoing') {
+    previousSeason.status = 'completed';
+    await previousSeason.save();
+  }
+  
+  // Set this season as ongoing
+  this.status = 'ongoing';
+  await this.save();
+  
+  return this;
 };
 
 const SeasonModel = mongoose.models.Season || mongoose.model<ISeason>('Season', SeasonSchema);

@@ -6,12 +6,24 @@ import sdk from "@farcaster/frame-sdk";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ContractPaymentModal from "../components/ContractPaymentModal";
+
+interface PlayerContract {
+  requestedAmount: number;
+  durationInSeasons: number;
+  status: "pending" | "active" | "rejected" | "expired";
+  startDate: Date | null;
+  endDate: Date | null;
+  seasonStarted: number;
+  seasonEnds: number;
+}
 
 interface Player {
   ethAddress: string;
   playerName: string;
   username?: string;
   isBot?: boolean;
+  contract?: PlayerContract;
   stats?: {
     strength: number;
     stamina: number;
@@ -40,6 +52,9 @@ export default function ManageTeamPage() {
     captainAddress: string;
   } | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [contractAmount, setContractAmount] = useState(0);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -322,16 +337,143 @@ export default function ManageTeamPage() {
                   </div>
                 )}
 
+                {/* Contract Information */}
+                {player.contract && (
+                  <div className="mt-2 p-2 bg-gray-800/50 rounded-lg">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-400 text-xs">Contract:</span>
+                      <span
+                        className={`text-xs font-medium ${
+                          player.contract.status === "active"
+                            ? "text-green-400"
+                            : player.contract.status === "pending"
+                            ? "text-yellow-400"
+                            : player.contract.status === "rejected"
+                            ? "text-red-400"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {player.contract.status.charAt(0).toUpperCase() +
+                          player.contract.status.slice(1)}
+                      </span>
+                    </div>
+
+                    {player.contract.status === "active" && (
+                      <div className="text-xs text-gray-300">
+                        {player.contract.requestedAmount} ETH until Season{" "}
+                        {player.contract.seasonEnds}
+                      </div>
+                    )}
+
+                    {player.contract.status === "pending" && (
+                      <div className="text-xs text-gray-300 mb-2">
+                        Request: {player.contract.requestedAmount} ETH for{" "}
+                        {player.contract.durationInSeasons}{" "}
+                        {player.contract.durationInSeasons === 1
+                          ? "season"
+                          : "seasons"}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Action Buttons - Only visible to team captain */}
                 {address?.toLowerCase() ===
                   teamData?.captainAddress.toLowerCase() && (
                   <div className="flex gap-2 mt-2">
-                    <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
-                      Renew Contract
-                    </button>
-                    <button className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm">
-                      Release Player
-                    </button>
+                    {player.contract?.status === "pending" ? (
+                      <>
+                        <button
+                          onClick={async () => {
+                            try {
+                              setUpdating(true);
+                              const response = await fetch(
+                                "/api/contracts/respond",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    "x-wallet-address": address,
+                                  },
+                                  body: JSON.stringify({
+                                    playerAddress: player.ethAddress,
+                                    action: "accept",
+                                  }),
+                                }
+                              );
+
+                              if (!response.ok) {
+                                const data = await response.json();
+                                throw new Error(
+                                  data.error || "Failed to accept contract"
+                                );
+                              }
+
+                              const data = await response.json();
+
+                              // Show payment modal
+                              setSelectedPlayer(player);
+                              setContractAmount(data.amount);
+                              setShowPaymentModal(true);
+                            } catch (error) {
+                              console.error("Error accepting contract:", error);
+                            } finally {
+                              setUpdating(false);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+                        >
+                          Accept Contract
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              setUpdating(true);
+                              const response = await fetch(
+                                "/api/contracts/respond",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    "x-wallet-address": address,
+                                  },
+                                  body: JSON.stringify({
+                                    playerAddress: player.ethAddress,
+                                    action: "reject",
+                                  }),
+                                }
+                              );
+
+                              if (!response.ok) {
+                                const data = await response.json();
+                                throw new Error(
+                                  data.error || "Failed to reject contract"
+                                );
+                              }
+
+                              // Refresh the page to show updated contract status
+                              window.location.reload();
+                            } catch (error) {
+                              console.error("Error rejecting contract:", error);
+                            } finally {
+                              setUpdating(false);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+                        >
+                          Reject Contract
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
+                          Renew Contract
+                        </button>
+                        <button className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm">
+                          Release Player
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -350,6 +492,20 @@ export default function ManageTeamPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Contract Payment Modal */}
+      {showPaymentModal && selectedPlayer && (
+        <ContractPaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          playerAddress={selectedPlayer.ethAddress}
+          amount={contractAmount}
+          onSuccess={() => {
+            // Refresh the page to show updated contract status
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

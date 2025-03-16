@@ -24,6 +24,16 @@ export interface IGameResult {
 }
 
 // Interface for the player document
+export interface IPlayerContract {
+  requestedAmount: number;
+  durationInSeasons: number;
+  status: 'pending' | 'active' | 'rejected' | 'expired';
+  startDate: Date | null;
+  endDate: Date | null;
+  seasonStarted: number;
+  seasonEnds: number;
+}
+
 export interface IPlayer extends Document {
   playerId: string;
   playerName: string;
@@ -49,6 +59,7 @@ export interface IPlayer extends Document {
     count: number;
     resetTime: Date | null;
   };
+  contract?: IPlayerContract;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -172,6 +183,51 @@ const GameResultSchema = new Schema<IGameResult>({
   },
 });
 
+// Schema for player contract
+const PlayerContractSchema = new Schema<IPlayerContract>({
+  requestedAmount: {
+    type: Number,
+    required: true,
+    min: 0.001,
+    validate: {
+      validator: Number.isFinite,
+      message: '{VALUE} is not a valid number',
+    },
+  },
+  durationInSeasons: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+    validate: {
+      validator: Number.isInteger,
+      message: '{VALUE} is not a valid integer',
+    },
+  },
+  status: {
+    type: String,
+    required: true,
+    enum: ['pending', 'active', 'rejected', 'expired'],
+    default: 'pending',
+  },
+  startDate: {
+    type: Date,
+    default: null,
+  },
+  endDate: {
+    type: Date,
+    default: null,
+  },
+  seasonStarted: {
+    type: Number,
+    default: 0,
+  },
+  seasonEnds: {
+    type: Number,
+    default: 0,
+  },
+});
+
 // Main player schema
 const PlayerSchema = new Schema<IPlayer>(
   {
@@ -281,6 +337,10 @@ const PlayerSchema = new Schema<IPlayer>(
         type: Date,
         default: null
       }
+    },
+    contract: {
+      type: PlayerContractSchema,
+      default: null
     }
   },
   {
