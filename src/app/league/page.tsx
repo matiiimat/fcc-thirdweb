@@ -42,6 +42,8 @@ export default function LeaguePage() {
   const [matchData, setMatchData] = useState<any>(null);
   const [showMatchPopup, setShowMatchPopup] = useState(false);
   const [simulatingMatch, setSimulatingMatch] = useState(false);
+  const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
+  const [matchInProgress, setMatchInProgress] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -68,6 +70,39 @@ export default function LeaguePage() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Check for active matches when the page loads
+  useEffect(() => {
+    const checkForActiveMatches = async () => {
+      try {
+        // Fetch in-progress matches from the database
+        const response = await fetch("/api/matches?status=inProgress");
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.success && data.matches && data.matches.length > 0) {
+            // Get the most recent in-progress match
+            const activeMatch = data.matches[0];
+
+            // Set the match data
+            setMatchData({ match: activeMatch });
+            setMatchInProgress(true);
+            setActiveMatchId(activeMatch._id);
+
+            // Show the match popup if it's in progress
+            setShowMatchPopup(true);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking for active matches:", error);
+      }
+    };
+
+    if (!loading) {
+      checkForActiveMatches();
+    }
+  }, [loading]);
 
   // Function to simulate a match between two teams
   const simulateMatch = async () => {
@@ -105,9 +140,9 @@ export default function LeaguePage() {
         throw new Error(data.error || "Failed to simulate match");
       }
 
-      // Step 2: Immediately save the match result to the database in the background
-      // This ensures the result is recorded even if the player quits early
-      const saveMatchPromise = fetch("/api/matches/save", {
+      // Step 2: Save the match to the database as "in progress"
+      // This allows other players to see the match in progress
+      const saveMatchResponse = await fetch("/api/matches/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -124,40 +159,23 @@ export default function LeaguePage() {
           awayStats: data.match.awayStats,
           homePlayerRatings: data.match.homePlayerRatings,
           awayPlayerRatings: data.match.awayPlayerRatings,
+          events: data.match.events,
+          isInProgress: true, // Mark as in progress, not completed
         }),
       });
 
-      // Step 3: Update team stats in the database immediately
-      const updateHomeTeamPromise = fetch(`/api/teams/${homeTeamId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          stats: data.stats.home,
-        }),
-      });
+      if (!saveMatchResponse.ok) {
+        throw new Error("Failed to save match to database");
+      }
 
-      const updateAwayTeamPromise = fetch(`/api/teams/${awayTeamId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          stats: data.stats.away,
-        }),
-      });
+      const saveMatchData = await saveMatchResponse.json();
+      const matchId = saveMatchData.matchId;
 
-      // Start all database operations in parallel but don't wait for them to complete
-      // This ensures we show the match popup immediately while saving in the background
-      Promise.all([
-        saveMatchPromise,
-        updateHomeTeamPromise,
-        updateAwayTeamPromise,
-      ]).catch((error) => {
-        console.warn("Background operations failed:", error);
-        // We don't show these errors to the user since the match simulation will continue
-      });
+      // Store the match ID for tracking
+      setActiveMatchId(matchId);
+      setMatchInProgress(true);
+
+      // We'll update team stats only when the match is completed
 
       // Show the match popup immediately
       setMatchData(data);
@@ -301,12 +319,78 @@ export default function LeaguePage() {
       </main>
       <Footer />
 
+      {/* Live Match Indicator - only shown when there's an active match but popup is closed */}
+      {matchInProgress && !showMatchPopup && (
+        <div
+          className="fixed bottom-20 right-4 bg-green-600 text-white p-3 rounded-full shadow-lg cursor-pointer flex items-center justify-center animate-pulse"
+          onClick={() => setShowMatchPopup(true)}
+          aria-label="View live match"
+        >
+          <div className="mr-2 w-3 h-3 bg-red-500 rounded-full"></div>
+          <span className="text-sm font-medium">LIVE MATCH</span>
+        </div>
+      )}
+
       {/* Match Popup */}
       {showMatchPopup && matchData && (
         <EnhancedTeamMatchPopup
           match={matchData.match}
           teamStats={matchData.stats}
           onClose={() => setShowMatchPopup(false)}
+          onMatchComplete={async () => {
+            // When match is completed, update the database
+            if (activeMatchId) {
+              try {
+                // 1. Mark the match as completed
+                await fetch(`/api/matches/${activeMatchId}/complete`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    result: matchData.match.result,
+                    homeStats: matchData.match.homeStats,
+                    awayStats: matchData.match.awayStats,
+                  }),
+                });
+
+                // 2. Update team stats
+                const homeTeamId = matchData.match.homeTeamId;
+                const awayTeamId = matchData.match.awayTeamId;
+
+                await Promise.all([
+                  fetch(`/api/teams/${homeTeamId}`, {
+                    method: "PATCH",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      stats: matchData.stats.home,
+                    }),
+                  }),
+                  fetch(`/api/teams/${awayTeamId}`, {
+                    method: "PATCH",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      stats: matchData.stats.away,
+                    }),
+                  }),
+                ]);
+
+                // 3. Clear the active match state
+                setMatchInProgress(false);
+                setActiveMatchId(null);
+
+                // 4. Force refresh the leaderboard
+                // This will be handled by reloading the page or component
+                window.location.reload();
+              } catch (error) {
+                console.error("Error completing match:", error);
+              }
+            }
+          }}
         />
       )}
     </div>

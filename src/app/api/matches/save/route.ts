@@ -57,6 +57,7 @@ const saveMatchRequestSchema = z.object({
       teamName: z.string(),
     })
   ),
+  isInProgress: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -74,7 +75,8 @@ export async function POST(request: NextRequest) {
       homeTeamName: validatedData.homeTeamName,
       awayTeamName: validatedData.awayTeamName,
       scheduledDate: new Date(),
-      isCompleted: true,
+      isCompleted: validatedData.isInProgress ? false : true,
+      isInProgress: !!validatedData.isInProgress,
       homeTactic: validatedData.homeTactic,
       awayTactic: validatedData.awayTactic,
       result: validatedData.result,

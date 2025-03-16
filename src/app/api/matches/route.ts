@@ -37,6 +37,9 @@ export async function GET(request: NextRequest) {
     } else if (status === 'upcoming') {
       query.isCompleted = false;
       query.scheduledDate = { $gt: new Date() };
+    } else if (status === 'inProgress') {
+      query.isCompleted = false;
+      query.isInProgress = true;
     }
 
     // Calculate pagination

@@ -80,6 +80,7 @@ interface EnhancedMatch {
 interface EnhancedTeamMatchPopupProps {
   match: EnhancedMatch;
   onClose: () => void;
+  onMatchComplete?: () => void;
   teamStats?: {
     home: ITeamStats;
     away: ITeamStats;
@@ -239,6 +240,7 @@ const MatchStatsComparison = ({
 const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
   match,
   onClose,
+  onMatchComplete,
   teamStats,
 }) => {
   const [activeTab, setActiveTab] = useState<
@@ -272,6 +274,10 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
       // Set match as completed when we reach the end
       if (newMinute >= MATCH_DURATION) {
         setMatchCompleted(true);
+        // Call the onMatchComplete callback if provided
+        if (onMatchComplete) {
+          onMatchComplete();
+        }
       }
     }, autoplaySpeed);
 
