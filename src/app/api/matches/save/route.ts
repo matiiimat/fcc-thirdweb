@@ -20,43 +20,79 @@ const saveMatchRequestSchema = z.object({
     possession: z.number(),
     shots: z.number(),
     shotsOnTarget: z.number(),
-    corners: z.number(),
+    passes: z.number().default(0),
+    passAccuracy: z.number().default(0),
+    tackles: z.number().default(0),
     fouls: z.number(),
-  }),
+  }).passthrough(), // Allow additional properties like corners
   awayStats: z.object({
     possession: z.number(),
     shots: z.number(),
     shotsOnTarget: z.number(),
-    corners: z.number(),
+    passes: z.number().default(0),
+    passAccuracy: z.number().default(0),
+    tackles: z.number().default(0),
     fouls: z.number(),
-  }),
+  }).passthrough(), // Allow additional properties like corners
   homePlayerRatings: z.array(
     z.object({
       ethAddress: z.string(),
+      username: z.string().optional(),
+      position: z.enum(["GK", "D", "M", "F"]).optional(),
       rating: z.number(),
-      goals: z.number(),
-      assists: z.number(),
-      saves: z.number().optional(),
-    })
+      stats: z.object({
+        goals: z.number().default(0),
+        assists: z.number().default(0),
+        shots: z.number().default(0),
+        passes: z.number().default(0),
+        tackles: z.number().default(0),
+        saves: z.number().optional(),
+      }).optional().default({
+        goals: 0,
+        assists: 0,
+        shots: 0,
+        passes: 0,
+        tackles: 0
+      }),
+    }).passthrough()
   ),
   awayPlayerRatings: z.array(
     z.object({
       ethAddress: z.string(),
+      username: z.string().optional(),
+      position: z.enum(["GK", "D", "M", "F"]).optional(),
       rating: z.number(),
-      goals: z.number(),
-      assists: z.number(),
-      saves: z.number().optional(),
-    })
+      stats: z.object({
+        goals: z.number().default(0),
+        assists: z.number().default(0),
+        shots: z.number().default(0),
+        passes: z.number().default(0),
+        tackles: z.number().default(0),
+        saves: z.number().optional(),
+      }).optional().default({
+        goals: 0,
+        assists: 0,
+        shots: 0,
+        passes: 0,
+        tackles: 0
+      }),
+    }).passthrough()
   ),
   events: z.array(
     z.object({
-      type: z.string(),
+      type: z.union([
+        z.literal("goal"),
+        z.literal("action"),
+        z.literal("system"),
+        z.literal("skill_check"),
+        z.string() // Fallback for any other types
+      ]),
       minute: z.number(),
       description: z.string(),
       playerAddress: z.string().optional(),
       teamName: z.string(),
     })
-  ),
+  ).optional().default([]),
   isInProgress: z.boolean().optional(),
 });
 
@@ -68,8 +104,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = saveMatchRequestSchema.parse(body);
 
-    // Create a new match document
-    const match = new MatchModel({
+    // Create a new match document with proper defaults
+    const matchData = {
       homeTeamId: new mongoose.Types.ObjectId(validatedData.homeTeamId),
       awayTeamId: new mongoose.Types.ObjectId(validatedData.awayTeamId),
       homeTeamName: validatedData.homeTeamName,
@@ -84,8 +120,10 @@ export async function POST(request: NextRequest) {
       awayStats: validatedData.awayStats,
       homePlayerRatings: validatedData.homePlayerRatings,
       awayPlayerRatings: validatedData.awayPlayerRatings,
-      events: validatedData.events,
-    });
+      events: validatedData.events || [],
+    };
+
+    const match = new MatchModel(matchData);
 
     // Save the match
     const savedMatch = await match.save();
