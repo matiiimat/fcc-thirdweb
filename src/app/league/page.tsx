@@ -81,7 +81,7 @@ export default function LeaguePage() {
       const homeTacticId = "67d44eab8a79d9fbbf83b3d4";
       const awayTacticId = "67d44eab8a79d9fbbf83b3d3";
 
-      // Step 1: Simulate the match
+      // Step 1: Simulate the match - this generates the result immediately
       const response = await fetch("/api/teams/teammatch", {
         method: "POST",
         headers: {
@@ -105,8 +105,9 @@ export default function LeaguePage() {
         throw new Error(data.error || "Failed to simulate match");
       }
 
-      // Step 2: Save the match to the database
-      const saveResponse = await fetch("/api/matches/save", {
+      // Step 2: Immediately save the match result to the database in the background
+      // This ensures the result is recorded even if the player quits early
+      const saveMatchPromise = fetch("/api/matches/save", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -126,14 +127,8 @@ export default function LeaguePage() {
         }),
       });
 
-      if (!saveResponse.ok) {
-        const saveErrorData = await saveResponse.json();
-        console.warn("Failed to save match:", saveErrorData.error);
-        // Continue even if saving fails, as we still want to show the match popup
-      }
-
-      // Step 3: Update team stats in the database
-      const updateHomeTeamResponse = await fetch(`/api/teams/${homeTeamId}`, {
+      // Step 3: Update team stats in the database immediately
+      const updateHomeTeamPromise = fetch(`/api/teams/${homeTeamId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -143,7 +138,7 @@ export default function LeaguePage() {
         }),
       });
 
-      const updateAwayTeamResponse = await fetch(`/api/teams/${awayTeamId}`, {
+      const updateAwayTeamPromise = fetch(`/api/teams/${awayTeamId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -153,12 +148,18 @@ export default function LeaguePage() {
         }),
       });
 
-      if (!updateHomeTeamResponse.ok || !updateAwayTeamResponse.ok) {
-        console.warn("Failed to update team stats");
-        // Continue even if updating stats fails
-      }
+      // Start all database operations in parallel but don't wait for them to complete
+      // This ensures we show the match popup immediately while saving in the background
+      Promise.all([
+        saveMatchPromise,
+        updateHomeTeamPromise,
+        updateAwayTeamPromise,
+      ]).catch((error) => {
+        console.warn("Background operations failed:", error);
+        // We don't show these errors to the user since the match simulation will continue
+      });
 
-      // Show the match popup
+      // Show the match popup immediately
       setMatchData(data);
       setShowMatchPopup(true);
     } catch (err) {

@@ -245,9 +245,8 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
     "overview" | "stats" | "players" | "events"
   >("events");
   const [currentMinute, setCurrentMinute] = useState(0);
-  const [isLiveMode, setIsLiveMode] = useState(true);
-  const [autoplaySpeed, setAutoplaySpeed] = useState(667); // ~667ms per minute = 90 minutes in ~60 seconds
   const [matchCompleted, setMatchCompleted] = useState(false);
+  const autoplaySpeed = 667; // ~667ms per minute = 90 minutes in ~60 seconds (normal speed)
   const MATCH_DURATION = 90; // Football matches last 90 minutes
 
   // Initialize match
@@ -255,13 +254,12 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
     // Start at minute 0
     setCurrentMinute(0);
     setMatchCompleted(false);
-    setIsLiveMode(true);
   }, [match.id]); // Reset when match changes
 
-  // Auto-advance the match time in live mode
+  // Auto-advance the match time
   useEffect(() => {
-    if (!isLiveMode || currentMinute >= MATCH_DURATION) {
-      if (currentMinute >= MATCH_DURATION && !matchCompleted) {
+    if (currentMinute >= MATCH_DURATION) {
+      if (!matchCompleted) {
         setMatchCompleted(true);
       }
       return;
@@ -278,20 +276,12 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
     }, autoplaySpeed);
 
     return () => clearTimeout(timer);
-  }, [
-    currentMinute,
-    isLiveMode,
-    autoplaySpeed,
-    matchCompleted,
-    MATCH_DURATION,
-  ]);
+  }, [currentMinute, autoplaySpeed, matchCompleted, MATCH_DURATION]);
 
-  // Get events up to current minute (for live mode)
+  // Get events up to current minute
   const visibleEvents =
     match.events?.filter((event) => {
-      if (!isLiveMode) return true;
-
-      // For live mode, only show events up to the current minute
+      // Only show events up to the current minute
       // Convert event minute to a number to ensure proper comparison
       const eventMinute =
         typeof event.minute === "string"
@@ -323,24 +313,27 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
         onClick={onClose}
       ></div>
       <div className="glass-container relative bg-[#1a1d21]/90 p-6 rounded-xl shadow-xl max-w-2xl w-full mx-auto z-10 max-h-[90vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-white"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        {/* Only show close button in the corner when match is completed */}
+        {matchCompleted && (
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 text-gray-400 hover:text-white"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
 
         <h2 className="text-xl font-bold text-center mb-4">Match Result</h2>
 
@@ -483,77 +476,42 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
 
         {activeTab === "events" && (
           <div className="space-y-4">
-            {/* Live Mode Controls */}
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="live-mode"
-                  checked={isLiveMode}
-                  onChange={() => setIsLiveMode(!isLiveMode)}
-                  className="mr-2"
-                />
-                <label htmlFor="live-mode" className="text-sm text-white">
-                  Live Mode
-                </label>
-              </div>
-
-              {isLiveMode && (
-                <div className="flex items-center">
-                  <span className="text-sm text-white mr-2">Speed:</span>
-                  <select
-                    value={autoplaySpeed}
-                    onChange={(e) => setAutoplaySpeed(Number(e.target.value))}
-                    className="bg-gray-800 text-white text-sm rounded px-2 py-1"
-                  >
-                    <option value="1000">Slow (90s)</option>
-                    <option value="667">Normal (60s)</option>
-                    <option value="333">Fast (30s)</option>
-                  </select>
-                </div>
-              )}
-            </div>
-
             {/* Match Time Display */}
-            {isLiveMode && (
-              <div className="text-center mb-4">
-                <div className="text-3xl font-bold text-white">
-                  {currentMinute}′
-                </div>
-                <div className="w-full bg-gray-700 h-2 rounded-full mt-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${(currentMinute / MATCH_DURATION) * 100}%`,
-                    }}
-                  ></div>
-                </div>
+            <div className="text-center mb-4">
+              <div className="text-3xl font-bold text-white">
+                {currentMinute}′
               </div>
-            )}
+              <div className="w-full bg-gray-700 h-2 rounded-full mt-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${(currentMinute / MATCH_DURATION) * 100}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
 
             {/* Score Display */}
             <div className="flex justify-center items-center space-x-4 mb-4">
               <div className="text-center">
                 <div className="font-semibold">{match.homeTeam}</div>
                 <div className="text-3xl font-bold text-green-500">
-                  {isLiveMode
-                    ? visibleEvents.filter(
-                        (e) =>
-                          e.type === "goal" && e.teamName === match.homeTeam
-                      ).length
-                    : match.result?.homeScore || 0}
+                  {
+                    visibleEvents.filter(
+                      (e) => e.type === "goal" && e.teamName === match.homeTeam
+                    ).length
+                  }
                 </div>
               </div>
               <div className="text-2xl font-bold">-</div>
               <div className="text-center">
                 <div className="font-semibold">{match.awayTeam}</div>
                 <div className="text-3xl font-bold text-green-500">
-                  {isLiveMode
-                    ? visibleEvents.filter(
-                        (e) =>
-                          e.type === "goal" && e.teamName === match.awayTeam
-                      ).length
-                    : match.result?.awayScore || 0}
+                  {
+                    visibleEvents.filter(
+                      (e) => e.type === "goal" && e.teamName === match.awayTeam
+                    ).length
+                  }
                 </div>
               </div>
             </div>
@@ -617,15 +575,17 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
             </div>
           )}
 
-        {/* Close Button */}
-        <div className="mt-6 text-center">
-          <button
-            onClick={onClose}
-            className="gradient-button py-2 px-6 rounded-lg text-sm transition-all duration-300 active:scale-95"
-          >
-            Close
-          </button>
-        </div>
+        {/* Close Button - only shown when match is completed */}
+        {matchCompleted && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={onClose}
+              className="gradient-button py-2 px-6 rounded-lg text-sm transition-all duration-300 active:scale-95"
+            >
+              Close
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
