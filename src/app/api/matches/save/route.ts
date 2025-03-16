@@ -96,13 +96,44 @@ export async function POST(request: NextRequest) {
       message: "Match saved successfully",
     });
   } catch (error) {
+    // Enhanced error logging with more details
     console.error("Error saving match:", error);
+    
+    // Determine the specific error type and provide a more detailed message
+    let errorMessage = "Failed to save match";
+    let errorDetails = null;
+    let statusCode = 500;
+    
+    if (error instanceof mongoose.Error.ValidationError) {
+      // Mongoose validation error
+      errorMessage = "Match validation failed";
+      errorDetails = Object.values(error.errors).map(err => err.message).join(', ');
+      statusCode = 400;
+    } else if (error instanceof mongoose.Error.CastError) {
+      // Invalid ID format
+      errorMessage = "Invalid ID format";
+      errorDetails = error.message;
+      statusCode = 400;
+    } else if (error instanceof z.ZodError) {
+      // Zod validation error
+      errorMessage = "Invalid request data";
+      errorDetails = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+      statusCode = 400;
+    } else if (error instanceof Error) {
+      // Generic Error with message
+      errorMessage = error.message;
+      errorDetails = error.stack;
+    }
+    
+    // Return a detailed error response
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to save match",
+        error: errorMessage,
+        details: errorDetails,
+        timestamp: new Date().toISOString(),
+        endpoint: "/api/matches/save"
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

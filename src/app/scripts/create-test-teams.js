@@ -8,7 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // MongoDB connection string - will be replaced by the actual URI
-const uri = "mongodb+srv://username:pass@url/?retryWrites=true&w=majority&appName=name";
+//const uri = "mongodb+srv://username:pass@url/?retryWrites=true&w=majority&appName=name";
+const uri = "mongodb+srv://mathieulr21:CHBTkLgXd9Hq2llV@fcc-test-cluster.ofxet.mongodb.net/?retryWrites=true&w=majority&appName=fcc-test-cluster";
 
 
 // Bot player stats configurations
@@ -37,13 +38,13 @@ const TEAM2_PLAYER_STATS = {
 // Team configurations
 const TEAMS = [
   {
-    name: "AC Test 1",
+    name: "FC Test 3",
     stats: TEAM1_PLAYER_STATS,
     formation: "4-3-3",
     tacticalStyle: "Tiki-Taka"
   },
   {
-    name: "FC Test 2",
+    name: "FC Test 4",
     stats: TEAM2_PLAYER_STATS,
     formation: "4-4-2",
     tacticalStyle: "None"

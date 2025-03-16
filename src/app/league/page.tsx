@@ -111,10 +111,10 @@ export default function LeaguePage() {
 
     try {
       // Team and tactic IDs provided by the user
-      const homeTeamId = "67d6ed37b7ed6f94251693a9";
-      const awayTeamId = "67d6ed37b7ed6f94251693aa";
-      const homeTacticId = "67d6ed37b7ed6f94251693a7";
-      const awayTacticId = "67d6ed37b7ed6f94251693a8";
+      const homeTeamId = "67d6f19c7d3400bac3e7c747";
+      const awayTeamId = "67d6f19c7d3400bac3e7c748";
+      const homeTacticId = "67d6f19c7d3400bac3e7c745";
+      const awayTacticId = "67d6f19c7d3400bac3e7c746";
 
       // Step 1: Simulate the match - this generates the result immediately
       const response = await fetch("/api/teams/teammatch", {
@@ -165,7 +165,14 @@ export default function LeaguePage() {
       });
 
       if (!saveMatchResponse.ok) {
-        throw new Error("Failed to save match to database");
+        // Get detailed error information from the response
+        const errorData = await saveMatchResponse.json();
+        const errorMessage =
+          errorData.error || "Failed to save match to database";
+        const errorDetails = errorData.details
+          ? `\nDetails: ${errorData.details}`
+          : "";
+        throw new Error(`${errorMessage}${errorDetails}`);
       }
 
       const saveMatchData = await saveMatchResponse.json();
