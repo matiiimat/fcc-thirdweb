@@ -282,7 +282,13 @@ const EnhancedTeamMatchPopup: React.FC<EnhancedTeamMatchPopupProps> = ({
     }, autoplaySpeed);
 
     return () => clearTimeout(timer);
-  }, [currentMinute, autoplaySpeed, matchCompleted, MATCH_DURATION]);
+  }, [
+    currentMinute,
+    autoplaySpeed,
+    matchCompleted,
+    MATCH_DURATION,
+    onMatchComplete,
+  ]);
 
   // Get events up to current minute
   const visibleEvents =

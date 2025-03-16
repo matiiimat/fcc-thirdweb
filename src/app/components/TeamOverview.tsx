@@ -427,8 +427,8 @@ export default function TeamOverview({
           ) : (
             <div className="text-center">
               <p className="text-gray-400 text-sm mb-3">
-                You don't have a contract with this team. Request one to secure
-                your position and earn ETH.
+                You don&apos;t have a contract with this team. Request one to
+                secure your position and earn ETH.
               </p>
               <button
                 onClick={() => setShowContractModal(true)}

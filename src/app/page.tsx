@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import sdk, { Context } from "@farcaster/frame-sdk";
+import Image from "next/image";
 
 export type FrameContext = Context.FrameContext;
 export type SafeAreaInsets = Context.SafeAreaInsets;
@@ -255,10 +256,12 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 mb-1">
               {context?.user?.pfpUrl ? (
                 <div className="w-8 h-8 rounded-full overflow-hidden">
-                  <img
+                  <Image
                     src={context.user.pfpUrl}
                     alt="Profile"
                     className="w-full h-full object-cover"
+                    width={32}
+                    height={32}
                   />
                 </div>
               ) : (

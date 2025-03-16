@@ -167,52 +167,57 @@ export default function Store() {
     fetchPlayer();
   }, [isConnected, address, router]);
 
-  const processPurchase = async (item: StoreItem, selectedSkill?: string) => {
-    if (!isConnected || !address) return;
-    setError(null);
-    setProcessing(item.id);
-    try {
-      const response = await fetch("/api/game/store", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": address,
-        },
-        body: JSON.stringify({
-          playerId: player?.playerId,
-          item,
-          selectedSkill,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to purchase item");
+  const processPurchase = useCallback(
+    async (item: StoreItem, selectedSkill?: string) => {
+      if (!isConnected || !address) return;
+      setError(null);
+      setProcessing(item.id);
+      try {
+        const response = await fetch("/api/game/store", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-wallet-address": address,
+          },
+          body: JSON.stringify({
+            playerId: player?.playerId,
+            item,
+            selectedSkill,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to purchase item");
+        }
+        setPlayer((prev) =>
+          prev
+            ? {
+                ...prev,
+                privateTrainer: data.privateTrainer,
+                leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
+                managementCertificate:
+                  data.managementCertificate || prev.managementCertificate,
+                lastTrainingDate: data.lastTrainingDate,
+                energyDrinkPurchases:
+                  data.energyDrinkPurchases || prev.energyDrinkPurchases,
+              }
+            : null
+        );
+        // Reset modal state
+        setShowSkillModal(false);
+        setPendingPurchase(null);
+        setSelectedSkill(null);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to purchase item"
+        );
+      } finally {
+        setProcessing("");
+        triggerConfetti(); // Trigger confetti after successful purchase
       }
-      setPlayer((prev) =>
-        prev
-          ? {
-              ...prev,
-              privateTrainer: data.privateTrainer,
-              leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
-              managementCertificate:
-                data.managementCertificate || prev.managementCertificate,
-              lastTrainingDate: data.lastTrainingDate,
-              energyDrinkPurchases:
-                data.energyDrinkPurchases || prev.energyDrinkPurchases,
-            }
-          : null
-      );
-      // Reset modal state
-      setShowSkillModal(false);
-      setPendingPurchase(null);
-      setSelectedSkill(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to purchase item");
-    } finally {
-      setProcessing("");
-      triggerConfetti(); // Trigger confetti after successful purchase
-    }
-  };
+    },
+    [isConnected, address, player, triggerConfetti]
+  );
 
   const handleSkillSelect = async () => {
     if (!pendingPurchase || !selectedSkill) return;
@@ -281,7 +286,7 @@ export default function Store() {
   }, [sendTransaction, processPurchase]);
 
   // Calculate energy drink price based on purchase count within 24 hours
-  const getEnergyDrinkPrice = () => {
+  const getEnergyDrinkPrice = useCallback(() => {
     const basePrice = 1000000000000000n; // 0.001 ETH
 
     if (!player?.energyDrinkPurchases?.resetTime) {
@@ -305,7 +310,7 @@ export default function Store() {
     // For count = 4: 2^4 = 16x price (0.016 ETH)
     const multiplier = 2n ** BigInt(player.energyDrinkPurchases.count);
     return basePrice * multiplier;
-  };
+  }, [player?.energyDrinkPurchases]);
 
   // Energy Drink transaction using wagmi
   const sendEnergyDrinkTx = useCallback(() => {
