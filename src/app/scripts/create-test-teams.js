@@ -10,6 +10,7 @@ const __dirname = dirname(__filename);
 // MongoDB connection string - will be replaced by the actual URI
 const uri = "mongodb+srv://username:pass@url/?retryWrites=true&w=majority&appName=name";
 
+
 // Bot player stats configurations
 const TEAM1_PLAYER_STATS = {
   strength: 2,
@@ -27,7 +28,7 @@ const TEAM2_PLAYER_STATS = {
   stamina: 1,
   passing: 1,
   shooting: 1,
-  defending: 1,
+  defending: 15,
   speed: 1,
   positioning: 1,
   workEthic: 1
@@ -168,6 +169,7 @@ const createTeam = (teamConfig, teamIndex, botAddresses) => {
       goalsFor: 0,
       goalsAgainst: 0,
       cleanSheets: 0,
+      goalDifference: 0, // Added this field
       tacticsUsed: []
     },
     isPublic: true
@@ -242,6 +244,14 @@ async function createTestTeams() {
       homeTacticId: team1.tactics[0]._id.toString(),
       awayTacticId: team2.tactics[0]._id.toString()
     }, null, 2));
+    
+    // Print instructions for updating the league page
+    console.log("\n=== IMPORTANT: Update the league page with these IDs ===");
+    console.log("Open src/app/league/page.tsx and replace lines 113-116 with:");
+    console.log(`      const homeTeamId = "${teamResults.insertedIds[0].toString()}";`);
+    console.log(`      const awayTeamId = "${teamResults.insertedIds[1].toString()}";`);
+    console.log(`      const homeTacticId = "${team1.tactics[0]._id.toString()}";`);
+    console.log(`      const awayTacticId = "${team2.tactics[0]._id.toString()}";`);
     
   } catch (error) {
     console.error("Error creating test teams:", error);

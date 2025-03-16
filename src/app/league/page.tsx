@@ -111,10 +111,10 @@ export default function LeaguePage() {
 
     try {
       // Team and tactic IDs provided by the user
-      const homeTeamId = "67d44eab8a79d9fbbf83b3d6";
-      const awayTeamId = "67d44eab8a79d9fbbf83b3d5";
-      const homeTacticId = "67d44eab8a79d9fbbf83b3d4";
-      const awayTacticId = "67d44eab8a79d9fbbf83b3d3";
+      const homeTeamId = "67d6ed37b7ed6f94251693a9";
+      const awayTeamId = "67d6ed37b7ed6f94251693aa";
+      const homeTacticId = "67d6ed37b7ed6f94251693a7";
+      const awayTacticId = "67d6ed37b7ed6f94251693a8";
 
       // Step 1: Simulate the match - this generates the result immediately
       const response = await fetch("/api/teams/teammatch", {
