@@ -256,7 +256,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-2 mb-1">
               {context?.user?.pfpUrl ? (
                 <div className="w-8 h-8 rounded-full overflow-hidden">
-                  <Image
+                  <img
                     src={context.user.pfpUrl}
                     alt="Profile"
                     className="w-full h-full object-cover"
