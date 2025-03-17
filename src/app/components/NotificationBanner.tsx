@@ -4,7 +4,7 @@ interface Notification {
   _id: string;
   fromTeamId: string;
   toPlayerId: string;
-  type: "TEAM_INVITATION";
+  type: "TEAM_INVITATION" | "CONTRACT_REQUEST";
   status: "PENDING" | "ACCEPTED" | "DECLINED";
   createdAt: string;
 }
@@ -133,7 +133,9 @@ export default function NotificationBanner({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
         <div className="flex flex-col w-full">
           <p className="text-sm sm:text-base text-gray-300">
-            {teamName} wants you to join their team!
+            {notifications[0].type === "TEAM_INVITATION"
+              ? `${teamName} wants you to join their team!`
+              : `You have a new contract request to review!`}
           </p>
           {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
         </div>

@@ -55,6 +55,7 @@ export default function ManageTeamPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [contractAmount, setContractAmount] = useState(0);
+  const [hasPendingContracts, setHasPendingContracts] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -176,6 +177,13 @@ export default function ManageTeamPage() {
             );
             const playerData = await Promise.all(playersPromises);
             setPlayers(playerData);
+
+            // Check if there are any pending contract requests
+            const hasPending = playerData.some(
+              (player) =>
+                player.contract && player.contract.status === "pending"
+            );
+            setHasPendingContracts(hasPending);
           }
         } catch (error) {
           console.error("Error initializing:", error);
@@ -338,44 +346,73 @@ export default function ManageTeamPage() {
                 )}
 
                 {/* Contract Information */}
-                {player.contract && (
-                  <div className="mt-2 p-2 bg-gray-800/50 rounded-lg">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-gray-400 text-xs">Contract:</span>
-                      <span
-                        className={`text-xs font-medium ${
-                          player.contract.status === "active"
-                            ? "text-green-400"
-                            : player.contract.status === "pending"
-                            ? "text-yellow-400"
-                            : player.contract.status === "rejected"
-                            ? "text-red-400"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        {player.contract.status.charAt(0).toUpperCase() +
-                          player.contract.status.slice(1)}
-                      </span>
+                <div className="mt-2 p-2 bg-gray-800/50 rounded-lg">
+                  {player.contract ? (
+                    <>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-400 text-xs">Contract:</span>
+                        <span
+                          className={`text-xs font-medium ${
+                            player.contract.status === "active"
+                              ? "text-green-400"
+                              : player.contract.status === "pending"
+                              ? "text-yellow-400"
+                              : player.contract.status === "rejected"
+                              ? "text-red-400"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {player.contract.status.charAt(0).toUpperCase() +
+                            player.contract.status.slice(1)}
+                        </span>
+                      </div>
+
+                      {player.contract.status === "active" && (
+                        <>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Amount:</span>
+                            <span>{player.contract.requestedAmount} ETH</span>
+                          </div>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Length:</span>
+                            <span>
+                              {player.contract.durationInSeasons}{" "}
+                              {player.contract.durationInSeasons === 1
+                                ? "season"
+                                : "seasons"}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Expires:</span>
+                            <span>Season {player.contract.seasonEnds}</span>
+                          </div>
+                        </>
+                      )}
+
+                      {player.contract.status === "pending" && (
+                        <>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Request:</span>
+                            <span>{player.contract.requestedAmount} ETH</span>
+                          </div>
+                          <div className="text-xs text-gray-300 flex justify-between mb-2">
+                            <span>Length:</span>
+                            <span>
+                              {player.contract.durationInSeasons}{" "}
+                              {player.contract.durationInSeasons === 1
+                                ? "season"
+                                : "seasons"}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-xs text-gray-400 text-center">
+                      No contract
                     </div>
-
-                    {player.contract.status === "active" && (
-                      <div className="text-xs text-gray-300">
-                        {player.contract.requestedAmount} ETH until Season{" "}
-                        {player.contract.seasonEnds}
-                      </div>
-                    )}
-
-                    {player.contract.status === "pending" && (
-                      <div className="text-xs text-gray-300 mb-2">
-                        Request: {player.contract.requestedAmount} ETH for{" "}
-                        {player.contract.durationInSeasons}{" "}
-                        {player.contract.durationInSeasons === 1
-                          ? "season"
-                          : "seasons"}
-                      </div>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Action Buttons - Only visible to team captain */}
                 {address?.toLowerCase() ===

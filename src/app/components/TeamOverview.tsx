@@ -121,6 +121,7 @@ export default function TeamOverview({
   };
 
   const [playerData, setPlayerData] = useState<any>(null);
+  const [pendingContractRequests, setPendingContractRequests] = useState(0);
   const [showContractModal, setShowContractModal] = useState(false);
   const [contractAmount, setContractAmount] = useState<number>(0.02);
   const [contractDuration, setContractDuration] = useState<number>(2);
@@ -237,9 +238,12 @@ export default function TeamOverview({
               <div className="grid gap-2">
                 <button
                   onClick={() => router.push("/manageteam")}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] relative"
                 >
                   Manage Team
+                  {pendingContractRequests > 0 && (
+                    <span className="absolute top-0 right-0 transform translate-x-1/3 -translate-y-1/3 w-3 h-3 bg-red-500 rounded-full"></span>
+                  )}
                 </button>
                 <button
                   onClick={() => router.push("/teammanagement")}
@@ -390,8 +394,54 @@ export default function TeamOverview({
                       {playerData.contract.durationInSeasons} seasons
                     </span>
                   </div>
-                  <div className="text-center mt-2 text-yellow-400 text-sm">
-                    Waiting for captain approval
+                  <div className="flex flex-col items-center mt-2">
+                    <div className="text-yellow-400 text-sm mb-2">
+                      Waiting for captain approval
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          setContractLoading(true);
+                          setContractError(null);
+
+                          const response = await fetch(
+                            "/api/contracts/cancel",
+                            {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                "x-wallet-address": playerAddress,
+                              },
+                            }
+                          );
+
+                          if (!response.ok) {
+                            const data = await response.json();
+                            throw new Error(
+                              data.error || "Failed to cancel contract request"
+                            );
+                          }
+
+                          // Update player data with contract removed
+                          setPlayerData({
+                            ...playerData,
+                            contract: undefined,
+                          });
+                        } catch (error) {
+                          console.error("Error cancelling contract:", error);
+                          setContractError(
+                            error instanceof Error
+                              ? error.message
+                              : "Failed to cancel contract request"
+                          );
+                        } finally {
+                          setContractLoading(false);
+                        }
+                      }}
+                      className="px-4 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs transition-colors"
+                    >
+                      Cancel Request
+                    </button>
                   </div>
                 </>
               )}
@@ -454,35 +504,59 @@ export default function TeamOverview({
                 <label className="block text-gray-400 text-sm mb-1">
                   Contract Amount (ETH)
                 </label>
-                <input
-                  type="number"
-                  min="0.001"
-                  step="0.001"
-                  value={contractAmount}
-                  onChange={(e) =>
-                    setContractAmount(parseFloat(e.target.value))
-                  }
-                  className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
-                />
+                <div className="flex items-center">
+                  <button
+                    onClick={() => {
+                      const newAmount = Math.max(0.001, contractAmount - 0.001);
+                      setContractAmount(parseFloat(newAmount.toFixed(3)));
+                    }}
+                    className="px-3 py-2 bg-gray-700 rounded-l-lg text-white hover:bg-gray-600"
+                  >
+                    -
+                  </button>
+                  <div className="flex-1 px-3 py-2 bg-gray-800 text-white text-center">
+                    {contractAmount.toFixed(3)} ETH
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newAmount = Math.min(1, contractAmount + 0.001);
+                      setContractAmount(parseFloat(newAmount.toFixed(3)));
+                    }}
+                    className="px-3 py-2 bg-gray-700 rounded-r-lg text-white hover:bg-gray-600"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-gray-400 text-sm mb-1">
                   Duration (Seasons)
                 </label>
-                <select
-                  value={contractDuration}
-                  onChange={(e) =>
-                    setContractDuration(parseInt(e.target.value))
-                  }
-                  className="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
-                >
-                  <option value={1}>1 Season</option>
-                  <option value={2}>2 Seasons</option>
-                  <option value={3}>3 Seasons</option>
-                  <option value={4}>4 Seasons</option>
-                  <option value={5}>5 Seasons</option>
-                </select>
+                <div className="flex items-center">
+                  <button
+                    onClick={() => {
+                      const newDuration = Math.max(1, contractDuration - 1);
+                      setContractDuration(newDuration);
+                    }}
+                    className="px-3 py-2 bg-gray-700 rounded-l-lg text-white hover:bg-gray-600"
+                  >
+                    -
+                  </button>
+                  <div className="flex-1 px-3 py-2 bg-gray-800 text-white text-center">
+                    {contractDuration}{" "}
+                    {contractDuration === 1 ? "Season" : "Seasons"}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const newDuration = Math.min(5, contractDuration + 1);
+                      setContractDuration(newDuration);
+                    }}
+                    className="px-3 py-2 bg-gray-700 rounded-r-lg text-white hover:bg-gray-600"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               {contractError && (

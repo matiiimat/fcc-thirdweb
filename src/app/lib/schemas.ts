@@ -5,7 +5,7 @@ import { PLAYER_CONSTANTS } from './constants';
 export const notificationSchema = z.object({
   fromTeamId: z.string().min(1, 'Team ID is required'),
   toPlayerId: z.string().min(1, 'Player ID is required'),
-  type: z.enum(['TEAM_INVITATION']),
+  type: z.enum(['TEAM_INVITATION', 'CONTRACT_REQUEST']),
   status: z.enum(['PENDING', 'ACCEPTED', 'DECLINED']).default('PENDING'),
 });
 

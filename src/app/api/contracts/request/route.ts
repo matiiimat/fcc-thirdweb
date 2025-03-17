@@ -83,7 +83,24 @@ export async function POST(request: NextRequest) {
     // Find the team captain to notify them
     const team = await TeamModel.findOne({ teamName: player.team });
     if (team) {
-      // TODO: Add notification for team captain about contract request
+      // Get the captain's player record to get their playerId
+      const captain = await PlayerModel.findOne({ ethAddress: team.captainAddress.toLowerCase() });
+      if (captain) {
+        // Create a notification for the captain
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'ethAddress': team.captainAddress,
+          },
+          body: JSON.stringify({
+            fromTeamId: team._id.toString(),
+            toPlayerId: captain.playerId,
+            type: 'CONTRACT_REQUEST',
+            status: 'PENDING',
+          }),
+        });
+      }
     }
 
     return NextResponse.json({ 
