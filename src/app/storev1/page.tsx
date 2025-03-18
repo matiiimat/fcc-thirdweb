@@ -316,7 +316,7 @@ export default function Store() {
   const sendEnergyDrinkTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
         value: getEnergyDrinkPrice(), // Dynamic price based on previous purchases
       },
       {
