@@ -504,9 +504,11 @@ export default function ManageTeamPage() {
                       </>
                     ) : (
                       <>
-                        <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
-                          Renew Contract
-                        </button>
+                        {player.contract && (
+                          <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
+                            Renew Contract
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
