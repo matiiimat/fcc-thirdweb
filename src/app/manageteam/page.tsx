@@ -410,7 +410,7 @@ export default function ManageTeamPage() {
                     </>
                   ) : (
                     <div className="text-xs text-gray-400 text-center">
-                      No contract
+                      No active contract
                     </div>
                   )}
                 </div>
@@ -506,9 +506,6 @@ export default function ManageTeamPage() {
                       <>
                         <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
                           Renew Contract
-                        </button>
-                        <button className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm">
-                          Release Player
                         </button>
                       </>
                     )}
