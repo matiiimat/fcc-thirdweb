@@ -16,6 +16,7 @@ interface PlayerContract {
   endDate: Date | null;
   seasonStarted: number;
   seasonEnds: number;
+  transactionHash?: string;
 }
 
 interface Player {

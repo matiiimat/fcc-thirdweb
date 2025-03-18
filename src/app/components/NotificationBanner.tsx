@@ -144,20 +144,35 @@ export default function NotificationBanner({
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
           ) : (
             <>
-              <button
-                onClick={() => handleResponse(notifications[0]._id, true)}
-                className="px-4 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
-                disabled={processing}
-              >
-                Accept
-              </button>
-              <button
-                onClick={() => handleResponse(notifications[0]._id, false)}
-                className="px-4 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm disabled:opacity-50"
-                disabled={processing}
-              >
-                Decline
-              </button>
+              {notifications[0].type === "TEAM_INVITATION" ? (
+                <>
+                  <button
+                    onClick={() => handleResponse(notifications[0]._id, true)}
+                    className="px-4 py-1 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
+                    disabled={processing}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => handleResponse(notifications[0]._id, false)}
+                    className="px-4 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm disabled:opacity-50"
+                    disabled={processing}
+                  >
+                    Decline
+                  </button>
+                </>
+              ) : notifications[0].type === "CONTRACT_REQUEST" ? (
+                <button
+                  onClick={() => (window.location.href = "/manageteam")}
+                  className="px-4 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
+                >
+                  View
+                </button>
+              ) : (
+                <div className="text-sm text-gray-400">
+                  Unknown notification type
+                </div>
+              )}
             </>
           )}
         </div>
