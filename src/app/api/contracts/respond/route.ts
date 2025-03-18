@@ -66,24 +66,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (validatedData.action === 'accept') {
-      // Update the contract to active status
-      player.contract.status = 'active';
-      player.contract.startDate = new Date();
-      
-      // Calculate end date (for display purposes)
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + (player.contract.durationInSeasons * 3)); // Assuming 3 months per season
-      player.contract.endDate = endDate;
-      
-      await player.save();
-
-      return NextResponse.json({ 
-        success: true, 
-        message: "Contract accepted successfully",
-        contract: player.contract,
+      // Don't update the contract status yet, just return the necessary information for payment
+      return NextResponse.json({
+        success: true,
+        message: "Contract ready for payment",
         transactionRequired: true,
         amount: player.contract.requestedAmount,
-        playerAddress: player.ethAddress
+        playerAddress: player.ethAddress,
+        playerId: player._id.toString(),
+        durationInSeasons: player.contract.durationInSeasons
       });
     } else {
       // Reject the contract

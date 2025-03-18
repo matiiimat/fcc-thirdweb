@@ -56,6 +56,8 @@ export default function ManageTeamPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [contractAmount, setContractAmount] = useState(0);
+  const [contractPlayerId, setContractPlayerId] = useState("");
+  const [contractDuration, setContractDuration] = useState(0);
   const [hasPendingContracts, setHasPendingContracts] = useState(false);
 
   // Farcaster Frame Integration
@@ -453,6 +455,8 @@ export default function ManageTeamPage() {
                               // Show payment modal
                               setSelectedPlayer(player);
                               setContractAmount(data.amount);
+                              setContractPlayerId(data.playerId);
+                              setContractDuration(data.durationInSeasons);
                               setShowPaymentModal(true);
                             } catch (error) {
                               console.error("Error accepting contract:", error);
@@ -537,7 +541,9 @@ export default function ManageTeamPage() {
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
           playerAddress={selectedPlayer.ethAddress}
+          playerId={contractPlayerId}
           amount={contractAmount}
+          durationInSeasons={contractDuration}
           onSuccess={() => {
             // Refresh the page to show updated contract status
             window.location.reload();

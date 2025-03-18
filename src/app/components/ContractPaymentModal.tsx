@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useSendTransaction } from "wagmi";
+import { useSendTransaction, useAccount } from "wagmi";
 
 interface ContractPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   playerAddress: string;
+  playerId: string;
   amount: number;
+  durationInSeasons: number;
   onSuccess: () => void;
 }
 
@@ -13,12 +15,16 @@ export default function ContractPaymentModal({
   isOpen,
   onClose,
   playerAddress,
+  playerId,
   amount,
+  durationInSeasons,
   onSuccess,
 }: ContractPaymentModalProps) {
   const [txStatus, setTxStatus] = useState<string>("");
   const [txHash, setTxHash] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { sendTransaction } = useSendTransaction();
+  const { address } = useAccount();
 
   if (!isOpen) return null;
 
@@ -34,10 +40,43 @@ export default function ContractPaymentModal({
         value: amountInWei,
       },
       {
-        onSuccess: (hash) => {
+        onSuccess: async (hash) => {
           setTxHash(hash);
-          setTxStatus("Transaction confirmed! 🎉");
-          onSuccess();
+          setTxStatus("Transaction confirmed! Activating contract...");
+          setIsProcessing(true);
+
+          try {
+            // Call the API to update the contract status
+            const response = await fetch("/api/contracts/payment", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-wallet-address": address as string,
+              },
+              body: JSON.stringify({
+                playerId,
+                transactionHash: hash,
+                durationInSeasons,
+              }),
+            });
+
+            if (!response.ok) {
+              const data = await response.json();
+              throw new Error(data.error || "Failed to activate contract");
+            }
+
+            setTxStatus("Contract activated successfully! 🎉");
+            onSuccess();
+          } catch (error) {
+            console.error("Error activating contract:", error);
+            setTxStatus(
+              `Contract activation failed: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`
+            );
+          } finally {
+            setIsProcessing(false);
+          }
         },
         onError: (error) => {
           console.error("Transaction error:", error);
