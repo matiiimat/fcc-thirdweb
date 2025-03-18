@@ -466,7 +466,7 @@ export default function ManageTeamPage() {
                           }}
                           className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
                         >
-                          Accept Contract
+                          Sign Contract
                         </button>
                         <button
                           onClick={async () => {
@@ -509,11 +509,7 @@ export default function ManageTeamPage() {
                       </>
                     ) : (
                       <>
-                        {player.contract && (
-                          <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
-                            Renew Contract
-                          </button>
-                        )}
+                        {/* Renew Contract button removed - only show for players without active contracts */}
                       </>
                     )}
                   </div>
