@@ -171,6 +171,7 @@ export default function ManageTeamPage() {
                     playerName: data.playerName,
                     username: data.username,
                     stats: data.stats,
+                    contract: data.contract,
                     isBot: false,
                   };
                 }
