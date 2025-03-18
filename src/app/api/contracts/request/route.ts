@@ -3,6 +3,7 @@ import connectDB from "../../../lib/mongodb";
 import PlayerModel from "../../../models/Player";
 import TeamModel from "../../../models/Team";
 import SeasonModel from "../../../models/Season";
+import NotificationModel from "../../../models/Notification";
 import { z } from "zod";
 
 // Validation schema for contract request
@@ -86,19 +87,13 @@ export async function POST(request: NextRequest) {
       // Get the captain's player record to get their playerId
       const captain = await PlayerModel.findOne({ ethAddress: team.captainAddress.toLowerCase() });
       if (captain) {
-        // Create a notification for the captain
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/notifications`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'ethAddress': team.captainAddress,
-          },
-          body: JSON.stringify({
-            fromTeamId: team._id.toString(),
-            toPlayerId: captain.playerId,
-            type: 'CONTRACT_REQUEST',
-            status: 'PENDING',
-          }),
+        // Create a notification for the captain directly using the model
+        await NotificationModel.create({
+          fromTeamId: team._id.toString(),
+          toPlayerId: captain.playerId,
+          type: 'CONTRACT_REQUEST',
+          status: 'PENDING',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
         });
       }
     }

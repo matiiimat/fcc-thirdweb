@@ -226,9 +226,38 @@ export default function TeamOverview({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-center gap-3">
-        <Jersey jersey={team.jersey} size="medium" />
-        <h3 className="text-xl font-bold text-yellow-400">{team.teamName}</h3>
+      <div className="flex flex-col items-center justify-center gap-2">
+        <div className="flex items-center gap-3">
+          <Jersey jersey={team.jersey} size="medium" />
+          <h3 className="text-xl font-bold text-yellow-400">{team.teamName}</h3>
+        </div>
+
+        {/* Contract Summary - Only visible to non-captains */}
+        {!isTeamCaptain && playerData?.contract && (
+          <div className="glass-container p-2 rounded-lg text-center text-sm w-full max-w-xs">
+            <span
+              className={`font-medium ${
+                playerData.contract.status === "active"
+                  ? "text-green-400"
+                  : playerData.contract.status === "pending"
+                  ? "text-yellow-400"
+                  : "text-gray-400"
+              }`}
+            >
+              {playerData.contract.status === "active"
+                ? `Contract: ${playerData.contract.requestedAmount} ETH, ${
+                    playerData.contract.durationInSeasons
+                  } ${
+                    playerData.contract.durationInSeasons === 1
+                      ? "season"
+                      : "seasons"
+                  }`
+                : playerData.contract.status === "pending"
+                ? "Contract request pending"
+                : "Contract expired"}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
