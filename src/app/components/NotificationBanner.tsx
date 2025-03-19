@@ -163,7 +163,36 @@ export default function NotificationBanner({
                 </>
               ) : notifications[0].type === "CONTRACT_REQUEST" ? (
                 <button
-                  onClick={() => (window.location.href = "/manageteam")}
+                  onClick={async () => {
+                    try {
+                      // Mark the notification as viewed by updating its status to "DECLINED"
+                      // This will remove it from the pending notifications list
+                      await fetch(
+                        `/api/notifications/${notifications[0]._id}`,
+                        {
+                          method: "PUT",
+                          headers: {
+                            "Content-Type": "application/json",
+                            ethAddress: ethAddress,
+                          },
+                          body: JSON.stringify({
+                            status: "DECLINED",
+                          }),
+                        }
+                      );
+
+                      // Remove the notification from the local state
+                      setNotifications([]);
+
+                      // Navigate to the manage team page
+                      window.location.href = "/manageteam";
+                    } catch (err) {
+                      console.error(
+                        "Error marking notification as viewed:",
+                        err
+                      );
+                    }
+                  }}
                   className="px-4 py-1 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm"
                 >
                   View

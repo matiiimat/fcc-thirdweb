@@ -27,7 +27,7 @@ export default function LeaguePage() {
     isLoading: isBalanceLoading,
     isError: isBalanceError,
   } = useBalance({
-    address: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+    address: "0xdd5Af00D3172d25C8762193478275b858148a454",
   });
 
   // Calculate rewards (total ETH - 20%)

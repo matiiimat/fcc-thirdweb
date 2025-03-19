@@ -131,7 +131,7 @@ export default function Store() {
     // Reset confetti after animation duration
     setTimeout(() => setShowConfetti(false), 3000);
   }, []);
-  const recipientAddress = "0xe9F99F23D2714faD419233C599a51e86A56c9E17";
+  const recipientAddress = "0xdd5Af00D3172d25C8762193478275b858148a454";
 
   useEffect(() => {
     if (!loading && (!isConnected || !address || !player)) {
@@ -228,7 +228,7 @@ export default function Store() {
   const sendManagementCertificateTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
         //value: 5000000000000000n, // 0.005 ETH in wei (5 * 10^15)
         value: 1000000000000000n, // add one-two zero if not enough for .187 cents
       },
@@ -259,7 +259,7 @@ export default function Store() {
   const sendLeaveOfAbsenceTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
         value: 5000000000000000n, // 0.005 ETH in wei (10^15)
       },
       {
@@ -346,7 +346,7 @@ export default function Store() {
   const sendPrivateTrainerTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
         value: 5000000000000000n, // 0.005 ETH in wei (10^16)
       },
       {
