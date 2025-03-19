@@ -37,9 +37,12 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      maxPoolSize: 10,
+      maxPoolSize: 20,      // Increased from 10 to 20
+      minPoolSize: 5,       // Added minimum pool size
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      family: 4,            // Use IPv4, faster DNS resolution
     };
 
     console.log('Creating new MongoDB connection');

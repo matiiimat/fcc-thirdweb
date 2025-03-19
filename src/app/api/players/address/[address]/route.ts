@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player, { IPlayer } from '@/app/models/Player';
 import Team from '@/app/models/Team';
+import cache, { CACHE_KEYS, setInCache } from '@/app/lib/serverCache';
 
 interface Params {
   params: {
@@ -13,11 +14,19 @@ interface Params {
 export async function GET(req: NextRequest, { params }: Params) {
   try {
     const searchAddress = decodeURIComponent(params.address).toLowerCase();
-    console.log('Looking up player by address:', searchAddress); // Debug log
+    console.log('Looking up player by address:', searchAddress);
+
+    // Check cache first
+    const cacheKey = CACHE_KEYS.PLAYER_BY_ADDRESS(searchAddress);
+    const cachedPlayer = cache.get(cacheKey);
+    
+    if (cachedPlayer) {
+      console.log('Player found in cache:', searchAddress);
+      return NextResponse.json(cachedPlayer);
+    }
 
     try {
       await connectDB();
-      console.log('MongoDB connected successfully'); // Debug log
     } catch (error) {
       console.error('MongoDB connection error:', error);
       return NextResponse.json(
@@ -27,43 +36,34 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
 
     try {
-      // List all players to debug address matching
-      const allPlayers = await Player.find({}).select('ethAddress playerName');
-      console.log('All players in DB:', allPlayers.map(p => ({
-        name: p.playerName,
-        address: p.ethAddress,
-        addressLower: p.ethAddress.toLowerCase(),
-        matches: p.ethAddress.toLowerCase() === searchAddress
-      }))); // Debug log
-
-      // Find the player
+      // Find the player - use direct lookup instead of regex for better performance
       const player = await Player.findOne({
-        ethAddress: { $regex: new RegExp(`^${searchAddress}$`, 'i') }
+        ethAddress: searchAddress
       });
       
-      if (player) {
-        // Just update the last connection date
-        player.lastConnectionDate = new Date();
-        await player.save();
-      }
-
       if (!player) {
-        console.log('No player found for address:', searchAddress); // Debug log
+        console.log('No player found for address:', searchAddress);
         return NextResponse.json(
           { error: 'Player not found' },
           { status: 404 }
         );
       }
 
+      // Update the last connection date
+      player.lastConnectionDate = new Date();
+      await player.save();
+
+      // Cache the player data (60 seconds TTL)
+      const playerData = player.toObject();
+      setInCache(cacheKey, playerData, 60);
+      
       console.log('Found player:', {
         id: player._id,
         name: player.playerName,
-        address: player.ethAddress,
-        searchedAddress: searchAddress,
-        matches: player.ethAddress.toLowerCase() === searchAddress
-      }); // Debug log
+        address: player.ethAddress
+      });
       
-      return NextResponse.json(player);
+      return NextResponse.json(playerData);
     } catch (error) {
       console.error('Error finding player:', error);
       return NextResponse.json(
@@ -88,9 +88,9 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     await connectDB();
 
-    // Find the player first
+    // Find the player first - use direct lookup instead of regex
     const player = await Player.findOne({
-      ethAddress: { $regex: new RegExp(`^${searchAddress}$`, 'i') }
+      ethAddress: searchAddress
     });
 
     if (!player) {
@@ -106,10 +106,24 @@ export async function DELETE(req: NextRequest, { params }: Params) {
         { teamName: player.team },
         { $pull: { players: player.ethAddress } }
       );
+      
+      // Invalidate team cache
+      const team = await Team.findOne({ teamName: player.team });
+      if (team) {
+        cache.del(CACHE_KEYS.TEAM(team._id.toString()));
+        cache.del(CACHE_KEYS.TEAM_BY_NAME(player.team));
+      }
     }
 
     // Delete the player
     await Player.deleteOne({ _id: player._id });
+    
+    // Invalidate player cache
+    cache.del(CACHE_KEYS.PLAYER(player._id.toString()));
+    cache.del(CACHE_KEYS.PLAYER_BY_ADDRESS(searchAddress));
+    
+    // Invalidate leaderboard cache as it might contain this player
+    cache.del(CACHE_KEYS.LEADERBOARD);
 
     return NextResponse.json({
       message: 'Player deleted successfully',
