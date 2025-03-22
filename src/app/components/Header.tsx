@@ -10,12 +10,8 @@ interface HeaderProps {
 export default function Header({ pageName }: HeaderProps) {
   const router = useRouter();
 
-  const goToSettings = () => {
-    router.push("/settings");
-  };
-
-  const goToLeaderboard = () => {
-    router.push("/leaderboard");
+  const goToStore = () => {
+    router.push("/storev1");
   };
 
   return (
@@ -25,26 +21,13 @@ export default function Header({ pageName }: HeaderProps) {
       </h1>
       <div className="absolute top-[10px] right-[10px] flex gap-4">
         <button
-          onClick={goToLeaderboard}
+          onClick={goToStore}
           className="bg-[#0d0f12]/90 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.07),inset_2px_2px_5px_rgba(0,0,0,0.5)] hover:shadow-[inset_-1px_-1px_3px_rgba(255,255,255,0.1),inset_1px_1px_3px_rgba(0,0,0,0.4)] flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-105"
-          aria-label="Leaderboard"
+          aria-label="Store"
         >
           <Image
-            src="/icons/leaderboard-icon.png"
-            alt="Leaderboard"
-            width={24}
-            height={24}
-            priority
-          />
-        </button>
-        <button
-          onClick={goToSettings}
-          className="bg-[#0d0f12]/90 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.07),inset_2px_2px_5px_rgba(0,0,0,0.5)] hover:shadow-[inset_-1px_-1px_3px_rgba(255,255,255,0.1),inset_1px_1px_3px_rgba(0,0,0,0.4)] flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 hover:scale-105"
-          aria-label="Settings"
-        >
-          <Image
-            src="/icons/settings-icon.png"
-            alt="Settings"
+            src="/icons/store-icon.png"
+            alt="Store"
             width={24}
             height={24}
             priority

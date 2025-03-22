@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../lib/mongodb";
 import TeamModel from "../../../models/Team";
 import { ITactic } from "../../../models/Team";
-
+import cache, { CACHE_KEYS, setInCache } from "../../../lib/serverCache";
 export async function GET(req: NextRequest) {
   try {
     const teamName = req.nextUrl.searchParams.get("teamName");
@@ -11,6 +11,15 @@ export async function GET(req: NextRequest) {
         { error: "Team name is required" },
         { status: 400 }
       );
+    }
+
+    // Check cache first
+    const cacheKey = CACHE_KEYS.TEAM_BY_NAME(teamName);
+    const cachedTeam = cache.get<any>(cacheKey);
+    
+    if (cachedTeam) {
+      console.log(`Team tactics for ${teamName} found in cache`);
+      return NextResponse.json(cachedTeam.tactics || []);
     }
 
     await connectDB();
@@ -23,6 +32,10 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Cache the team data for 5 minutes (300 seconds)
+    setInCache(cacheKey, team.toObject(), 300);
+
+    return NextResponse.json(team.tactics);
     return NextResponse.json(team.tactics);
   } catch (error) {
     console.error("Error fetching team tactics:", error);
@@ -80,6 +93,11 @@ export async function POST(req: NextRequest) {
     }
 
     await team.save();
+    
+    // Invalidate team cache
+    cache.del(CACHE_KEYS.TEAM(team._id.toString()));
+    cache.del(CACHE_KEYS.TEAM_BY_NAME(teamName));
+    
     return NextResponse.json(team.tactics);
   } catch (error) {
     console.error("Error updating team tactics:", error);
@@ -123,6 +141,10 @@ export async function DELETE(req: NextRequest) {
 
     team.tactics = team.tactics.filter((t: ITactic) => t.name !== tacticName);
     await team.save();
+
+    // Invalidate team cache
+    cache.del(CACHE_KEYS.TEAM(team._id.toString()));
+    cache.del(CACHE_KEYS.TEAM_BY_NAME(teamName));
 
     return NextResponse.json(team.tactics);
   } catch (error) {

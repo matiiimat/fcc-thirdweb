@@ -1,6 +1,5 @@
 "use client";
 
-import { ConnectButton } from "thirdweb/react";
 import { client } from "../client";
 import { useRouter } from "next/navigation";
 import Header from "../components/Header";

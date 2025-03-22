@@ -93,10 +93,7 @@ export default function TeamLeaderboard({
         >
           <option value="points">Points</option>
           <option value="wins">Wins</option>
-          <option value="goalDifference">Goal Difference</option>
-          <option value="goalsFor">Goals Scored</option>
-          <option value="cleanSheets">Clean Sheets</option>
-          <option value="winRate">Win Rate</option>
+          <option value="goalDifference">Goal Average (GA)</option>
         </select>
       </div>
 
@@ -106,16 +103,12 @@ export default function TeamLeaderboard({
             <tr className="text-sm text-gray-400">
               <th className="text-left py-2 px-3">#</th>
               <th className="text-left py-2 px-3">Team</th>
+              <th className="text-center py-2 px-3">Pts</th>
               <th className="text-center py-2 px-3">P</th>
               <th className="text-center py-2 px-3">W</th>
               <th className="text-center py-2 px-3">D</th>
               <th className="text-center py-2 px-3">L</th>
-              <th className="text-center py-2 px-3">GF</th>
               <th className="text-center py-2 px-3">GA</th>
-              <th className="text-center py-2 px-3">GD</th>
-              <th className="text-center py-2 px-3">CS</th>
-              <th className="text-center py-2 px-3">Pts</th>
-              <th className="text-center py-2 px-3">Form</th>
             </tr>
           </thead>
           <tbody>
@@ -126,6 +119,9 @@ export default function TeamLeaderboard({
               >
                 <td className="py-2 px-3">{index + 1}</td>
                 <td className="py-2 px-3 font-medium">{team.teamName}</td>
+                <td className="text-center py-2 px-3 font-bold">
+                  {team.points}
+                </td>
                 <td className="text-center py-2 px-3">{team.gamesPlayed}</td>
                 <td className="text-center py-2 px-3 text-green-400">
                   {team.wins}
@@ -136,8 +132,6 @@ export default function TeamLeaderboard({
                 <td className="text-center py-2 px-3 text-red-400">
                   {team.losses}
                 </td>
-                <td className="text-center py-2 px-3">{team.goalsFor}</td>
-                <td className="text-center py-2 px-3">{team.goalsAgainst}</td>
                 <td
                   className={`text-center py-2 px-3 ${
                     team.goalDifference > 0
@@ -149,17 +143,6 @@ export default function TeamLeaderboard({
                 >
                   {team.goalDifference > 0 ? "+" : ""}
                   {team.goalDifference}
-                </td>
-                <td className="text-center py-2 px-3 text-blue-400">
-                  {team.cleanSheets}
-                </td>
-                <td className="text-center py-2 px-3 font-bold">
-                  {team.points}
-                </td>
-                <td
-                  className={`text-center py-2 px-3 ${getFormColor(team.form)}`}
-                >
-                  {team.form}
                 </td>
               </tr>
             ))}

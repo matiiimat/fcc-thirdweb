@@ -4,7 +4,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface INotification extends Document {
   fromTeamId: string;
   toPlayerId: string;
-  type: 'TEAM_INVITATION';
+  type: 'TEAM_INVITATION' | 'CONTRACT_REQUEST';
   status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
   createdAt: Date;
   expiresAt: Date;
@@ -28,7 +28,7 @@ const NotificationSchema = new Schema<INotification>(
     type: {
       type: String,
       required: true,
-      enum: ['TEAM_INVITATION'],
+      enum: ['TEAM_INVITATION', 'CONTRACT_REQUEST'],
       default: 'TEAM_INVITATION',
     },
     status: {

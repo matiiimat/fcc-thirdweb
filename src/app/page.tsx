@@ -3,9 +3,29 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import sdk, { Context } from "@farcaster/frame-sdk";
+import Image from "next/image";
 
 export type FrameContext = Context.FrameContext;
 export type SafeAreaInsets = Context.SafeAreaInsets;
+
+export type FrameNotificationDetails = {
+  url: string;
+  token: string;
+};
+
+export type AddFrameRejectedReason =
+  | "invalid_domain_manifest"
+  | "rejected_by_user";
+
+export type AddFrameResult =
+  | {
+      added: true;
+      notificationDetails?: FrameNotificationDetails;
+    }
+  | {
+      added: false;
+      reason: AddFrameRejectedReason;
+    };
 
 import {
   useAccount,
@@ -60,6 +80,9 @@ export default function Home() {
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addFrameResult, setAddFrameResult] = useState<AddFrameResult | null>(
+    null
+  );
 
   // Wagmi hooks
   const { address, isConnected } = useAccount();
@@ -72,6 +95,26 @@ export default function Home() {
       try {
         setContext(await sdk.context);
         sdk.actions.ready();
+
+        // Automatically prompt user to add frame to their Farcaster client
+        try {
+          // Use type assertion to ensure TypeScript understands the structure
+          const result = (await sdk.actions.addFrame()) as AddFrameResult;
+          setAddFrameResult(result);
+
+          // Use type guards to safely check properties
+          if ("added" in result && result.added === true) {
+            console.log("Frame added successfully", result.notificationDetails);
+          } else if (
+            "added" in result &&
+            result.added === false &&
+            "reason" in result
+          ) {
+            console.log("Frame not added", result.reason);
+          }
+        } catch (addFrameError) {
+          console.error("Error adding frame:", addFrameError);
+        }
       } catch (error) {
         console.error("Error initializing Farcaster Frame SDK:", error);
       }
@@ -130,14 +173,40 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Home" />
-        <div className="flex flex-col items-center mt-4">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
-            <p className="mt-2">Loading...</p>
+        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+          <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
+            {/* Notification Banner Skeleton */}
+            <div className="glass-container w-full h-12 rounded-lg animate-pulse bg-gray-700/30"></div>
+
+            {/* Player Info Skeleton */}
+            <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-full bg-gray-700/30 animate-pulse"></div>
+                <div className="h-6 w-32 bg-gray-700/30 rounded animate-pulse"></div>
+              </div>
+              <div className="h-6 w-24 mx-auto mb-3 bg-gray-700/30 rounded animate-pulse"></div>
+
+              {/* Stats Chart Skeleton */}
+              <div className="w-full aspect-square bg-gray-700/30 rounded animate-pulse"></div>
+            </div>
+
+            {/* Status Skeleton */}
+            <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2 flex justify-between items-center">
+                  <div className="h-4 w-16 bg-gray-700/30 rounded animate-pulse"></div>
+                  <div className="h-4 w-12 bg-gray-700/30 rounded animate-pulse"></div>
+                </div>
+                <div className="col-span-2 flex justify-between items-center">
+                  <div className="h-4 w-16 bg-gray-700/30 rounded animate-pulse"></div>
+                  <div className="h-4 w-12 bg-gray-700/30 rounded animate-pulse"></div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -217,6 +286,8 @@ export default function Home() {
                     src={context.user.pfpUrl}
                     alt="Profile"
                     className="w-full h-full object-cover"
+                    width={32}
+                    height={32}
                   />
                 </div>
               ) : (

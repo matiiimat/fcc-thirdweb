@@ -407,9 +407,12 @@ export default function ScoutingPage() {
               throw new Error(data.error || "Failed to send invitation");
             }
 
-            setSuccess(
-              `Successfully sent invitation to ${selectedPlayer.playerName}!`
-            );
+            const displayName =
+              selectedPlayer.username && selectedPlayer.username.trim() !== ""
+                ? selectedPlayer.username
+                : selectedPlayer.playerName;
+
+            setSuccess(`Successfully sent invitation to ${displayName}!`);
 
             // Remove the invited player from the available players list
             setPlayers((prevPlayers) =>
@@ -421,6 +424,7 @@ export default function ScoutingPage() {
           setSelectedPlayer(null);
         }}
         playerName={selectedPlayer?.playerName || ""}
+        username={selectedPlayer?.username}
       />
     </div>
   );

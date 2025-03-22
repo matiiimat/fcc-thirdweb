@@ -34,6 +34,7 @@ export interface IMatch extends Document {
   seasonId?: Types.ObjectId;
   matchday?: number;
   isCompleted: boolean;
+  isInProgress?: boolean;
   homeTactic?: ITactic;
   awayTactic?: ITactic;
   result?: {
@@ -108,6 +109,11 @@ const MatchSchema = new Schema<IMatch>({
     type: Number,
   },
   isCompleted: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  isInProgress: {
     type: Boolean,
     default: false,
     index: true,

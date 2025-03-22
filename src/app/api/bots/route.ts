@@ -3,8 +3,44 @@ import { getBotName } from "@/app/lib/botNames";
 import { PLAYER_CONSTANTS } from "@/app/lib/constants";
 import connectDB from "@/app/lib/mongodb";
 
-const generateRandomStat = () => {
-  return Math.floor(Math.random() * 4) + 3; // Random number between 3 and 6
+// Generate a balanced set of stats with a total of exactly 10 points
+// and no stat exceeding 3 points
+const generateBalancedStats = () => {
+  // Initialize all stats to 0
+  const stats = {
+    strength: 0,
+    stamina: 0,
+    passing: 0,
+    shooting: 0,
+    defending: 0,
+    speed: 0,
+    positioning: 0,
+    workEthic: 0,
+  };
+  
+  // We need to distribute exactly 10 points
+  let remainingPoints = 10;
+  
+  // Get all stat keys
+  const statKeys = Object.keys(stats) as Array<keyof typeof stats>;
+  
+  // First pass: randomly distribute points while respecting max of 3 per stat
+  while (remainingPoints > 0) {
+    // Pick a random stat
+    const randomStatIndex = Math.floor(Math.random() * statKeys.length);
+    const randomStat = statKeys[randomStatIndex];
+    
+    // If this stat is already at max (3), skip it
+    if (stats[randomStat] >= 3) {
+      continue;
+    }
+    
+    // Add 1 point to this stat
+    stats[randomStat]++;
+    remainingPoints--;
+  }
+  
+  return stats;
 };
 
 const generateBot = (index: number) => {
@@ -24,16 +60,9 @@ const generateBot = (index: number) => {
   
   // Create a unique playerId
   const playerId = `bot_${safeIndex}`;
-  const stats = {
-    strength: generateRandomStat(),
-    stamina: generateRandomStat(),
-    passing: generateRandomStat(),
-    shooting: generateRandomStat(),
-    defending: generateRandomStat(),
-    speed: generateRandomStat(),
-    positioning: generateRandomStat(),
-    workEthic: generateRandomStat(),
-  };
+  
+  // Generate balanced stats (total of 10 points, max 3 per stat)
+  const stats = generateBalancedStats();
 
   return {
     playerId, // Add playerId to the returned object
@@ -54,19 +83,82 @@ const generateBot = (index: number) => {
   };
 };
 
+// Update existing bot stats to match new balanced requirements
+const updateExistingBotStats = async (mongoose: any) => {
+  try {
+    // Find all bots
+    const allBots = await mongoose.connection.db
+      .collection("players")
+      .find({
+        ethAddress: /^0xbot/
+      })
+      .toArray();
+    
+    // Update each bot's stats
+    for (const bot of allBots) {
+      // Generate new balanced stats
+      const newStats = generateBalancedStats();
+      
+      // Update the bot in the database
+      await mongoose.connection.db
+        .collection("players")
+        .updateOne(
+          { _id: bot._id },
+          { $set: { stats: newStats } }
+        );
+    }
+    
+    console.log(`Updated stats for ${allBots.length} bots`);
+    return allBots.length;
+  } catch (error) {
+    console.error("Error updating bot stats:", error);
+    throw error;
+  }
+};
+
 export async function GET(request: NextRequest) {
   try {
+    console.log("GET /api/bots: Starting request");
+    
     const mongoose = await connectDB();
     if (!mongoose) {
+      console.error("GET /api/bots: Database connection failed");
       return NextResponse.json(
         { error: "Database connection failed" },
         { status: 500 }
       );
     }
+    
+    console.log("GET /api/bots: Database connected successfully");
 
     // Check if we're looking for a specific bot address
     const url = new URL(request.url);
     const botAddress = url.searchParams.get('address');
+    const updateStats = url.searchParams.get('updateStats') === 'true';
+
+    console.log("GET /api/bots: Query params:", { botAddress, updateStats });
+
+    // If updateStats is true, update all bot stats
+    if (updateStats) {
+      console.log("GET /api/bots: Updating all bot stats");
+      try {
+        const updatedCount = await updateExistingBotStats(mongoose);
+        console.log(`GET /api/bots: Successfully updated ${updatedCount} bots`);
+        return NextResponse.json({
+          success: true,
+          message: `Updated stats for ${updatedCount} bots`
+        });
+      } catch (updateError) {
+        console.error("GET /api/bots: Error updating bot stats:", updateError);
+        return NextResponse.json(
+          {
+            error: "Failed to update bot stats",
+            details: updateError instanceof Error ? updateError.message : String(updateError)
+          },
+          { status: 500 }
+        );
+      }
+    }
 
     if (botAddress) {
       console.log("Looking for specific bot with address:", botAddress);
@@ -122,7 +214,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error in GET /api/bots:", error);
     return NextResponse.json(
-      { error: "Failed to generate bots" },
+      {
+        error: "Failed to generate bots",
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

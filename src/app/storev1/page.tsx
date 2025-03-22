@@ -131,7 +131,7 @@ export default function Store() {
     // Reset confetti after animation duration
     setTimeout(() => setShowConfetti(false), 3000);
   }, []);
-  const recipientAddress = "0xe9F99F23D2714faD419233C599a51e86A56c9E17";
+  const recipientAddress = "0xdd5Af00D3172d25C8762193478275b858148a454";
 
   useEffect(() => {
     if (!loading && (!isConnected || !address || !player)) {
@@ -167,52 +167,57 @@ export default function Store() {
     fetchPlayer();
   }, [isConnected, address, router]);
 
-  const processPurchase = async (item: StoreItem, selectedSkill?: string) => {
-    if (!isConnected || !address) return;
-    setError(null);
-    setProcessing(item.id);
-    try {
-      const response = await fetch("/api/game/store", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": address,
-        },
-        body: JSON.stringify({
-          playerId: player?.playerId,
-          item,
-          selectedSkill,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to purchase item");
+  const processPurchase = useCallback(
+    async (item: StoreItem, selectedSkill?: string) => {
+      if (!isConnected || !address) return;
+      setError(null);
+      setProcessing(item.id);
+      try {
+        const response = await fetch("/api/game/store", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-wallet-address": address,
+          },
+          body: JSON.stringify({
+            playerId: player?.playerId,
+            item,
+            selectedSkill,
+          }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to purchase item");
+        }
+        setPlayer((prev) =>
+          prev
+            ? {
+                ...prev,
+                privateTrainer: data.privateTrainer,
+                leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
+                managementCertificate:
+                  data.managementCertificate || prev.managementCertificate,
+                lastTrainingDate: data.lastTrainingDate,
+                energyDrinkPurchases:
+                  data.energyDrinkPurchases || prev.energyDrinkPurchases,
+              }
+            : null
+        );
+        // Reset modal state
+        setShowSkillModal(false);
+        setPendingPurchase(null);
+        setSelectedSkill(null);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to purchase item"
+        );
+      } finally {
+        setProcessing("");
+        triggerConfetti(); // Trigger confetti after successful purchase
       }
-      setPlayer((prev) =>
-        prev
-          ? {
-              ...prev,
-              privateTrainer: data.privateTrainer,
-              leaveOfAbsence: data.leaveOfAbsence || prev.leaveOfAbsence,
-              managementCertificate:
-                data.managementCertificate || prev.managementCertificate,
-              lastTrainingDate: data.lastTrainingDate,
-              energyDrinkPurchases:
-                data.energyDrinkPurchases || prev.energyDrinkPurchases,
-            }
-          : null
-      );
-      // Reset modal state
-      setShowSkillModal(false);
-      setPendingPurchase(null);
-      setSelectedSkill(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to purchase item");
-    } finally {
-      setProcessing("");
-      triggerConfetti(); // Trigger confetti after successful purchase
-    }
-  };
+    },
+    [isConnected, address, player, triggerConfetti]
+  );
 
   const handleSkillSelect = async () => {
     if (!pendingPurchase || !selectedSkill) return;
@@ -223,7 +228,7 @@ export default function Store() {
   const sendManagementCertificateTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
         //value: 5000000000000000n, // 0.005 ETH in wei (5 * 10^15)
         value: 1000000000000000n, // add one-two zero if not enough for .187 cents
       },
@@ -254,8 +259,8 @@ export default function Store() {
   const sendLeaveOfAbsenceTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
-        value: 1000000000000000n, // 0.001 ETH in wei (10^15)
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
+        value: 5000000000000000n, // 0.005 ETH in wei (10^15)
       },
       {
         onSuccess: (hash) => {
@@ -281,7 +286,7 @@ export default function Store() {
   }, [sendTransaction, processPurchase]);
 
   // Calculate energy drink price based on purchase count within 24 hours
-  const getEnergyDrinkPrice = () => {
+  const getEnergyDrinkPrice = useCallback(() => {
     const basePrice = 1000000000000000n; // 0.001 ETH
 
     if (!player?.energyDrinkPurchases?.resetTime) {
@@ -305,13 +310,13 @@ export default function Store() {
     // For count = 4: 2^4 = 16x price (0.016 ETH)
     const multiplier = 2n ** BigInt(player.energyDrinkPurchases.count);
     return basePrice * multiplier;
-  };
+  }, [player?.energyDrinkPurchases]);
 
   // Energy Drink transaction using wagmi
   const sendEnergyDrinkTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
         value: getEnergyDrinkPrice(), // Dynamic price based on previous purchases
       },
       {
@@ -341,8 +346,8 @@ export default function Store() {
   const sendPrivateTrainerTx = useCallback(() => {
     sendTransaction(
       {
-        to: "0xe9F99F23D2714faD419233C599a51e86A56c9E17",
-        value: 10000000000000000n, // 0.01 ETH in wei (10^16)
+        to: "0xdd5Af00D3172d25C8762193478275b858148a454",
+        value: 5000000000000000n, // 0.005 ETH in wei (10^16)
       },
       {
         onSuccess: (hash) => {
@@ -380,10 +385,32 @@ export default function Store() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Store" />
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-          <p className="mt-2 text-green-400">Loading...</p>
-        </div>
+        <main className="container max-w-2xl mx-auto px-3 sm:px-6 py-2 sm:py-6 pb-16">
+          {/* Store Items Skeleton */}
+          <div className="glass-container p-2 sm:p-6 rounded-lg sm:rounded-2xl shadow-lg">
+            <div className="grid grid-cols-1 gap-2">
+              {/* Buy Section Skeleton */}
+              <div>
+                <div className="h-6 w-16 bg-gray-700/30 rounded animate-pulse mb-4"></div>
+                <div className="space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="glass-container p-2 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="h-5 w-32 bg-gray-700/30 rounded animate-pulse"></div>
+                          <div className="h-4 w-48 bg-gray-700/30 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <div className="h-8 w-24 bg-gray-700/30 rounded-lg animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
         <Footer />
       </div>
     );
@@ -455,14 +482,14 @@ export default function Store() {
                             onClick={sendPrivateTrainerTx}
                             className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
-                            0.01 ETH
+                            0.005 ETH
                           </button>
                         ) : item.id === "leave_of_absence" ? (
                           <button
                             onClick={sendLeaveOfAbsenceTx}
                             className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                           >
-                            0.001 ETH
+                            0.005 ETH
                           </button>
                         ) : item.id === "energy_drink" ? (
                           <button

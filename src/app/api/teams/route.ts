@@ -3,6 +3,7 @@ import connectDB from "../../lib/mongodb";
 import TeamModel, { ITeam } from "../../models/Team";
 import PlayerModel from "../../models/Player";
 import { generateMatchSchedule, Match } from "../../lib/match";
+import cache, { CACHE_KEYS, setInCache } from "../../lib/serverCache";
 
 type IScheduleMatch = Match;
 
@@ -128,6 +129,11 @@ export async function POST(req: NextRequest) {
       await generateNewSchedule(allTeams);
     }
 
+    // Invalidate team cache
+    cache.del(CACHE_KEYS.TEAM_LEADERBOARD);
+    setInCache(CACHE_KEYS.TEAM(team._id.toString()), team.toObject(), 300);
+    setInCache(CACHE_KEYS.TEAM_BY_NAME(normalizedTeamName), team.toObject(), 300);
+
     return NextResponse.json(team);
   } catch (error) {
     console.error("Error creating team:", error);
@@ -137,9 +143,17 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
 export async function GET(req: NextRequest) {
   try {
+    // Check cache first
+    const cacheKey = CACHE_KEYS.TEAM_LEADERBOARD;
+    const cachedTeams = cache.get(cacheKey);
+    
+    if (cachedTeams) {
+      console.log('Teams found in cache');
+      return NextResponse.json(cachedTeams);
+    }
+
     await connectDB();
     
     // Get all teams and the match schedule
@@ -151,8 +165,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json([]);
     }
 
-    const schedule = await TeamModel.findOne({ 
-      teamName: "MatchSchedule" 
+    const schedule = await TeamModel.findOne({
+      teamName: "MatchSchedule"
     }).lean() as (TeamDocument & { matches: IScheduleMatch[] }) | null;
     
     // Check if we need to generate a new schedule
@@ -192,6 +206,9 @@ export async function GET(req: NextRequest) {
         matches: teamMatches
       };
     });
+
+    // Cache the result for 5 minutes (300 seconds)
+    setInCache(cacheKey, teamsWithMatches, 300);
 
     console.log('All teams with matches:', teamsWithMatches);
     return NextResponse.json(teamsWithMatches);

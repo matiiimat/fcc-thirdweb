@@ -3,15 +3,28 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import sdk from "@farcaster/frame-sdk";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ContractPaymentModal from "../components/ContractPaymentModal";
+
+interface PlayerContract {
+  requestedAmount: number;
+  durationInSeasons: number;
+  status: "pending" | "active" | "rejected" | "expired";
+  startDate: Date | null;
+  endDate: Date | null;
+  seasonStarted: number;
+  seasonEnds: number;
+  transactionHash?: string;
+}
 
 interface Player {
   ethAddress: string;
   playerName: string;
   username?: string;
   isBot?: boolean;
+  contract?: PlayerContract;
   stats?: {
     strength: number;
     stamina: number;
@@ -40,6 +53,28 @@ export default function ManageTeamPage() {
     captainAddress: string;
   } | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [contractAmount, setContractAmount] = useState(0);
+  const [contractPlayerId, setContractPlayerId] = useState("");
+  const [contractDuration, setContractDuration] = useState(0);
+  const [hasPendingContracts, setHasPendingContracts] = useState(false);
+
+  // Check if the current user is the team captain
+  const isCaptain =
+    isConnected &&
+    !!address &&
+    !!teamData &&
+    address?.toLowerCase() === teamData?.captainAddress?.toLowerCase();
+
+  // Fetch the balance of the captain's wallet (only if the user is the captain)
+  const {
+    data: balanceData,
+    isLoading: isBalanceLoading,
+    isError: isBalanceError,
+  } = useBalance({
+    address: isCaptain ? address : undefined,
+  });
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -154,6 +189,7 @@ export default function ManageTeamPage() {
                     playerName: data.playerName,
                     username: data.username,
                     stats: data.stats,
+                    contract: data.contract,
                     isBot: false,
                   };
                 }
@@ -161,6 +197,13 @@ export default function ManageTeamPage() {
             );
             const playerData = await Promise.all(playersPromises);
             setPlayers(playerData);
+
+            // Check if there are any pending contract requests
+            const hasPending = playerData.some(
+              (player) =>
+                player.contract && player.contract.status === "pending"
+            );
+            setHasPendingContracts(hasPending);
           }
         } catch (error) {
           console.error("Error initializing:", error);
@@ -178,13 +221,7 @@ export default function ManageTeamPage() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header
-          pageName={
-            address?.toLowerCase() === teamData?.captainAddress.toLowerCase()
-              ? "Manage Team"
-              : "Players"
-          }
-        />
+        <Header pageName={isCaptain ? "Manage Team" : "Players"} />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
@@ -202,13 +239,7 @@ export default function ManageTeamPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header
-        pageName={
-          address?.toLowerCase() === teamData?.captainAddress.toLowerCase()
-            ? "Manage Team"
-            : "Players"
-        }
-      />
+      <Header pageName={isCaptain ? "Manage Team" : "Players"} />
       <main className="flex-1 container max-w-4xl mx-auto px-2 sm:px-6 py-2 sm:py-4 pb-32">
         <div className="glass-container p-3 sm:p-6 rounded-xl">
           <div className="mb-6">
@@ -220,29 +251,58 @@ export default function ManageTeamPage() {
                 {players.length} Players
               </span>
             </div>
-            {address?.toLowerCase() ===
-              teamData?.captainAddress.toLowerCase() && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleVisibilityToggle}
-                  disabled={updating}
-                  className="text-sm px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 transition-colors flex items-center gap-2"
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      teamData?.isPublic ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  ></span>
-                  <span className="text-gray-300">
-                    {teamData?.isPublic ? "Public" : "Private"}
+            {isCaptain && (
+              <>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleVisibilityToggle}
+                    disabled={updating}
+                    className="text-sm px-3 py-1 rounded bg-gray-800 hover:bg-gray-700 transition-colors flex items-center gap-2"
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        teamData?.isPublic ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    ></span>
+                    <span className="text-gray-300">
+                      {teamData?.isPublic ? "Public" : "Private"}
+                    </span>
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    {teamData?.isPublic
+                      ? "Team is visible to other players"
+                      : "Team is hidden from other players"}
                   </span>
-                </button>
-                <span className="text-xs text-gray-500">
-                  {teamData?.isPublic
-                    ? "Team is visible to other players"
-                    : "Team is hidden from other players"}
-                </span>
-              </div>
+                </div>
+
+                {/* Team Budget - Only visible to captain */}
+                <div className="mt-3 p-3 bg-gradient-to-r from-green-900/30 to-green-700/30 rounded-lg">
+                  <h3 className="text-green-400 font-medium text-sm mb-1">
+                    Team Budget
+                  </h3>
+                  {isBalanceLoading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500 mr-2"></div>
+                      <span className="text-gray-300 text-sm">
+                        Loading balance...
+                      </span>
+                    </div>
+                  ) : isBalanceError ? (
+                    <p className="text-red-400 text-sm">
+                      Error loading wallet balance
+                    </p>
+                  ) : (
+                    <div className="flex items-center">
+                      <span className="text-green-400 font-semibold text-xl">
+                        {balanceData
+                          ? parseFloat(balanceData.formatted).toFixed(3)
+                          : "0.000"}{" "}
+                        ETH
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
 
@@ -322,16 +382,168 @@ export default function ManageTeamPage() {
                   </div>
                 )}
 
+                {/* Contract Information */}
+                <div className="mt-2 p-2 bg-gray-800/50 rounded-lg">
+                  {player.contract ? (
+                    <>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-400 text-xs">Contract:</span>
+                        <span
+                          className={`text-xs font-medium ${
+                            player.contract.status === "active"
+                              ? "text-green-400"
+                              : player.contract.status === "pending"
+                              ? "text-yellow-400"
+                              : player.contract.status === "rejected"
+                              ? "text-red-400"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {player.contract.status.charAt(0).toUpperCase() +
+                            player.contract.status.slice(1)}
+                        </span>
+                      </div>
+
+                      {player.contract.status === "active" && (
+                        <>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Amount:</span>
+                            <span>{player.contract.requestedAmount} ETH</span>
+                          </div>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Length:</span>
+                            <span>
+                              {player.contract.durationInSeasons}{" "}
+                              {player.contract.durationInSeasons === 1
+                                ? "season"
+                                : "seasons"}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Expires:</span>
+                            <span>Season {player.contract.seasonEnds}</span>
+                          </div>
+                        </>
+                      )}
+
+                      {player.contract.status === "pending" && (
+                        <>
+                          <div className="text-xs text-gray-300 flex justify-between">
+                            <span>Request:</span>
+                            <span>{player.contract.requestedAmount} ETH</span>
+                          </div>
+                          <div className="text-xs text-gray-300 flex justify-between mb-2">
+                            <span>Length:</span>
+                            <span>
+                              {player.contract.durationInSeasons}{" "}
+                              {player.contract.durationInSeasons === 1
+                                ? "season"
+                                : "seasons"}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-xs text-gray-400 text-center">
+                      No active contract
+                    </div>
+                  )}
+                </div>
+
                 {/* Action Buttons - Only visible to team captain */}
-                {address?.toLowerCase() ===
-                  teamData?.captainAddress.toLowerCase() && (
+                {isCaptain && (
                   <div className="flex gap-2 mt-2">
-                    <button className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm">
-                      Renew Contract
-                    </button>
-                    <button className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm">
-                      Release Player
-                    </button>
+                    {player.contract?.status === "pending" ? (
+                      <>
+                        <button
+                          onClick={async () => {
+                            try {
+                              setUpdating(true);
+                              const response = await fetch(
+                                "/api/contracts/respond",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    "x-wallet-address": address,
+                                  },
+                                  body: JSON.stringify({
+                                    playerAddress: player.ethAddress,
+                                    action: "accept",
+                                  }),
+                                }
+                              );
+
+                              if (!response.ok) {
+                                const data = await response.json();
+                                throw new Error(
+                                  data.error || "Failed to accept contract"
+                                );
+                              }
+
+                              const data = await response.json();
+
+                              // Show payment modal
+                              setSelectedPlayer(player);
+                              setContractAmount(data.amount);
+                              setContractPlayerId(data.playerId);
+                              setContractDuration(data.durationInSeasons);
+                              setShowPaymentModal(true);
+                            } catch (error) {
+                              console.error("Error accepting contract:", error);
+                            } finally {
+                              setUpdating(false);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+                        >
+                          Sign Contract
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              setUpdating(true);
+                              const response = await fetch(
+                                "/api/contracts/respond",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                    "x-wallet-address": address,
+                                  },
+                                  body: JSON.stringify({
+                                    playerAddress: player.ethAddress,
+                                    action: "reject",
+                                  }),
+                                }
+                              );
+
+                              if (!response.ok) {
+                                const data = await response.json();
+                                throw new Error(
+                                  data.error || "Failed to reject contract"
+                                );
+                              }
+
+                              // Refresh the page to show updated contract status
+                              window.location.reload();
+                            } catch (error) {
+                              console.error("Error rejecting contract:", error);
+                            } finally {
+                              setUpdating(false);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+                        >
+                          Reject Contract
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* Renew Contract button removed - only show for players without active contracts */}
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -350,6 +562,22 @@ export default function ManageTeamPage() {
         </div>
       </main>
       <Footer />
+
+      {/* Contract Payment Modal */}
+      {showPaymentModal && selectedPlayer && (
+        <ContractPaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          playerAddress={selectedPlayer.ethAddress}
+          playerId={contractPlayerId}
+          amount={contractAmount}
+          durationInSeasons={contractDuration}
+          onSuccess={() => {
+            // Refresh the page to show updated contract status
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }
