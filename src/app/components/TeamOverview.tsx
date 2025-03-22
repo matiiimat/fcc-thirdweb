@@ -264,11 +264,16 @@ export default function TeamOverview({
         <div className="grid gap-3">
           {isTeamCaptain ? (
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-              <div className="grid gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => router.push("/manageteam")}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] relative"
+                  className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] relative"
                 >
+                  <img
+                    src="/icons/iconmanageteam.png"
+                    alt="Manage Team"
+                    className="w-8 h-8 mb-2"
+                  />
                   Manage Team
                   {pendingContractRequests > 0 && (
                     <span className="absolute top-0 right-0 transform translate-x-1/3 -translate-y-1/3 w-3 h-3 bg-red-500 rounded-full"></span>
@@ -276,46 +281,76 @@ export default function TeamOverview({
                 </button>
                 <button
                   onClick={() => router.push("/teammanagement")}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
+                  <img
+                    src="/icons/icontactics.png"
+                    alt="Tactics"
+                    className="w-8 h-8 mb-2"
+                  />
                   Tactics
                 </button>
                 <button
                   onClick={() => router.push("/scouting")}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
+                  <img
+                    src="/icons/iconscouting.png"
+                    alt="Scouting"
+                    className="w-8 h-8 mb-2"
+                  />
                   Scouting
                 </button>
                 <button
                   onClick={() => setJerseyModalOpen(true)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-yellow-600 to-yellow-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
+                  <img
+                    src="/icons/iconcustomize.png"
+                    alt="Customize"
+                    className="w-8 h-8 mb-2"
+                  />
                   Customize
                 </button>
               </div>
             </div>
           ) : (
-            <>
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => router.push("/manageteam")}
-                className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
               >
+                <img
+                  src="/icons/iconmanageteam.png"
+                  alt="Players"
+                  className="w-8 h-8 mb-2"
+                />
                 Players
               </button>
               <button
                 onClick={() => router.push("/playertactics")}
-                className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-green-600 to-green-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                View Team Tactics
+                <img
+                  src="/icons/icontactics.png"
+                  alt="View Team Tactics"
+                  className="w-8 h-8 mb-2"
+                />
+                Tactics
               </button>
               <button
                 onClick={handleLeaveTeam}
                 disabled={loading}
-                className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:transform-none"
+                className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-medium hover:opacity-90 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:transform-none col-span-2"
               >
+                <img
+                  src="/icons/iconleave.png"
+                  alt="Leave Team"
+                  className="w-8 h-8 mb-2"
+                />
                 {loading ? "Leaving..." : "Leave Team"}
               </button>
-            </>
+            </div>
           )}
         </div>
 
