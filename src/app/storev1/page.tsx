@@ -385,10 +385,32 @@ export default function Store() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Store" />
-        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-          <p className="mt-2 text-green-400">Loading...</p>
-        </div>
+        <main className="container max-w-2xl mx-auto px-3 sm:px-6 py-2 sm:py-6 pb-16">
+          {/* Store Items Skeleton */}
+          <div className="glass-container p-2 sm:p-6 rounded-lg sm:rounded-2xl shadow-lg">
+            <div className="grid grid-cols-1 gap-2">
+              {/* Buy Section Skeleton */}
+              <div>
+                <div className="h-6 w-16 bg-gray-700/30 rounded animate-pulse mb-4"></div>
+                <div className="space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="glass-container p-2 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="h-5 w-32 bg-gray-700/30 rounded animate-pulse"></div>
+                          <div className="h-4 w-48 bg-gray-700/30 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <div className="h-8 w-24 bg-gray-700/30 rounded-lg animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
         <Footer />
       </div>
     );

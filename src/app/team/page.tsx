@@ -296,7 +296,51 @@ export default function TeamPage() {
   }
 
   if (loading) {
-    return <LoadingState />;
+    return (
+      <PageWrapper>
+        <div className="flex flex-col items-center max-w-md mx-auto space-y-4">
+          {/* Team Info Skeleton */}
+          <div className="glass-container p-6 w-full rounded-lg shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-8 w-48 bg-gray-700/30 rounded animate-pulse"></div>
+              <div className="h-8 w-24 bg-gray-700/30 rounded animate-pulse"></div>
+            </div>
+
+            {/* Team Stats Grid Skeleton */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex flex-col space-y-2">
+                  <div className="h-4 w-16 bg-gray-700/30 rounded animate-pulse"></div>
+                  <div className="h-6 w-12 bg-gray-700/30 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Players List Skeleton */}
+            <div className="space-y-3">
+              <div className="h-6 w-32 bg-gray-700/30 rounded animate-pulse mb-4"></div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="h-4 w-32 bg-gray-700/30 rounded animate-pulse"></div>
+                  <div className="h-4 w-24 bg-gray-700/30 rounded animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Available Teams Section Skeleton */}
+          <div className="glass-container p-6 w-full rounded-lg shadow-lg">
+            <div className="h-6 w-48 bg-gray-700/30 rounded animate-pulse mb-4"></div>
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center justify-between mb-3">
+                <div className="h-4 w-40 bg-gray-700/30 rounded animate-pulse"></div>
+                <div className="h-8 w-24 bg-gray-700/30 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </PageWrapper>
+    );
   }
 
   return (

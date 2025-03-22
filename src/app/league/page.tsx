@@ -199,10 +199,43 @@ export default function LeaguePage() {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="League" />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
-            <p className="mt-2 text-green-400 text-sm">Loading...</p>
+        <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
+          <div className="grid grid-cols-1 gap-4">
+            {/* League Content Section Skeleton */}
+            <div className="glass-container p-3 sm:p-4 rounded-xl shadow-lg">
+              <div className="h-6 w-36 bg-gray-700/30 rounded animate-pulse mb-4"></div>
+
+              {/* Prize Pool Skeleton */}
+              <div className="bg-gradient-to-r from-green-900/30 to-green-700/30 p-3 rounded-lg mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="h-5 w-32 bg-gray-700/30 rounded animate-pulse"></div>
+                  <div className="h-5 w-5 rounded-full bg-gray-700/30 animate-pulse"></div>
+                </div>
+                <div className="h-8 w-24 mx-auto bg-gray-700/30 rounded animate-pulse"></div>
+              </div>
+
+              {/* Leaderboard Skeleton */}
+              <div className="mb-6">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 mb-2 glass-container rounded-lg"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 bg-gray-700/30 rounded animate-pulse"></div>
+                      <div className="h-6 w-32 bg-gray-700/30 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-6 w-16 bg-gray-700/30 rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Button Skeleton */}
+              <div className="text-center">
+                <div className="h-10 w-40 mx-auto bg-gray-700/30 rounded-lg animate-pulse"></div>
+                <div className="h-4 w-48 mx-auto mt-2 bg-gray-700/30 rounded animate-pulse"></div>
+              </div>
+            </div>
           </div>
         </main>
         <Footer />

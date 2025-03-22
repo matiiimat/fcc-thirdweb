@@ -272,10 +272,46 @@ export default function TrainPage() {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Train" />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
-            <p className="mt-2 text-green-400 text-sm">Loading...</p>
+        <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
+          <div className="grid grid-cols-1 gap-4">
+            {/* Drop In Match Section Skeleton */}
+            <div className="glass-container p-3 sm:p-4 rounded-xl shadow-lg">
+              <div className="h-6 w-32 bg-gray-700/30 rounded animate-pulse mb-4"></div>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {/* Position Selector Skeleton */}
+                <div className="col-span-1">
+                  <div className="h-24 bg-gray-700/30 rounded animate-pulse"></div>
+                </div>
+                {/* Coach Suggestion Skeleton */}
+                <div className="col-span-1">
+                  <div className="h-4 w-28 bg-gray-700/30 rounded animate-pulse mb-2"></div>
+                  <div className="h-20 bg-gray-700/30 rounded animate-pulse"></div>
+                </div>
+              </div>
+              {/* Button Skeleton */}
+              <div className="h-10 w-full bg-gray-700/30 rounded-lg animate-pulse"></div>
+            </div>
+
+            {/* Training Section Skeleton */}
+            <div className="glass-container p-3 sm:p-4 rounded-xl shadow-lg">
+              <div className="h-6 w-24 bg-gray-700/30 rounded animate-pulse mb-4"></div>
+              {/* Training Button Skeleton */}
+              <div className="text-center mb-3">
+                <div className="h-10 w-full bg-gray-700/30 rounded-lg animate-pulse mb-2"></div>
+              </div>
+              {/* Stats Grid Skeleton */}
+              <div className="grid grid-cols-2 gap-2">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="glass-container p-2 rounded-lg">
+                    <div className="flex justify-between items-center mb-1">
+                      <div className="h-4 w-16 bg-gray-700/30 rounded animate-pulse"></div>
+                      <div className="h-4 w-12 bg-gray-700/30 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-1.5 w-full bg-gray-700/30 rounded-full animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </main>
         <Footer />
