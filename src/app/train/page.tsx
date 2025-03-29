@@ -511,6 +511,7 @@ export default function TrainPage() {
           username={player.username}
           onClose={handleMatchEnd}
           matchResult={matchResult}
+          isBottomSheet={true}
         />
       )}
     </div>
