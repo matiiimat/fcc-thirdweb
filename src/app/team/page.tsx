@@ -16,6 +16,7 @@ import {
 import { generateTeamName } from "../lib/names";
 import { ITactic, ITeamStats } from "../models/Team";
 import { Types } from "mongoose";
+import JerseyCustomizationModal from "../components/JerseyCustomizationModal";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
@@ -82,6 +83,7 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isJerseyModalOpen, setIsJerseyModalOpen] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -291,6 +293,14 @@ export default function TeamPage() {
     await fetchPlayerData();
   };
 
+  const handleCloseJerseyModal = () => {
+    setIsJerseyModalOpen(false);
+  };
+
+  const handleSaveJersey = (jersey: any) => {
+    // Implementation of handleSaveJersey
+  };
+
   if (!isConnected || !address) {
     return <NoWalletState />;
   }
@@ -368,6 +378,14 @@ export default function TeamPage() {
       )}
 
       <StatusMessages error={error} success={success} />
+
+      <JerseyCustomizationModal
+        isOpen={isJerseyModalOpen}
+        onClose={handleCloseJerseyModal}
+        onSave={handleSaveJersey}
+        currentJersey={currentTeam?.jersey}
+        isBottomSheet={true}
+      />
     </PageWrapper>
   );
 }
