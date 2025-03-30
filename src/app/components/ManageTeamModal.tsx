@@ -68,21 +68,56 @@ export default function ManageTeamModal({
       try {
         setLoading(true);
 
-        // Fetch team data
-        const teamResponse = await fetch(`/api/teams/${teamId}`);
-        if (!teamResponse.ok) {
-          throw new Error("Failed to fetch team data");
-        }
-        const teamData = await teamResponse.json();
-        setTeamData(teamData);
+        // Fetch team data first
+        const teamsResponse = await fetch("/api/teams");
+        const teams = await teamsResponse.json();
 
-        // Fetch team players
-        const playersResponse = await fetch(`/api/teams/${teamId}/players`);
-        if (!playersResponse.ok) {
-          throw new Error("Failed to fetch team players");
+        // Find the team by ID
+        const team = teams.find((t: any) => t._id === teamId);
+
+        if (team) {
+          setTeamData(team);
+
+          // Fetch players using the same approach as in manageteam/page.tsx
+          const playersPromises = team.players.map(async (address: string) => {
+            if (address.toLowerCase().startsWith("0xbot")) {
+              // Fetch the specific bot
+              const botsResponse = await fetch(
+                `/api/bots?address=${encodeURIComponent(address)}`
+              );
+              if (!botsResponse.ok) {
+                throw new Error(`Failed to fetch bot data for ${address}`);
+              }
+              const botsData = await botsResponse.json();
+              const bot = botsData.bots[0];
+              return {
+                ethAddress: bot.ethAddress,
+                playerName: bot.playerName,
+                isBot: true,
+                stats: bot.stats,
+              };
+            } else {
+              // Fetch the specific player
+              const playerResponse = await fetch(
+                `/api/players/address/${encodeURIComponent(address)}`
+              );
+              if (!playerResponse.ok) {
+                throw new Error(`Failed to fetch player data for ${address}`);
+              }
+              const playerData = await playerResponse.json();
+              return {
+                ethAddress: playerData.ethAddress,
+                playerName: playerData.playerName,
+                username: playerData.username,
+                stats: playerData.stats,
+                contract: playerData.contract,
+              };
+            }
+          });
+
+          const playersData = await Promise.all(playersPromises);
+          setPlayers(playersData);
         }
-        const playersData = await playersResponse.json();
-        setPlayers(playersData);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -463,7 +498,7 @@ export default function ManageTeamModal({
 
                               // Refresh data
                               const playersResponse = await fetch(
-                                `/api/teams/${teamId}/players`
+                                `/api/teams/players?teamId=${teamId}`
                               );
                               if (playersResponse.ok) {
                                 const playersData =
@@ -503,7 +538,9 @@ export default function ManageTeamModal({
             setShowPaymentModal(false);
 
             // Refresh data
-            const playersResponse = await fetch(`/api/teams/${teamId}/players`);
+            const playersResponse = await fetch(
+              `/api/teams/players?teamId=${teamId}`
+            );
             if (playersResponse.ok) {
               const playersData = await playersResponse.json();
               setPlayers(playersData);
