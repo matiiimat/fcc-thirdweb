@@ -18,6 +18,7 @@ import { ITactic, ITeamStats } from "../models/Team";
 import { Types } from "mongoose";
 import JerseyCustomizationModal from "../components/JerseyCustomizationModal";
 import ScoutingModal from "../components/ScoutingModal";
+import ManageTeamModal from "../components/ManageTeamModal";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
@@ -86,6 +87,7 @@ export default function TeamPage() {
   const [success, setSuccess] = useState("");
   const [isJerseyModalOpen, setIsJerseyModalOpen] = useState(false);
   const [isScoutingModalOpen, setIsScoutingModalOpen] = useState(false);
+  const [isManageTeamModalOpen, setIsManageTeamModalOpen] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -319,6 +321,22 @@ export default function TeamPage() {
     setIsScoutingModalOpen(false);
   };
 
+  const handleOpenManageTeamModal = () => {
+    if (!currentTeam || !address) return;
+
+    // Check if user is captain
+    if (currentTeam.captainAddress.toLowerCase() !== address.toLowerCase()) {
+      setError("Only team captains can manage the team");
+      return;
+    }
+
+    setIsManageTeamModalOpen(true);
+  };
+
+  const handleCloseManageTeamModal = () => {
+    setIsManageTeamModalOpen(false);
+  };
+
   if (!isConnected || !address) {
     return <NoWalletState />;
   }
@@ -379,6 +397,7 @@ export default function TeamPage() {
           playerAddress={address}
           onLeaveTeam={handleLeaveTeam}
           onOpenScouting={handleOpenScoutingModal}
+          onOpenManageTeam={handleOpenManageTeamModal}
         />
       ) : (
         <>
@@ -409,6 +428,14 @@ export default function TeamPage() {
       <ScoutingModal
         isOpen={isScoutingModalOpen}
         onClose={handleCloseScoutingModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={true}
+      />
+
+      <ManageTeamModal
+        isOpen={isManageTeamModalOpen}
+        onClose={handleCloseManageTeamModal}
         captainAddress={address}
         teamId={currentTeam?._id || ""}
         isBottomSheet={true}

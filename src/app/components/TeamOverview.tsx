@@ -42,6 +42,7 @@ interface TeamOverviewProps {
   playerAddress: string;
   onLeaveTeam: () => void;
   onOpenScouting: () => void;
+  onOpenManageTeam: () => void;
 }
 
 export default function TeamOverview({
@@ -49,6 +50,7 @@ export default function TeamOverview({
   playerAddress,
   onLeaveTeam,
   onOpenScouting,
+  onOpenManageTeam,
 }: TeamOverviewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -268,7 +270,7 @@ export default function TeamOverview({
             <div className="glass-container p-4 rounded-lg shadow-lg">
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => router.push("/manageteam")}
+                  onClick={onOpenManageTeam}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] relative"
                 >
                   <img
