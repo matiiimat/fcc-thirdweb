@@ -293,7 +293,7 @@ export default function TeamOverview({
                   Tactics
                 </button>
                 <button
-                  onClick={() => router.push("/scouting")}
+                  onClick={onOpenScouting}
                   className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                   style={{ minHeight: "100%" }}
                 >
@@ -660,6 +660,7 @@ export default function TeamOverview({
         onClose={() => setJerseyModalOpen(false)}
         onSave={handleJerseyUpdate}
         currentJersey={team.jersey}
+        isBottomSheet={true}
       />
 
       {error && (
