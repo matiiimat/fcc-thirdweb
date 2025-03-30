@@ -41,12 +41,14 @@ interface TeamOverviewProps {
   team: MongoTeam;
   playerAddress: string;
   onLeaveTeam: () => void;
+  onOpenScouting: () => void;
 }
 
 export default function TeamOverview({
   team,
   playerAddress,
   onLeaveTeam,
+  onOpenScouting,
 }: TeamOverviewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -663,6 +665,23 @@ export default function TeamOverview({
       {error && (
         <div className="mt-2 text-red-400 text-center text-sm">{error}</div>
       )}
+
+      <div className="flex justify-end space-x-2 mt-4">
+        {isTeamCaptain && (
+          <button
+            onClick={onOpenScouting}
+            className="px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors text-sm"
+          >
+            Scout Players
+          </button>
+        )}
+        <button
+          onClick={handleLeaveTeam}
+          className="px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors text-sm"
+        >
+          Leave Team
+        </button>
+      </div>
     </div>
   );
 }

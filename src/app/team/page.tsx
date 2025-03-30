@@ -17,6 +17,7 @@ import { generateTeamName } from "../lib/names";
 import { ITactic, ITeamStats } from "../models/Team";
 import { Types } from "mongoose";
 import JerseyCustomizationModal from "../components/JerseyCustomizationModal";
+import ScoutingModal from "../components/ScoutingModal";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
@@ -84,6 +85,7 @@ export default function TeamPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isJerseyModalOpen, setIsJerseyModalOpen] = useState(false);
+  const [isScoutingModalOpen, setIsScoutingModalOpen] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -301,6 +303,22 @@ export default function TeamPage() {
     // Implementation of handleSaveJersey
   };
 
+  const handleOpenScoutingModal = () => {
+    if (!currentTeam || !address) return;
+
+    // Check if user is captain
+    if (currentTeam.captainAddress.toLowerCase() !== address.toLowerCase()) {
+      setError("Only team captains can access scouting");
+      return;
+    }
+
+    setIsScoutingModalOpen(true);
+  };
+
+  const handleCloseScoutingModal = () => {
+    setIsScoutingModalOpen(false);
+  };
+
   if (!isConnected || !address) {
     return <NoWalletState />;
   }
@@ -360,6 +378,7 @@ export default function TeamPage() {
           team={currentTeam}
           playerAddress={address}
           onLeaveTeam={handleLeaveTeam}
+          onOpenScouting={handleOpenScoutingModal}
         />
       ) : (
         <>
@@ -384,6 +403,14 @@ export default function TeamPage() {
         onClose={handleCloseJerseyModal}
         onSave={handleSaveJersey}
         currentJersey={currentTeam?.jersey}
+        isBottomSheet={true}
+      />
+
+      <ScoutingModal
+        isOpen={isScoutingModalOpen}
+        onClose={handleCloseScoutingModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
         isBottomSheet={true}
       />
     </PageWrapper>
