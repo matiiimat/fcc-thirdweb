@@ -117,7 +117,7 @@ export default function ScoutingModal({
       <div
         className={`
           bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] 
-          rounded-t-xl w-full max-w-4xl max-h-[90vh] flex flex-col
+          rounded-t-xl w-full max-w-4xl h-[90vh] flex flex-col
           transform transition-all duration-300 ease-out
           ${isBottomSheet ? "animate-slide-up" : "animate-fade-in"}
         `}
@@ -188,7 +188,7 @@ export default function ScoutingModal({
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto -mx-2 sm:mx-0 max-h-[50vh]">
+              <div className="overflow-x-auto -mx-2 sm:mx-0 h-[65vh]">
                 <table className="w-full">
                   <thead className="sticky top-0 bg-[#1a1d21] z-10">
                     <tr className="text-gray-400 border-b border-gray-700">
