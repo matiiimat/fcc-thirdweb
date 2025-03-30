@@ -117,7 +117,7 @@ export default function ScoutingModal({
       <div
         className={`
           bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] 
-          rounded-t-xl w-full max-w-4xl h-[90vh] flex flex-col
+          rounded-t-xl w-full max-w-4xl h-[75vh] flex flex-col
           transform transition-all duration-300 ease-out
           ${isBottomSheet ? "animate-slide-up" : "animate-fade-in"}
         `}
@@ -184,12 +184,24 @@ export default function ScoutingModal({
           )}
 
           {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+            <div className="space-y-4">
+              {/* Table Header Skeleton */}
+              <div className="overflow-x-auto -mx-2 sm:mx-0">
+                <div className="w-full h-8 bg-gray-700/30 rounded animate-pulse mb-2"></div>
+
+                {/* Table Rows Skeleton */}
+                {[...Array(8)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-full h-10 bg-gray-700/30 rounded animate-pulse mb-2"
+                    style={{ animationDelay: `${i * 0.05}s` }}
+                  ></div>
+                ))}
+              </div>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto -mx-2 sm:mx-0 h-[65vh]">
+              <div className="overflow-x-auto -mx-2 sm:mx-0 h-[50vh]">
                 <table className="w-full">
                   <thead className="sticky top-0 bg-[#1a1d21] z-10">
                     <tr className="text-gray-400 border-b border-gray-700">
