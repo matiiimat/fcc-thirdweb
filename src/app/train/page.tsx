@@ -122,8 +122,10 @@ export default function TrainPage() {
 
       try {
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(address)}`
+          `/api/players/address/${encodeURIComponent(address)}`,
+          { cache: "no-store" }
         );
+
         if (!response.ok) {
           if (response.status === 404) {
             setPlayer(null);
@@ -179,6 +181,7 @@ export default function TrainPage() {
           "x-wallet-address": address,
         },
         body: JSON.stringify({ playerId: player.playerId }),
+        cache: "no-store",
       });
 
       if (!response.ok) {
@@ -212,6 +215,8 @@ export default function TrainPage() {
         setTrainingResult(result.training);
         setShowTrainingAnimation(true);
         setTimeout(() => setShowTrainingAnimation(false), 2000);
+
+        router.refresh();
       } else {
         throw new Error(result.error || "Training failed");
       }

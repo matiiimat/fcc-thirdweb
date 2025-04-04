@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../lib/mongodb";
 import PlayerModel from "../../../models/Player";
+import { revalidatePath } from "next/cache";
 
 export async function PATCH(
   req: NextRequest,
@@ -25,6 +26,10 @@ export async function PATCH(
       );
     }
 
+    // Revalidate the cache for pages that display player data
+    revalidatePath('/');
+    revalidatePath('/train');
+    
     return NextResponse.json(player);
   } catch (error) {
     console.error("Error updating player:", error);
