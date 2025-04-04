@@ -48,6 +48,7 @@ interface TacticsModalProps {
   captainAddress: string;
   teamId: string;
   isBottomSheet?: boolean;
+  readOnly?: boolean;
 }
 
 export default function TacticsModal({
@@ -56,6 +57,7 @@ export default function TacticsModal({
   captainAddress,
   teamId,
   isBottomSheet = false,
+  readOnly = false,
 }: TacticsModalProps) {
   const [loading, setLoading] = useState(true);
   const [teamData, setTeamData] = useState<{
@@ -406,25 +408,27 @@ export default function TacticsModal({
               <div className="flex justify-between items-center mb-4">
                 <div></div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={handleSaveTactic}
-                    disabled={savingTactic || tactics.length >= 3}
-                    className={`
-                      px-4 py-2 rounded-lg transition-all duration-200
-                      ${
-                        savingTactic
-                          ? "bg-gray-600"
-                          : "bg-green-600 hover:bg-green-700"
-                      }
-                      ${
-                        tactics.length >= 3
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }
-                    `}
-                  >
-                    {savingTactic ? "Saving..." : "Save Tactic"}
-                  </button>
+                  {!readOnly && (
+                    <button
+                      onClick={handleSaveTactic}
+                      disabled={savingTactic || tactics.length >= 3}
+                      className={`
+                        px-4 py-2 rounded-lg transition-all duration-200
+                        ${
+                          savingTactic
+                            ? "bg-gray-600"
+                            : "bg-green-600 hover:bg-green-700"
+                        }
+                        ${
+                          tactics.length >= 3
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }
+                      `}
+                    >
+                      {savingTactic ? "Saving..." : "Save Tactic"}
+                    </button>
+                  )}
                   {currentTactic.name !== "Default Tactic" && (
                     <button
                       onClick={handleDeleteTactic}

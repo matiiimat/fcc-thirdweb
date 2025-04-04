@@ -44,6 +44,7 @@ interface TeamOverviewProps {
   onOpenScouting: () => void;
   onOpenManageTeam: () => void;
   onOpenTactics: () => void;
+  isCaptain: boolean;
 }
 
 export default function TeamOverview({
@@ -53,6 +54,7 @@ export default function TeamOverview({
   onOpenScouting,
   onOpenManageTeam,
   onOpenTactics,
+  isCaptain,
 }: TeamOverviewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -227,9 +229,6 @@ export default function TeamOverview({
     }
   };
 
-  const isTeamCaptain =
-    team.captainAddress.toLowerCase() === playerAddress.toLowerCase();
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-center justify-center gap-2">
@@ -239,7 +238,7 @@ export default function TeamOverview({
         </div>
 
         {/* Contract Summary - Only visible to non-captains */}
-        {!isTeamCaptain && playerData?.contract && (
+        {!isCaptain && playerData?.contract && (
           <div className="glass-container p-2 rounded-lg text-center text-sm w-full max-w-xs">
             <span
               className={`font-medium ${
@@ -268,7 +267,7 @@ export default function TeamOverview({
 
       <div className="space-y-4">
         <div className="grid gap-3">
-          {isTeamCaptain ? (
+          {isCaptain ? (
             <div className="glass-container p-4 rounded-lg shadow-lg">
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -393,7 +392,7 @@ export default function TeamOverview({
             teamName={team.teamName}
             teamId={team._id}
             tactics={team.tactics || []}
-            isTeamCaptain={isTeamCaptain}
+            isTeamCaptain={isCaptain}
             currentTeam={team}
           />
         ) : (
@@ -404,7 +403,7 @@ export default function TeamOverview({
       </div>
 
       {/* Contract Section - Only visible to non-captains */}
-      {!isTeamCaptain && (
+      {!isCaptain && (
         <div className="mt-4 glass-container p-4 rounded-xl shadow-lg">
           <h3 className="text-lg font-semibold text-white mb-3">
             Player Contract

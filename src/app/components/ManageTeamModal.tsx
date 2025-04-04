@@ -41,6 +41,7 @@ interface ManageTeamModalProps {
   captainAddress: string;
   teamId: string;
   isBottomSheet?: boolean;
+  readOnly?: boolean;
 }
 
 export default function ManageTeamModal({
@@ -49,6 +50,7 @@ export default function ManageTeamModal({
   captainAddress,
   teamId,
   isBottomSheet = false,
+  readOnly = false,
 }: ManageTeamModalProps) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teamData, setTeamData] = useState<TeamData | null>(null);
@@ -344,178 +346,192 @@ export default function ManageTeamModal({
                       </div>
                     </div>
 
-                    {/* Contract Information */}
-                    <div className="mt-2 p-2 bg-gray-800/50 rounded-lg">
-                      {player.contract ? (
-                        <>
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="text-gray-400 text-xs">
-                              Contract:
-                            </span>
-                            <span
-                              className={`text-xs font-medium ${
-                                player.contract.status === "active"
-                                  ? "text-green-400"
-                                  : player.contract.status === "pending"
-                                  ? "text-yellow-400"
-                                  : player.contract.status === "rejected"
-                                  ? "text-red-400"
-                                  : "text-gray-400"
-                              }`}
-                            >
-                              {player.contract.status.charAt(0).toUpperCase() +
-                                player.contract.status.slice(1)}
-                            </span>
-                          </div>
+                    {/* Contract Information - Only show for captains */}
+                    {!readOnly ? (
+                      <div className="mt-2 p-2 bg-gray-800/50 rounded-lg">
+                        {player.contract ? (
+                          <>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-gray-400 text-xs">
+                                Contract:
+                              </span>
+                              <span
+                                className={`text-xs font-medium ${
+                                  player.contract.status === "active"
+                                    ? "text-green-400"
+                                    : player.contract.status === "pending"
+                                    ? "text-yellow-400"
+                                    : player.contract.status === "rejected"
+                                    ? "text-red-400"
+                                    : "text-gray-400"
+                                }`}
+                              >
+                                {player.contract.status
+                                  .charAt(0)
+                                  .toUpperCase() +
+                                  player.contract.status.slice(1)}
+                              </span>
+                            </div>
 
-                          {player.contract.status === "active" && (
-                            <>
-                              <div className="text-xs text-gray-300 flex justify-between">
-                                <span>Amount:</span>
-                                <span>
-                                  {player.contract.requestedAmount} ETH
-                                </span>
-                              </div>
-                              <div className="text-xs text-gray-300 flex justify-between">
-                                <span>Length:</span>
-                                <span>
-                                  {player.contract.durationInSeasons}{" "}
-                                  {player.contract.durationInSeasons === 1
-                                    ? "season"
-                                    : "seasons"}
-                                </span>
-                              </div>
-                              {player.contract.seasonEnds && (
+                            {player.contract.status === "active" && (
+                              <>
                                 <div className="text-xs text-gray-300 flex justify-between">
-                                  <span>Expires:</span>
+                                  <span>Amount:</span>
                                   <span>
-                                    Season {player.contract.seasonEnds}
+                                    {player.contract.requestedAmount} ETH
                                   </span>
                                 </div>
-                              )}
-                            </>
-                          )}
+                                <div className="text-xs text-gray-300 flex justify-between">
+                                  <span>Length:</span>
+                                  <span>
+                                    {player.contract.durationInSeasons}{" "}
+                                    {player.contract.durationInSeasons === 1
+                                      ? "season"
+                                      : "seasons"}
+                                  </span>
+                                </div>
+                                {player.contract.seasonEnds && (
+                                  <div className="text-xs text-gray-300 flex justify-between">
+                                    <span>Expires:</span>
+                                    <span>
+                                      Season {player.contract.seasonEnds}
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            )}
 
-                          {player.contract.status === "pending" && (
-                            <>
-                              <div className="text-xs text-gray-300 flex justify-between">
-                                <span>Request:</span>
-                                <span>
-                                  {player.contract.requestedAmount} ETH
-                                </span>
-                              </div>
-                              <div className="text-xs text-gray-300 flex justify-between mb-2">
-                                <span>Length:</span>
-                                <span>
-                                  {player.contract.durationInSeasons}{" "}
-                                  {player.contract.durationInSeasons === 1
-                                    ? "season"
-                                    : "seasons"}
-                                </span>
-                              </div>
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-xs text-gray-400 text-center">
-                          No active contract
-                        </div>
-                      )}
-                    </div>
+                            {player.contract.status === "pending" && (
+                              <>
+                                <div className="text-xs text-gray-300 flex justify-between">
+                                  <span>Request:</span>
+                                  <span>
+                                    {player.contract.requestedAmount} ETH
+                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-300 flex justify-between mb-2">
+                                  <span>Length:</span>
+                                  <span>
+                                    {player.contract.durationInSeasons}{" "}
+                                    {player.contract.durationInSeasons === 1
+                                      ? "season"
+                                      : "seasons"}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-xs text-gray-400 text-center">
+                            No active contract
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
 
                     {/* Action Buttons */}
-                    {player.contract?.status === "pending" && (
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          onClick={async () => {
-                            try {
-                              setUpdating(true);
-                              const response = await fetch(
-                                "/api/contracts/respond",
-                                {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    "x-wallet-address": captainAddress,
-                                  },
-                                  body: JSON.stringify({
-                                    playerAddress: player.ethAddress,
-                                    action: "accept",
-                                  }),
+                    {!readOnly && (
+                      <>
+                        {player.contract?.status === "pending" && (
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  setUpdating(true);
+                                  const response = await fetch(
+                                    "/api/contracts/respond",
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                        "x-wallet-address": captainAddress,
+                                      },
+                                      body: JSON.stringify({
+                                        playerAddress: player.ethAddress,
+                                        action: "accept",
+                                      }),
+                                    }
+                                  );
+
+                                  if (!response.ok) {
+                                    const data = await response.json();
+                                    throw new Error(
+                                      data.error || "Failed to accept contract"
+                                    );
+                                  }
+
+                                  const data = await response.json();
+
+                                  // Show payment modal
+                                  setSelectedPlayer(player);
+                                  setContractAmount(data.amount);
+                                  setContractPlayerId(data.playerId);
+                                  setContractDuration(data.durationInSeasons);
+                                  setShowPaymentModal(true);
+                                } catch (error) {
+                                  console.error(
+                                    "Error accepting contract:",
+                                    error
+                                  );
+                                } finally {
+                                  setUpdating(false);
                                 }
-                              );
+                              }}
+                              className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
+                            >
+                              Sign Contract
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  setUpdating(true);
+                                  const response = await fetch(
+                                    "/api/contracts/respond",
+                                    {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                        "x-wallet-address": captainAddress,
+                                      },
+                                      body: JSON.stringify({
+                                        playerAddress: player.ethAddress,
+                                        action: "reject",
+                                      }),
+                                    }
+                                  );
 
-                              if (!response.ok) {
-                                const data = await response.json();
-                                throw new Error(
-                                  data.error || "Failed to accept contract"
-                                );
-                              }
+                                  if (!response.ok) {
+                                    const data = await response.json();
+                                    throw new Error(
+                                      data.error || "Failed to reject contract"
+                                    );
+                                  }
 
-                              const data = await response.json();
-
-                              // Show payment modal
-                              setSelectedPlayer(player);
-                              setContractAmount(data.amount);
-                              setContractPlayerId(data.playerId);
-                              setContractDuration(data.durationInSeasons);
-                              setShowPaymentModal(true);
-                            } catch (error) {
-                              console.error("Error accepting contract:", error);
-                            } finally {
-                              setUpdating(false);
-                            }
-                          }}
-                          className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
-                        >
-                          Sign Contract
-                        </button>
-                        <button
-                          onClick={async () => {
-                            try {
-                              setUpdating(true);
-                              const response = await fetch(
-                                "/api/contracts/respond",
-                                {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                    "x-wallet-address": captainAddress,
-                                  },
-                                  body: JSON.stringify({
-                                    playerAddress: player.ethAddress,
-                                    action: "reject",
-                                  }),
+                                  // Refresh data
+                                  const playersResponse = await fetch(
+                                    `/api/teams/players?teamId=${teamId}`
+                                  );
+                                  if (playersResponse.ok) {
+                                    const playersData =
+                                      await playersResponse.json();
+                                    setPlayers(playersData);
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    "Error rejecting contract:",
+                                    error
+                                  );
+                                } finally {
+                                  setUpdating(false);
                                 }
-                              );
-
-                              if (!response.ok) {
-                                const data = await response.json();
-                                throw new Error(
-                                  data.error || "Failed to reject contract"
-                                );
-                              }
-
-                              // Refresh data
-                              const playersResponse = await fetch(
-                                `/api/teams/players?teamId=${teamId}`
-                              );
-                              if (playersResponse.ok) {
-                                const playersData =
-                                  await playersResponse.json();
-                                setPlayers(playersData);
-                              }
-                            } catch (error) {
-                              console.error("Error rejecting contract:", error);
-                            } finally {
-                              setUpdating(false);
-                            }
-                          }}
-                          className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
-                        >
-                          Reject Contract
-                        </button>
-                      </div>
+                              }}
+                              className="flex-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+                            >
+                              Reject Contract
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}

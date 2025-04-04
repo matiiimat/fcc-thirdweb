@@ -337,15 +337,8 @@ export default function TeamPage() {
     setIsScoutingModalOpen(false);
   };
 
-  const handleOpenManageTeamModal = () => {
+  const handleOpenPlayersModal = () => {
     if (!currentTeam || !address) return;
-
-    // Check if user is captain
-    if (currentTeam.captainAddress.toLowerCase() !== address.toLowerCase()) {
-      setError("Only team captains can manage the team");
-      return;
-    }
-
     setIsManageTeamModalOpen(true);
   };
 
@@ -363,6 +356,23 @@ export default function TeamPage() {
     }
 
     setIsTacticsModalOpen(true);
+  };
+
+  const handleOpenViewTacticsModal = () => {
+    if (!currentTeam || !address) return;
+    setIsTacticsModalOpen(true);
+  };
+
+  const handleOpenManageTeamModal = () => {
+    if (!currentTeam || !address) return;
+
+    // Check if user is captain
+    if (currentTeam.captainAddress.toLowerCase() !== address.toLowerCase()) {
+      setError("Only team captains can manage the team");
+      return;
+    }
+
+    setIsManageTeamModalOpen(true);
   };
 
   const handleCloseTacticsModal = () => {
@@ -429,8 +439,19 @@ export default function TeamPage() {
           playerAddress={address}
           onLeaveTeam={handleLeaveTeam}
           onOpenScouting={handleOpenScoutingModal}
-          onOpenManageTeam={handleOpenManageTeamModal}
-          onOpenTactics={handleOpenTacticsModal}
+          onOpenManageTeam={
+            currentTeam.captainAddress.toLowerCase() === address.toLowerCase()
+              ? handleOpenManageTeamModal
+              : handleOpenPlayersModal
+          }
+          onOpenTactics={
+            currentTeam.captainAddress.toLowerCase() === address.toLowerCase()
+              ? handleOpenTacticsModal
+              : handleOpenViewTacticsModal
+          }
+          isCaptain={
+            currentTeam.captainAddress.toLowerCase() === address.toLowerCase()
+          }
         />
       ) : (
         <>
@@ -472,6 +493,9 @@ export default function TeamPage() {
         captainAddress={address}
         teamId={currentTeam?._id || ""}
         isBottomSheet={true}
+        readOnly={
+          currentTeam?.captainAddress.toLowerCase() !== address.toLowerCase()
+        }
       />
 
       <TacticsModal
@@ -480,6 +504,9 @@ export default function TeamPage() {
         captainAddress={address}
         teamId={currentTeam?._id || ""}
         isBottomSheet={true}
+        readOnly={
+          currentTeam?.captainAddress.toLowerCase() !== address.toLowerCase()
+        }
       />
     </PageWrapper>
   );
