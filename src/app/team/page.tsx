@@ -110,7 +110,9 @@ export default function TeamPage() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      const response = await fetch("/api/teams");
+      const response = await fetch("/api/teams", {
+        cache: "no-store", // Disable caching
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setTeams(data);
@@ -135,7 +137,8 @@ export default function TeamPage() {
 
       // Fetch player data
       const response = await fetch(
-        `/api/players/address/${encodeURIComponent(address)}`
+        `/api/players/address/${encodeURIComponent(address)}`,
+        { cache: "no-store" } // Disable caching
       );
       if (!response.ok) {
         throw new Error("Failed to fetch player data");
@@ -159,7 +162,9 @@ export default function TeamPage() {
       if (data.team && data.team !== "Unassigned") {
         try {
           // Fetch teams data
-          const teamResponse = await fetch("/api/teams");
+          const teamResponse = await fetch("/api/teams", {
+            cache: "no-store", // Disable caching
+          });
           const teams = await teamResponse.json();
           if (!teamResponse.ok) throw new Error("Failed to fetch teams");
 
@@ -167,7 +172,8 @@ export default function TeamPage() {
           if (team) {
             // Fetch team tactics
             const tacticsResponse = await fetch(
-              `/api/teams/tactics?teamName=${team.teamName}`
+              `/api/teams/tactics?teamName=${team.teamName}`,
+              { cache: "no-store" } // Disable caching
             );
             if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
             const tactics = await tacticsResponse.json();
@@ -238,7 +244,10 @@ export default function TeamPage() {
 
       const response = await fetch("/api/teams", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache", // Prevent caching
+        },
         body: JSON.stringify({
           teamName,
           captainAddress: address,
@@ -250,6 +259,8 @@ export default function TeamPage() {
 
       setSuccess("Team created successfully!");
       setLoading(true);
+
+      // Force a fresh data fetch
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to create team");
@@ -274,6 +285,7 @@ export default function TeamPage() {
         headers: {
           "Content-Type": "application/json",
           ethAddress: address,
+          "Cache-Control": "no-cache", // Prevent caching
         },
         body: JSON.stringify({
           teamName: teamName,
@@ -285,6 +297,8 @@ export default function TeamPage() {
 
       setSuccess("Successfully joined team!");
       setLoading(true);
+
+      // Force a fresh data fetch
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to join team");

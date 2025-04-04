@@ -1,9 +1,12 @@
+"use client";
+
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 
 import { Providers } from "./providers";
+import { useEffect } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,6 +22,17 @@ export const viewport: Viewport = {
   userScalable: false,
   themeColor: "#000000",
 };
+
+export function InitializeApp() {
+  useEffect(() => {
+    // Call the init route to create database indexes
+    fetch("/api/init")
+      .then((response) => response.json())
+      .catch((error) => console.error("Error initializing app:", error));
+  }, []);
+
+  return null;
+}
 
 export default function RootLayout({
   children,
@@ -54,7 +68,10 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <InitializeApp />
+          {children}
+        </Providers>
       </body>
     </html>
   );
