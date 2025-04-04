@@ -3,10 +3,36 @@
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import sdk, { Context } from "@farcaster/frame-sdk";
+
+export type FrameContext = Context.FrameContext;
 
 export default function Footer() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<FrameContext>();
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setContext(await sdk.context);
+        sdk.actions.ready();
+      } catch (error) {
+        console.error(
+          "Error initializing Farcaster Frame SDK in Footer:",
+          error
+        );
+      }
+    };
+
+    if (sdk && !isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -39,16 +65,28 @@ export default function Footer() {
             onClick={() => router.push("/")}
             className={getButtonClass("/")}
           >
-            <Image
-              src="/icons/player-icon.png"
-              alt="Player"
-              width={20}
-              height={20}
-              priority
-              className="transition-transform group-hover:scale-110"
-            />
+            {context?.user?.pfpUrl ? (
+              <img
+                src={context.user.pfpUrl}
+                alt="Profile"
+                className="w-5 h-5 rounded-full object-cover"
+                width={20}
+                height={20}
+              />
+            ) : (
+              <Image
+                src="/icons/player-icon.png"
+                alt="Player"
+                width={20}
+                height={20}
+                priority
+                className="transition-transform group-hover:scale-110"
+              />
+            )}
           </button>
-          <span className={getTextClass("/")}>Player</span>
+          <span className={getTextClass("/")}>
+            {context?.user?.username || "Player"}
+          </span>
         </div>
         <div className="flex flex-col items-center">
           <button
