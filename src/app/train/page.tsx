@@ -122,8 +122,7 @@ export default function TrainPage() {
 
       try {
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(address)}`,
-          { cache: "no-store" }
+          `/api/players/address/${encodeURIComponent(address)}`
         );
         if (!response.ok) {
           if (response.status === 404) {
@@ -178,7 +177,6 @@ export default function TrainPage() {
         headers: {
           "Content-Type": "application/json",
           "x-wallet-address": address,
-          "Cache-Control": "no-cache",
         },
         body: JSON.stringify({ playerId: player.playerId }),
       });
@@ -237,7 +235,6 @@ export default function TrainPage() {
         headers: {
           "Content-Type": "application/json",
           "x-wallet-address": address,
-          "Cache-Control": "no-cache",
         },
         body: JSON.stringify({
           playerId: player.playerId,
