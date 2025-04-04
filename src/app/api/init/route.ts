@@ -1,22 +1,24 @@
 import { NextResponse } from 'next/server';
-import { createDatabaseIndexes } from '../../lib/db/indexes';
+import connectDB from '../../lib/mongodb';
+import PlayerModel from '../../models/Player';
 
 export async function GET() {
   try {
-    const result = await createDatabaseIndexes();
+    await connectDB();
     
-    if (result) {
-      return NextResponse.json({ success: true, message: 'Database indexes created successfully' });
-    } else {
-      return NextResponse.json(
-        { success: false, message: 'Failed to create database indexes' },
-        { status: 500 }
-      );
-    }
+    // Create indexes for frequently queried fields
+    await PlayerModel.collection.createIndex({ ethAddress: 1 }, { unique: true });
+    
+    // Add additional indexes based on your query patterns
+    // For example, if you frequently query by other fields:
+    // await PlayerModel.collection.createIndex({ username: 1 });
+    // await PlayerModel.collection.createIndex({ level: -1 }); // For sorting by level descending
+    
+    return NextResponse.json({ success: true, message: 'Database indexes created successfully' });
   } catch (error) {
-    console.error('Error in init route:', error);
+    console.error('Error creating database indexes:', error);
     return NextResponse.json(
-      { success: false, message: 'Server error during initialization' },
+      { error: 'Failed to create database indexes' },
       { status: 500 }
     );
   }

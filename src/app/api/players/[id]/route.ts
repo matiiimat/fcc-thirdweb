@@ -39,3 +39,32 @@ export async function PATCH(
     );
   }
 }
+
+// Add a GET method to retrieve player data
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    
+    await connectDB();
+    
+    const player = await PlayerModel.findOne({ ethAddress: id });
+    
+    if (!player) {
+      return NextResponse.json(
+        { error: "Player not found" },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(player);
+  } catch (error) {
+    console.error("Error fetching player:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch player" },
+      { status: 500 }
+    );
+  }
+}
