@@ -13,12 +13,25 @@ export default function Footer() {
   const pathname = usePathname();
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<FrameContext>();
+  const [username, setUsername] = useState("Player");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   // Farcaster Frame Integration
   useEffect(() => {
     const load = async () => {
       try {
-        setContext(await sdk.context);
+        const ctx = await sdk.context;
+        setContext(ctx);
+        
+        // Store username and profile image in state
+        if (ctx?.user?.username) {
+          setUsername(ctx.user.username);
+        }
+        
+        if (ctx?.user?.pfpUrl) {
+          setProfileImage(ctx.user.pfpUrl);
+        }
+        
         sdk.actions.ready();
       } catch (error) {
         console.error(
@@ -65,9 +78,9 @@ export default function Footer() {
             onClick={() => router.push("/")}
             className={getButtonClass("/")}
           >
-            {context?.user?.pfpUrl ? (
+            {profileImage ? (
               <img
-                src={context.user.pfpUrl}
+                src={profileImage}
                 alt="Profile"
                 className="w-5 h-5 rounded-full object-cover"
                 width={20}
@@ -85,7 +98,7 @@ export default function Footer() {
             )}
           </button>
           <span className={getTextClass("/")}>
-            {context?.user?.username || "Player"}
+            {username}
           </span>
         </div>
         <div className="flex flex-col items-center">
