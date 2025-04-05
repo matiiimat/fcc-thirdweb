@@ -324,7 +324,7 @@ export default function TeamOverview({
             <div className="glass-container p-4 rounded-lg shadow-lg">
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => router.push("/manageteam")}
+                  onClick={onOpenManageTeam}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <img
