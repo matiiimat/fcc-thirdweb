@@ -194,7 +194,7 @@ export default function TeamOverview({
         </div>
 
         {/* Contract Summary - Only visible to non-captains */}
-        {!isCaptain && playerData?.contract && (
+        {/* {!isCaptain && playerData?.contract && (
           <div className="glass-container p-2 rounded-lg text-center text-sm w-full max-w-xs">
             <span
               className={`font-medium ${
@@ -218,7 +218,7 @@ export default function TeamOverview({
                 : "Contract expired"}
             </span>
           </div>
-        )}
+        )} */}
       </div>
 
       <div className="space-y-4">
