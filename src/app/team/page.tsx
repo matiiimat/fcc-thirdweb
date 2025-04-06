@@ -535,7 +535,7 @@ export default function TeamPage() {
         onClose={handleClosePlayerTacticsModal}
         captainAddress={address}
         teamId={currentTeam?._id || ""}
-        isBottomSheet={false} // Full screen for player view
+        isBottomSheet={true} // Full screen for player view
         readOnly={true}
       />
     </PageWrapper>
