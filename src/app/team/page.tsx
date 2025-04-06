@@ -90,6 +90,10 @@ export default function TeamPage() {
   const [isScoutingModalOpen, setIsScoutingModalOpen] = useState(false);
   const [isManageTeamModalOpen, setIsManageTeamModalOpen] = useState(false);
   const [isTacticsModalOpen, setIsTacticsModalOpen] = useState(false);
+  const [isPlayerTacticsModalOpen, setIsPlayerTacticsModalOpen] =
+    useState(false);
+  const [isPlayerManageTeamModalOpen, setIsPlayerManageTeamModalOpen] =
+    useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -339,7 +343,7 @@ export default function TeamPage() {
 
   const handleOpenPlayersModal = () => {
     if (!currentTeam || !address) return;
-    setIsManageTeamModalOpen(true);
+    setIsPlayerManageTeamModalOpen(true);
   };
 
   const handleCloseManageTeamModal = () => {
@@ -360,7 +364,7 @@ export default function TeamPage() {
 
   const handleOpenViewTacticsModal = () => {
     if (!currentTeam || !address) return;
-    setIsTacticsModalOpen(true);
+    setIsPlayerTacticsModalOpen(true);
   };
 
   const handleOpenManageTeamModal = () => {
@@ -377,6 +381,14 @@ export default function TeamPage() {
 
   const handleCloseTacticsModal = () => {
     setIsTacticsModalOpen(false);
+  };
+
+  const handleClosePlayerTacticsModal = () => {
+    setIsPlayerTacticsModalOpen(false);
+  };
+
+  const handleClosePlayerManageTeamModal = () => {
+    setIsPlayerManageTeamModalOpen(false);
   };
 
   if (!isConnected || !address) {
@@ -487,26 +499,44 @@ export default function TeamPage() {
         isBottomSheet={true}
       />
 
+      {/* Captain's Manage Team Modal */}
       <ManageTeamModal
         isOpen={isManageTeamModalOpen}
         onClose={handleCloseManageTeamModal}
         captainAddress={address}
         teamId={currentTeam?._id || ""}
         isBottomSheet={true}
-        readOnly={
-          currentTeam?.captainAddress.toLowerCase() !== address.toLowerCase()
-        }
+        readOnly={false}
       />
 
+      {/* Player's Manage Team Modal */}
+      <ManageTeamModal
+        isOpen={isPlayerManageTeamModalOpen}
+        onClose={handleClosePlayerManageTeamModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={true} // Full screen for player view
+        readOnly={true}
+      />
+
+      {/* Captain's Tactics Modal */}
       <TacticsModal
         isOpen={isTacticsModalOpen}
         onClose={handleCloseTacticsModal}
         captainAddress={address}
         teamId={currentTeam?._id || ""}
         isBottomSheet={true}
-        readOnly={
-          currentTeam?.captainAddress.toLowerCase() !== address.toLowerCase()
-        }
+        readOnly={false}
+      />
+
+      {/* Player's Tactics Modal */}
+      <TacticsModal
+        isOpen={isPlayerTacticsModalOpen}
+        onClose={handleClosePlayerTacticsModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={false} // Full screen for player view
+        readOnly={true}
       />
     </PageWrapper>
   );
