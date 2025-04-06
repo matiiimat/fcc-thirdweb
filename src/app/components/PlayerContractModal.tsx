@@ -272,8 +272,8 @@ export default function PlayerContractModal({
           ) : (
             <div className="space-y-4">
               <p className="text-gray-300 mb-4">
-                You don't have a contract with this team. Request one to secure
-                your position and earn ETH.
+                You don&apos;t have a contract with this team. Request one to
+                secure your position and earn ETH.
               </p>
               <div className="space-y-4">
                 <div>
