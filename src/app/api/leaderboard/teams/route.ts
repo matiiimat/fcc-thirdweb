@@ -33,7 +33,9 @@ export async function GET(request: NextRequest) {
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
     const sortBy = (searchParams.get("sortBy") || "points") as LeaderboardSortBy;
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
 
     // Fetch all teams with their stats
     const teams = await TeamModel.find({}, {
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
             return b.points - a.points;
         }
       })
-      .slice(0, limit);
+      .slice(skip, skip + limit);
 
     return NextResponse.json({
       success: true,

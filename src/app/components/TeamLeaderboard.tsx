@@ -38,15 +38,29 @@ export default function TeamLeaderboard({
     async function fetchLeaderboard() {
       try {
         setLoading(true);
+        setError(null); // Clear any previous errors
+
         const response = await fetch(
           `/api/leaderboard/teams?sortBy=${sortBy}&page=${page}&limit=${limit}`
         );
+
         if (!response.ok) {
-          throw new Error("Failed to fetch leaderboard");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error ||
+              `Failed to fetch leaderboard (${response.status})`
+          );
         }
+
         const data = await response.json();
+
+        if (!data.leaderboard || !Array.isArray(data.leaderboard)) {
+          throw new Error("Invalid leaderboard data received");
+        }
+
         setLeaderboard(data.leaderboard);
       } catch (error) {
+        console.error("Leaderboard fetch error:", error);
         setError(
           error instanceof Error ? error.message : "Failed to fetch leaderboard"
         );

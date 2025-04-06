@@ -232,8 +232,8 @@ export default function PlayerContractModal({
                       </label>
                       <input
                         type="number"
-                        min="0.01"
-                        step="0.01"
+                        min="0.001"
+                        step="0.001"
                         value={contractAmount}
                         onChange={(e) =>
                           setContractAmount(parseFloat(e.target.value))
@@ -282,8 +282,8 @@ export default function PlayerContractModal({
                   </label>
                   <input
                     type="number"
-                    min="0.01"
-                    step="0.01"
+                    min="0.001"
+                    step="0.001"
                     value={contractAmount}
                     onChange={(e) =>
                       setContractAmount(parseFloat(e.target.value))
