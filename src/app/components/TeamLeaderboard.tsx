@@ -20,10 +20,14 @@ interface LeaderboardEntry {
 
 interface TeamLeaderboardProps {
   className?: string;
+  page?: number;
+  limit?: number;
 }
 
 export default function TeamLeaderboard({
   className = "",
+  page = 1,
+  limit = 10,
 }: TeamLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +38,9 @@ export default function TeamLeaderboard({
     async function fetchLeaderboard() {
       try {
         setLoading(true);
-        const response = await fetch(`/api/leaderboard/teams?sortBy=${sortBy}`);
+        const response = await fetch(
+          `/api/leaderboard/teams?sortBy=${sortBy}&page=${page}&limit=${limit}`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch leaderboard");
         }
@@ -50,7 +56,7 @@ export default function TeamLeaderboard({
     }
 
     fetchLeaderboard();
-  }, [sortBy]);
+  }, [sortBy, page, limit]);
 
   const getFormColor = (form: string) => {
     switch (form) {
@@ -117,7 +123,7 @@ export default function TeamLeaderboard({
                 key={team.teamName}
                 className="border-t border-gray-800 hover:bg-black/20 transition-colors"
               >
-                <td className="py-2 px-3">{index + 1}</td>
+                <td className="py-2 px-3">{(page - 1) * limit + index + 1}</td>
                 <td className="py-2 px-3 font-medium">{team.teamName}</td>
                 <td className="text-center py-2 px-3 font-bold">
                   {team.points}

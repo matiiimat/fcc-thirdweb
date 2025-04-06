@@ -18,6 +18,11 @@ export default function LeaguePage() {
   // State for tooltip visibility
   const [showTooltip, setShowTooltip] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const teamsPerPage = 10;
+  const [totalTeams, setTotalTeams] = useState(0);
+
   // Fetch the balance of the rewards address
   const {
     data: balanceData,
@@ -62,6 +67,33 @@ export default function LeaguePage() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Fetch total number of teams for pagination
+  useEffect(() => {
+    const fetchTotalTeams = async () => {
+      try {
+        const response = await fetch("/api/teams/count");
+        if (response.ok) {
+          const data = await response.json();
+          setTotalTeams(data.count);
+        }
+      } catch (error) {
+        console.error("Error fetching team count:", error);
+      }
+    };
+
+    if (!loading) {
+      fetchTotalTeams();
+    }
+  }, [loading]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalTeams / teamsPerPage);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Show loading state if either the page is loading or balance is loading
   if (loading || isBalanceLoading) {
@@ -162,10 +194,10 @@ export default function LeaguePage() {
                   </p>
                   <ul className="space-y-1 mb-2">
                     <li>🥇 1st place team: 30% of the prize pool</li>
-                    <li>🥈 2nd place team: 25%</li>
-                    <li>🥉 3rd place team: 20%</li>
-                    <li>🔹 4th place team: 15%</li>
-                    <li>🔹 5th place team: 10%</li>
+                    <li>🥈 2nd place team: 20%</li>
+                    <li>🥉 3rd place team: 15%</li>
+                    <li>🔹 4th place team: 10%</li>
+                    <li>🔹 5th place team: 5%</li>
                   </ul>
                   <p>
                     The reward for each team is then evenly divided among all
@@ -187,9 +219,83 @@ export default function LeaguePage() {
             </div>
 
             {/* Team Leaderboard */}
-            <div className="mb-6">
-              <TeamLeaderboard />
+            <div className="mb-4">
+              <TeamLeaderboard page={currentPage} limit={teamsPerPage} />
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2 mt-4 mb-2">
+                <button
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-md text-xs ${
+                    currentPage === 1
+                      ? "bg-gray-700/30 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                  }`}
+                  aria-label="Previous page"
+                >
+                  &lt;
+                </button>
+
+                <div className="flex space-x-1">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    // Show current page, first, last, and pages around current
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-7 h-7 rounded-md text-xs flex items-center justify-center ${
+                            currentPage === pageNum
+                              ? "bg-green-600/70 text-white"
+                              : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      (pageNum === currentPage - 2 && currentPage > 3) ||
+                      (pageNum === currentPage + 2 &&
+                        currentPage < totalPages - 2)
+                    ) {
+                      // Show ellipsis for skipped pages
+                      return (
+                        <span
+                          key={pageNum}
+                          className="w-7 h-7 flex items-center justify-center text-gray-400"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-md text-xs ${
+                    currentPage === totalPages
+                      ? "bg-gray-700/30 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                  }`}
+                  aria-label="Next page"
+                >
+                  &gt;
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
