@@ -75,20 +75,28 @@ export default function LeaguePage() {
         const response = await fetch("/api/teams/count");
         if (response.ok) {
           const data = await response.json();
-          setTotalTeams(data.count);
+          // Ensure we have at least 1 team for pagination calculations
+          setTotalTeams(Math.max(data.count, 1));
+        } else {
+          // Handle API error
+          console.warn("Could not fetch team count, using fallback value");
+          setTotalTeams(1); // Fallback to minimum value
+          setError("Unable to load team count data. Using default pagination.");
         }
       } catch (error) {
         console.error("Error fetching team count:", error);
+        setTotalTeams(1); // Fallback to minimum value
+        setError("Unable to load team count data. Using default pagination.");
       }
     };
 
     if (!loading) {
       fetchTotalTeams();
     }
-  }, [loading]);
+  }, [loading]); // Only run when loading state changes, not on every render
 
-  // Calculate total pages
-  const totalPages = Math.ceil(totalTeams / teamsPerPage);
+  // Calculate total pages - ensure at least 1 page even with 0 teams
+  const totalPages = Math.max(Math.ceil(totalTeams / teamsPerPage), 1);
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -199,15 +207,7 @@ export default function LeaguePage() {
                     <li>🔹 4th place team: 10%</li>
                     <li>🔹 5th place team: 5%</li>
                   </ul>
-                  <p>
-                    The reward for each team is then evenly divided among all
-                    registered players in that team at the end of the
-                    season&apos;s final match.
-                  </p>
-                  <p className="mt-2">
-                    Payouts are automatic and sent directly to the Farcaster
-                    wallet linked to each player.
-                  </p>
+                  <p>The reward is sent to the captain of each team.</p>
                   <button
                     className="mt-2 text-green-400 font-medium"
                     onClick={() => setShowTooltip(false)}
@@ -223,7 +223,7 @@ export default function LeaguePage() {
               <TeamLeaderboard page={currentPage} limit={teamsPerPage} />
             </div>
 
-            {/* Pagination Controls */}
+            {/* Pagination Controls - Only show if we have teams */}
             {totalPages > 1 && (
               <div className="flex justify-center items-center space-x-2 mt-4 mb-2">
                 <button
@@ -299,12 +299,15 @@ export default function LeaguePage() {
           </div>
         </div>
 
+        {/* Error display - show both API errors and balance errors */}
         {(error || isBalanceError) && (
-          <div className="text-red-500 text-center mt-2 text-xs">
-            {error ||
-              (isBalanceError
-                ? "Failed to load prize pool data. Please try again later."
-                : "")}
+          <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-3 mt-4 text-center">
+            <p className="text-red-400 text-xs">
+              {error ||
+                (isBalanceError
+                  ? "Failed to load prize pool data. Please try again later."
+                  : "")}
+            </p>
           </div>
         )}
       </main>
