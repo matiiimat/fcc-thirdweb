@@ -7,10 +7,7 @@ import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
 import { config } from "../components/providers/WagmiProvider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import EnhancedTeamMatchPopup from "../components/EnhancedTeamMatchPopup";
 import TeamLeaderboard from "../components/TeamLeaderboard";
-import MatchModel from "../models/Match";
-import SeasonModel from "../models/Season";
 
 export default function LeaguePage() {
   const router = useRouter();
@@ -39,11 +36,6 @@ export default function LeaguePage() {
   const [context, setContext] = useState<any>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [matchData, setMatchData] = useState<any>(null);
-  const [showMatchPopup, setShowMatchPopup] = useState(false);
-  const [simulatingMatch, setSimulatingMatch] = useState(false);
-  const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
-  const [matchInProgress, setMatchInProgress] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -70,129 +62,6 @@ export default function LeaguePage() {
 
     return () => clearTimeout(timer);
   }, []);
-
-  // Check for active matches when the page loads
-  useEffect(() => {
-    const checkForActiveMatches = async () => {
-      try {
-        // Fetch in-progress matches from the database
-        const response = await fetch("/api/matches?status=inProgress");
-
-        if (response.ok) {
-          const data = await response.json();
-
-          if (data.success && data.matches && data.matches.length > 0) {
-            // Get the most recent in-progress match
-            const activeMatch = data.matches[0];
-
-            // Set the match data
-            setMatchData({ match: activeMatch });
-            setMatchInProgress(true);
-            setActiveMatchId(activeMatch._id);
-
-            // Show the match popup if it's in progress
-            setShowMatchPopup(true);
-          }
-        }
-      } catch (error) {
-        console.error("Error checking for active matches:", error);
-      }
-    };
-
-    if (!loading) {
-      checkForActiveMatches();
-    }
-  }, [loading]);
-
-  // Function to simulate a match between two teams
-  const simulateMatch = async () => {
-    setSimulatingMatch(true);
-    setError(null);
-
-    try {
-      // Team and tactic IDs provided by the user
-      const homeTeamId = "67d6f19c7d3400bac3e7c747";
-      const awayTeamId = "67d6f19c7d3400bac3e7c748";
-      const homeTacticId = "67d6f19c7d3400bac3e7c745";
-      const awayTacticId = "67d6f19c7d3400bac3e7c746";
-
-      // Step 1: Simulate the match - this generates the result immediately
-      const response = await fetch("/api/teams/teammatch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          homeTeamId,
-          awayTeamId,
-          homeTacticId,
-          awayTacticId,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to simulate match");
-      }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || "Failed to simulate match");
-      }
-
-      // Step 2: Save the match to the database as "in progress"
-      // This allows other players to see the match in progress
-      const saveMatchResponse = await fetch("/api/matches/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          homeTeamId: homeTeamId,
-          awayTeamId: awayTeamId,
-          homeTeamName: data.match.homeTeam,
-          awayTeamName: data.match.awayTeam,
-          homeTactic: data.match.homeTactic,
-          awayTactic: data.match.awayTactic,
-          result: data.match.result,
-          homeStats: data.match.homeStats,
-          awayStats: data.match.awayStats,
-          homePlayerRatings: data.match.homePlayerRatings,
-          awayPlayerRatings: data.match.awayPlayerRatings,
-          events: data.match.events,
-          isInProgress: true, // Mark as in progress, not completed
-        }),
-      });
-
-      if (!saveMatchResponse.ok) {
-        // Get detailed error information from the response
-        const errorData = await saveMatchResponse.json();
-        const errorMessage =
-          errorData.error || "Failed to save match to database";
-        const errorDetails = errorData.details
-          ? `\nDetails: ${errorData.details}`
-          : "";
-        throw new Error(`${errorMessage}${errorDetails}`);
-      }
-
-      const saveMatchData = await saveMatchResponse.json();
-      const matchId = saveMatchData.matchId;
-
-      // Store the match ID for tracking
-      setActiveMatchId(matchId);
-      setMatchInProgress(true);
-
-      // We'll update team stats only when the match is completed
-
-      // Show the match popup immediately
-      setMatchData(data);
-      setShowMatchPopup(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to simulate match");
-    } finally {
-      setSimulatingMatch(false);
-    }
-  };
 
   // Show loading state if either the page is loading or balance is loading
   if (loading || isBalanceLoading) {
@@ -228,12 +97,6 @@ export default function LeaguePage() {
                     <div className="h-6 w-16 bg-gray-700/30 rounded animate-pulse"></div>
                   </div>
                 ))}
-              </div>
-
-              {/* Button Skeleton */}
-              <div className="text-center">
-                <div className="h-10 w-40 mx-auto bg-gray-700/30 rounded-lg animate-pulse"></div>
-                <div className="h-4 w-48 mx-auto mt-2 bg-gray-700/30 rounded animate-pulse"></div>
               </div>
             </div>
           </div>
@@ -327,24 +190,6 @@ export default function LeaguePage() {
             <div className="mb-6">
               <TeamLeaderboard />
             </div>
-
-            {/* Test Match Button */}
-            <div className="text-center mb-3">
-              <button
-                onClick={simulateMatch}
-                className={`gradient-button py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
-                  simulatingMatch
-                    ? "opacity-50 cursor-not-allowed"
-                    : "active:scale-95"
-                }`}
-                disabled={simulatingMatch}
-              >
-                {simulatingMatch ? "Simulating..." : "Simulate Test Match"}
-              </button>
-              <p className="text-xs text-gray-400 mt-1">
-                This button is for testing purposes and will be removed later.
-              </p>
-            </div>
           </div>
         </div>
 
@@ -358,81 +203,6 @@ export default function LeaguePage() {
         )}
       </main>
       <Footer />
-
-      {/* Live Match Indicator - only shown when there's an active match but popup is closed */}
-      {matchInProgress && !showMatchPopup && (
-        <div
-          className="fixed bottom-20 right-4 bg-green-600 text-white p-3 rounded-full shadow-lg cursor-pointer flex items-center justify-center animate-pulse"
-          onClick={() => setShowMatchPopup(true)}
-          aria-label="View live match"
-        >
-          <div className="mr-2 w-3 h-3 bg-red-500 rounded-full"></div>
-          <span className="text-sm font-medium">LIVE MATCH</span>
-        </div>
-      )}
-
-      {/* Match Popup */}
-      {showMatchPopup && matchData && (
-        <EnhancedTeamMatchPopup
-          match={matchData.match}
-          teamStats={matchData.stats}
-          onClose={() => setShowMatchPopup(false)}
-          onMatchComplete={async () => {
-            // When match is completed, update the database
-            if (activeMatchId) {
-              try {
-                // 1. Mark the match as completed
-                await fetch(`/api/matches/${activeMatchId}/complete`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    result: matchData.match.result,
-                    homeStats: matchData.match.homeStats,
-                    awayStats: matchData.match.awayStats,
-                  }),
-                });
-
-                // 2. Update team stats
-                const homeTeamId = matchData.match.homeTeamId;
-                const awayTeamId = matchData.match.awayTeamId;
-
-                await Promise.all([
-                  fetch(`/api/teams/${homeTeamId}`, {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      stats: matchData.stats.home,
-                    }),
-                  }),
-                  fetch(`/api/teams/${awayTeamId}`, {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      stats: matchData.stats.away,
-                    }),
-                  }),
-                ]);
-
-                // 3. Clear the active match state
-                setMatchInProgress(false);
-                setActiveMatchId(null);
-
-                // 4. Force refresh the leaderboard
-                // This will be handled by reloading the page or component
-                window.location.reload();
-              } catch (error) {
-                console.error("Error completing match:", error);
-              }
-            }
-          }}
-        />
-      )}
     </div>
   );
 }
