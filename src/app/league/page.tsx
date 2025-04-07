@@ -198,7 +198,7 @@ export default function LeaguePage() {
                     The total prize pool is funded by all in-game store
                     purchases, with 20% deducted for development costs. The
                     remaining amount is distributed as rewards after the final
-                    game of the season, following these rules:
+                    game of the season, following these rufles:
                   </p>
                   <ul className="space-y-1 mb-2">
                     <li>🥇 1st place team: 30% of the prize pool</li>
