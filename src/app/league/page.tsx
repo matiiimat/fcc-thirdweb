@@ -196,9 +196,9 @@ export default function LeaguePage() {
                 <div className="absolute left-0 right-0 top-full mt-2 bg-gray-800 rounded-lg p-3 z-10 shadow-lg text-xs text-gray-300 leading-relaxed">
                   <p className="mb-2">
                     The total prize pool is funded by all in-game store
-                    purchases, with 20% deducted for development costs. The
-                    remaining amount is distributed as rewards after the final
-                    game of the season, following these rufles:
+                    purchases, with 20% deducted for development costs. 
+                    The remaining amount is distributed as rewards after the final
+                    game of the season, following these rules:
                   </p>
                   <ul className="space-y-1 mb-2">
                     <li>🥇 1st place team: 30% of the prize pool</li>
