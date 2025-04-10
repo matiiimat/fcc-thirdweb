@@ -28,8 +28,8 @@ export default function PlayerContractModal({
 }: PlayerContractModalProps) {
   const [contractLoading, setContractLoading] = useState(false);
   const [contractError, setContractError] = useState<string | null>(null);
-  const [contractAmount, setContractAmount] = useState<number>(0.02);
-  const [contractDuration, setContractDuration] = useState<number>(2);
+  const [contractAmount, setContractAmount] = useState<number>(0.001);
+  const [contractDuration, setContractDuration] = useState<number>(1);
 
   const handleContractRequest = async () => {
     try {
