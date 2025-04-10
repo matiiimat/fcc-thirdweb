@@ -95,6 +95,14 @@ export default function TeamPage() {
   const [isPlayerManageTeamModalOpen, setIsPlayerManageTeamModalOpen] =
     useState(false);
 
+  // Check URL parameters on component mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openManageTeam') === 'true') {
+      setIsManageTeamModalOpen(true);
+    }
+  }, []);
+
   // Farcaster Frame Integration
   useEffect(() => {
     const load = async () => {
