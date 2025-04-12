@@ -123,7 +123,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
           onClick={() => setShowOpponentInfo(!showOpponentInfo)}
           className="text-sm text-gray-400 hover:text-gray-300"
         >
-          {showOpponentInfo ? "Hide" : "Show"} Opponent's Last Match
+          {showOpponentInfo ? "Hide" : "Show"} Opponent&apos;s Last Match
         </button>
       )}
 

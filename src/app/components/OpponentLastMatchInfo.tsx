@@ -74,7 +74,7 @@ export default function OpponentLastMatchInfo({
   return (
     <div className="glass-container p-4 rounded-xl shadow-lg mt-4">
       <h3 className="text-lg font-semibold text-white mb-4">
-        {opponentTeamName}'s Last Match
+        {opponentTeamName}&apos;s Last Match
       </h3>
 
       {/* Match Summary */}
