@@ -7,6 +7,7 @@ import TeamMatchPopup from "./TeamMatchPopup";
 import { Types } from "mongoose";
 import MatchCard from "./MatchCard";
 import { Match } from "../types/match";
+import OpponentLastMatchInfo from "./OpponentLastMatchInfo";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
