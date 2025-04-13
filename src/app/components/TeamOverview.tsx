@@ -46,6 +46,7 @@ interface TeamOverviewProps {
   onOpenManageTeam: () => void;
   onOpenTactics: () => void;
   isCaptain: boolean;
+  onLastMatchClick: () => void;
 }
 
 export default function TeamOverview({
@@ -56,6 +57,7 @@ export default function TeamOverview({
   onOpenManageTeam,
   onOpenTactics,
   isCaptain,
+  onLastMatchClick,
 }: TeamOverviewProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -364,6 +366,7 @@ export default function TeamOverview({
             tactics={team.tactics || []}
             isTeamCaptain={isCaptain}
             currentTeam={team}
+            onLastMatchClick={onLastMatchClick}
           />
         ) : (
           <div className="glass-container p-4 rounded-xl shadow-lg">

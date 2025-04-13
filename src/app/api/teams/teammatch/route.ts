@@ -96,6 +96,10 @@ export async function POST(request: NextRequest) {
       players: IPlayer[],
       tactic: ITactic
     ): PlayerWithStats[] => {
+      if (!tactic) {
+        console.warn("No tactic provided for team");
+        return [];
+      }
       return tactic.playerPositions
         .map((pos) => {
           const player = players.find(
@@ -226,19 +230,19 @@ export async function POST(request: NextRequest) {
             type: "goal",
             minute: 15,
             team: winner.teamName,
-            player: winnerMappedPlayers[0].username,
+            player: winnerMappedPlayers[0]?.username || "Unknown Player",
           },
           {
             type: "goal",
             minute: 35,
             team: winner.teamName,
-            player: winnerMappedPlayers[1].username,
+            player: winnerMappedPlayers[1]?.username || "Unknown Player",
           },
           {
             type: "goal",
             minute: 65,
             team: winner.teamName,
-            player: winnerMappedPlayers[2].username,
+            player: winnerMappedPlayers[2]?.username || "Unknown Player",
           },
         ],
       };

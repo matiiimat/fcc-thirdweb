@@ -25,6 +25,7 @@ interface TeamMatchesSectionProps {
   tactics: ITactic[];
   isTeamCaptain: boolean;
   currentTeam: Team;
+  onLastMatchClick: () => void;
 }
 
 export default function TeamMatchesSection({
@@ -33,6 +34,7 @@ export default function TeamMatchesSection({
   tactics,
   isTeamCaptain,
   currentTeam,
+  onLastMatchClick,
 }: TeamMatchesSectionProps) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);

@@ -94,6 +94,32 @@ export default function TeamPage() {
     useState(false);
   const [isPlayerManageTeamModalOpen, setIsPlayerManageTeamModalOpen] =
     useState(false);
+  const [isLastMatchModalOpen, setIsLastMatchModalOpen] = useState(false);
+  const [lastMatchModalData, setLastMatchModalData] = useState({
+    homeTeam: "",
+    awayTeam: "",
+    homeScore: 0,
+    awayScore: 0,
+    homeStats: {
+      possession: 0,
+      shots: 0,
+      shotsOnTarget: 0,
+      passes: 0,
+      tackles: 0,
+      fouls: 0,
+    },
+    awayStats: {
+      possession: 0,
+      shots: 0,
+      shotsOnTarget: 0,
+      passes: 0,
+      tackles: 0,
+      fouls: 0,
+    },
+    homePlayerRatings: [],
+    awayPlayerRatings: [],
+    events: [],
+  });
 
   // Check URL parameters on component mount
   useEffect(() => {
@@ -399,6 +425,63 @@ export default function TeamPage() {
     setIsPlayerManageTeamModalOpen(false);
   };
 
+  const handleLastMatchClick = () => {
+    if (!currentTeam || !currentTeam.teamName) {
+      setLastMatchModalData({
+        homeTeam: "No previous match",
+        awayTeam: "No previous match",
+        homeScore: 0,
+        awayScore: 0,
+        homeStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        awayStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        homePlayerRatings: [],
+        awayPlayerRatings: [],
+        events: [],
+      });
+    } else {
+      setLastMatchModalData({
+        homeTeam: currentTeam.teamName,
+        awayTeam: "No previous match",
+        homeScore: 0,
+        awayScore: 0,
+        homeStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        awayStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        homePlayerRatings: [],
+        awayPlayerRatings: [],
+        events: [],
+      });
+    }
+    setIsLastMatchModalOpen(true);
+  };
+
   if (!isConnected || !address) {
     return <NoWalletState />;
   }
@@ -472,6 +555,7 @@ export default function TeamPage() {
           isCaptain={
             currentTeam.captainAddress.toLowerCase() === address.toLowerCase()
           }
+          onLastMatchClick={handleLastMatchClick}
         />
       ) : (
         <>
@@ -546,6 +630,33 @@ export default function TeamPage() {
         isBottomSheet={true} // Full screen for player view
         readOnly={true}
       />
+
+      {/* Last Match Modal */}
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ${
+          isLastMatchModalOpen ? "block" : "hidden"
+        }`}
+      >
+        <div className="bg-white p-8 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold mb-4">Last Match</h2>
+          <p>
+            {lastMatchModalData.homeTeam} vs {lastMatchModalData.awayTeam}
+          </p>
+          <p>
+            {lastMatchModalData.homeScore} - {lastMatchModalData.awayScore}
+          </p>
+          <div className="mt-4">
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+              onClick={() => {
+                setIsLastMatchModalOpen(false);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
     </PageWrapper>
   );
 }
