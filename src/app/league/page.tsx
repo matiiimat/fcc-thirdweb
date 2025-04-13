@@ -8,6 +8,7 @@ import { config } from "../components/providers/WagmiProvider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import TeamLeaderboard from "../components/TeamLeaderboard";
+import LastMatchModal from "../components/LastMatchModal";
 
 export default function LeaguePage() {
   const router = useRouter();
@@ -101,6 +102,31 @@ export default function LeaguePage() {
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const [isLastMatchModalOpen, setIsLastMatchModalOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<{
+    name: string;
+    lastMatch: any;
+  } | null>(null);
+
+  const handleTeamClick = async (teamName: string) => {
+    try {
+      // Fetch the team's last match
+      const response = await fetch(`/api/teams/last-match?teamName=${encodeURIComponent(teamName)}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch last match");
+      }
+      const lastMatch = await response.json();
+      
+      setSelectedTeam({
+        name: teamName,
+        lastMatch
+      });
+      setIsLastMatchModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching last match:", error);
+    }
   };
 
   // Show loading state if either the page is loading or balance is loading
@@ -220,7 +246,11 @@ export default function LeaguePage() {
 
             {/* Team Leaderboard */}
             <div className="mb-4">
-              <TeamLeaderboard page={currentPage} limit={teamsPerPage} />
+              <TeamLeaderboard 
+                page={currentPage} 
+                limit={teamsPerPage} 
+                onTeamClick={handleTeamClick}
+              />
             </div>
 
             {/* Pagination Controls - Only show if we have teams */}
@@ -312,6 +342,14 @@ export default function LeaguePage() {
         )}
       </main>
       <Footer />
+
+      {/* Last Match Modal */}
+      <LastMatchModal
+        isOpen={isLastMatchModalOpen}
+        onClose={() => setIsLastMatchModalOpen(false)}
+        matchData={selectedTeam?.lastMatch || null}
+        teamName={selectedTeam?.name || ""}
+      />
     </div>
   );
 }

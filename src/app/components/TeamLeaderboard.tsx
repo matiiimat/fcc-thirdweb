@@ -22,12 +22,14 @@ interface TeamLeaderboardProps {
   className?: string;
   page?: number;
   limit?: number;
+  onTeamClick: (teamName: string) => void;
 }
 
 export default function TeamLeaderboard({
   className = "",
   page = 1,
   limit = 10,
+  onTeamClick,
 }: TeamLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
