@@ -6,6 +6,7 @@ import PlayerModel, { IPlayer, Position, IPlayerStats } from "@/app/models/Playe
 import { simulateTeamMatch } from "@/app/lib/teamMatchEngine";
 import { updateTeamStats } from "@/app/lib/teamStats";
 import connectDB from "../../../lib/mongodb";
+import cache, { CACHE_KEYS } from "../../../lib/serverCache";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
@@ -353,6 +354,15 @@ export async function POST(request: NextRequest) {
         }),
       ]);
       console.log("Teams updated successfully");
+
+      // Invalidate relevant caches
+      cache.del(CACHE_KEYS.TEAM(homeTeam._id.toString()));
+      cache.del(CACHE_KEYS.TEAM(awayTeam._id.toString()));
+      cache.del(CACHE_KEYS.TEAM_BY_NAME(homeTeam.teamName));
+      cache.del(CACHE_KEYS.TEAM_BY_NAME(awayTeam.teamName));
+      cache.del(CACHE_KEYS.TEAM_LEADERBOARD);
+      cache.del(CACHE_KEYS.TEAM_MATCHES(homeTeam._id.toString()));
+      cache.del(CACHE_KEYS.TEAM_MATCHES(awayTeam._id.toString()));
     } catch (error) {
       console.error("Error updating teams:", error);
       return NextResponse.json(

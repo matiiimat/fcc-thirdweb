@@ -82,6 +82,17 @@ export default function AdminPage() {
         throw new Error(`Failed to generate ${failedMatches.length} matches`);
       }
 
+      // Trigger a refresh of the league page
+      try {
+        await fetch("/api/refresh-league", {
+          method: "POST",
+        });
+        // Dispatch refresh event
+        window.dispatchEvent(new Event("league-refresh"));
+      } catch (error) {
+        console.error("Failed to trigger league refresh:", error);
+      }
+
       setSuccess(`Successfully generated ${results.length} matches`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate matches");

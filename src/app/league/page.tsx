@@ -18,6 +18,7 @@ export default function LeaguePage() {
 
   // State for tooltip visibility
   const [showTooltip, setShowTooltip] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -128,6 +129,26 @@ export default function LeaguePage() {
       console.error("Error fetching last match:", error);
     }
   };
+
+  // Add this function to trigger a refresh
+  const triggerRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Add event listener for refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      triggerRefresh();
+    };
+
+    // Listen for refresh events
+    window.addEventListener("league-refresh", handleRefresh);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("league-refresh", handleRefresh);
+    };
+  }, []);
 
   // Show loading state if either the page is loading or balance is loading
   if (loading || isBalanceLoading) {
@@ -248,8 +269,9 @@ export default function LeaguePage() {
             <div className="mb-4">
               <TeamLeaderboard 
                 page={currentPage} 
-                limit={teamsPerPage} 
+                limit={teamsPerPage}
                 onTeamClick={handleTeamClick}
+                refreshTrigger={refreshTrigger}
               />
             </div>
 

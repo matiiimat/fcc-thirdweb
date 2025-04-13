@@ -23,6 +23,7 @@ interface TeamLeaderboardProps {
   page?: number;
   limit?: number;
   onTeamClick: (teamName: string) => void;
+  refreshTrigger?: number;
 }
 
 export default function TeamLeaderboard({
@@ -30,6 +31,7 @@ export default function TeamLeaderboard({
   page = 1,
   limit = 10,
   onTeamClick,
+  refreshTrigger = 0,
 }: TeamLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export default function TeamLeaderboard({
     }
 
     fetchLeaderboard();
-  }, [sortBy, page, limit]);
+  }, [sortBy, page, limit, refreshTrigger]);
 
   const getFormColor = (form: string) => {
     switch (form) {
