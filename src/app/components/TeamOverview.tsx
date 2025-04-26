@@ -64,7 +64,6 @@ export default function TeamOverview({
   const [error, setError] = useState("");
   const [jerseyModalOpen, setJerseyModalOpen] = useState(false);
   const [contractModalOpen, setContractModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"matches" | "stats">("matches");
   const [playerData, setPlayerData] = useState<any>(null);
   const [pendingContractRequests, setPendingContractRequests] = useState(0);
 
@@ -332,20 +331,6 @@ export default function TeamOverview({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setActiveTab("matches")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-              activeTab === "matches"
-                ? "bg-green-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-          >
-            Matches
-          </button>
         </div>
 
         {/* Tab Content */}
