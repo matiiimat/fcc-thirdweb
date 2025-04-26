@@ -346,33 +346,17 @@ export default function TeamOverview({
           >
             Matches
           </button>
-          <button
-            onClick={() => setActiveTab("stats")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-              activeTab === "stats"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-          >
-            Statistics
-          </button>
         </div>
 
         {/* Tab Content */}
-        {activeTab === "matches" ? (
-          <TeamMatchesSection
-            teamName={team.teamName}
-            teamId={team._id}
-            tactics={team.tactics || []}
-            isTeamCaptain={isCaptain}
-            currentTeam={team}
-            onLastMatchClick={onLastMatchClick}
-          />
-        ) : (
-          <div className="glass-container p-4 rounded-xl shadow-lg">
-            <TeamStatsDisplay stats={team.stats} />
-          </div>
-        )}
+        <TeamMatchesSection
+          teamName={team.teamName}
+          teamId={team._id}
+          tactics={team.tactics || []}
+          isTeamCaptain={isCaptain}
+          currentTeam={team}
+          onLastMatchClick={onLastMatchClick}
+        />
       </div>
 
       {/* Add PlayerContractModal */}
