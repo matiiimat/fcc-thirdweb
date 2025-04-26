@@ -32,13 +32,14 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
-    const sortBy = (searchParams.get("sortBy") || "points") as LeaderboardSortBy;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
     // Fetch all teams with their stats
-    const teams = await TeamModel.find({}, {
+    const teams = await TeamModel.find({
+      teamName: { $ne: "MatchSchedule" }  // Exclude the MatchSchedule team
+    }, {
       teamName: 1,
       stats: 1,
     });
@@ -68,26 +69,7 @@ export async function GET(request: NextRequest) {
             ((points / (stats.gamesPlayed * 3)) * 100 >= 40 ? "Average" : "Poor")),
         };
       })
-      .sort((a, b) => {
-        switch (sortBy) {
-          case "points":
-            return b.points - a.points || // Primary sort by points
-                   b.goalDifference - a.goalDifference || // Secondary sort by goal difference
-                   b.goalsFor - a.goalsFor; // Tertiary sort by goals scored
-          case "wins":
-            return b.wins - a.wins;
-          case "goalDifference":
-            return b.goalDifference - a.goalDifference;
-          case "goalsFor":
-            return b.goalsFor - a.goalsFor;
-          case "cleanSheets":
-            return b.cleanSheets - a.cleanSheets;
-          case "winRate":
-            return b.winRate - a.winRate;
-          default:
-            return b.points - a.points;
-        }
-      })
+      .sort((a, b) => b.points - a.points)
       .slice(skip, skip + limit);
 
     return NextResponse.json({
