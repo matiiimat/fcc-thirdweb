@@ -70,6 +70,25 @@ export default function Footer() {
     } hover:text-gray-300`;
   };
 
+  // Haptic feedback function
+  const triggerHapticFeedback = async () => {
+    try {
+      const capabilities = await sdk.getCapabilities();
+      // Check if specific haptic methods are supported
+      if (capabilities.includes('haptics.impactOccurred')) {
+        await sdk.haptics.impactOccurred('medium');
+      }
+    } catch (error) {
+      console.error('Error triggering haptic feedback:', error);
+    }
+  };
+
+  // Enhanced navigation function with haptic feedback
+  const navigateWithHaptic = async (path: string) => {
+    await triggerHapticFeedback();
+    router.push(path);
+  };
+
   return (
     <footer className="fixed bottom-0 left-0 right-0 bg-[#0d0f12]/85 backdrop-blur-md px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
       <div className="flex justify-around items-center max-w-screen-lg mx-auto">
@@ -103,7 +122,7 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/train")}
+            onClick={() => navigateWithHaptic("/train")}
             className={getButtonClass("/train")}
           >
             <Image
@@ -119,7 +138,7 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/team")}
+            onClick={() => navigateWithHaptic("/team")}
             className={getButtonClass("/team")}
           >
             <Image
@@ -135,7 +154,7 @@ export default function Footer() {
         </div>
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/league")}
+            onClick={() => navigateWithHaptic("/league")}
             className={getButtonClass("/league")}
           >
             <Image

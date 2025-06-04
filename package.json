@@ -11,7 +11,7 @@
     "clear-live-data": "node scripts/clear-live-data.js"
   },
   "dependencies": {
-    "@farcaster/frame-sdk": "^0.0.26",
+    "@farcaster/frame-sdk": "^0.0.57",
     "@farcaster/frame-wagmi-connector": "^0.0.14",
     "@headlessui/react": "^2.2.0",
     "@tanstack/react-query": "^5.67.2",
