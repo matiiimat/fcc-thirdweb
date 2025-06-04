@@ -11,7 +11,7 @@ export function calculatePlayerRating(stats: any) {
 
 // Get star rating based on player rating
 export function getStarRating(rating: number) {
-  const stars = '⭐'.repeat(Math.floor(rating / 4));
+  const stars = '⭐'.repeat(Math.floor(rating));
   return stars || '⭐';
 }
 

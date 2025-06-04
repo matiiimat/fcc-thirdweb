@@ -94,7 +94,7 @@ export default function Footer() {
       <div className="flex justify-around items-center max-w-screen-lg mx-auto">
         <div className="flex flex-col items-center">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => navigateWithHaptic("/")}
             className={getButtonClass("/")}
           >
             {profileImage ? (
