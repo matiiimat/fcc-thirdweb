@@ -6,13 +6,16 @@ export function calculatePlayerRating(stats: any) {
     .filter(([key]) => key !== 'workEthic')
     .map(([_, value]) => Number(value));
   const highestStat = Math.max(...values);
-  return highestStat / 4;
+  return highestStat;
 }
 
 // Get star rating based on player rating
 export function getStarRating(rating: number) {
-  const stars = '⭐'.repeat(Math.floor(rating));
-  return stars || '⭐';
+  if (rating >= 16) return '⭐⭐⭐⭐⭐';
+  if (rating >= 12) return '⭐⭐⭐⭐';
+  if (rating >= 8) return '⭐⭐⭐';
+  if (rating >= 6) return '⭐⭐';
+  return '⭐';
 }
 
 // Get color class based on stat value
