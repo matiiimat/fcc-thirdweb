@@ -43,7 +43,7 @@ import StatsRadarChart from "./components/StatsRadarChart";
 import NotificationBanner from "./components/NotificationBanner";
 import {
   calculatePlayerRating,
-  getStarRating,
+  getStarCount,
   getActionCooldown,
 } from "./lib/game";
 
@@ -297,7 +297,9 @@ export default function Home() {
               <h2 className="text-xl sm:text-2xl">{context?.user?.username}</h2>
             </div>
             <div className="text-lg sm:text-2xl mb-3 text-center">
-              {getStarRating(calculatePlayerRating(player.stats))}
+              {Array.from({ length: getStarCount(calculatePlayerRating(player.stats)) }, (_, index) => (
+                <span key={index} className="text-yellow-400">⭐</span>
+              ))}
             </div>
 
             {/* Stats Radar Chart */}

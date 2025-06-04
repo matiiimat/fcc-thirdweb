@@ -9,13 +9,13 @@ export function calculatePlayerRating(stats: any) {
   return highestStat;
 }
 
-// Get star rating based on player rating
-export function getStarRating(rating: number) {
-  if (rating >= 16) return '⭐⭐⭐⭐⭐';
-  if (rating >= 12) return '⭐⭐⭐⭐';
-  if (rating >= 8) return '⭐⭐⭐';
-  if (rating >= 6) return '⭐⭐';
-  return '⭐';
+// Get star count based on player rating
+export function getStarCount(rating: number): number {
+  if (rating >= 16) return 5;
+  if (rating >= 12) return 4;
+  if (rating >= 8) return 3;
+  if (rating >= 6) return 2;
+  return 1;
 }
 
 // Get color class based on stat value
