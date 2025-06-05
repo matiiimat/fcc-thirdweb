@@ -10,9 +10,17 @@ export function calculatePlayerRating(stats: any) {
       const numValue = Number(value);
       console.log(`${key}: ${value} -> ${numValue}`);
       return numValue;
-    });
+    })
+    .filter(value => !isNaN(value)); // Filter out any NaN values
   
   console.log('Processed values:', values);
+  console.log('Values array length:', values.length);
+  
+  if (values.length === 0) {
+    console.log('No valid values found, returning 0');
+    return 0;
+  }
+  
   const highestStat = Math.max(...values);
   console.log('Highest stat:', highestStat);
   
