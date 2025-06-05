@@ -31,6 +31,7 @@ export default function NotificationModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState<string>("");
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -166,17 +167,34 @@ export default function NotificationModal({
     }
   };
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before actually closing
+    setTimeout(() => {
+      setIsClosing(false);
+      onClose();
+    }, 300); // Match the animation duration
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
+  if (!isOpen && !isClosing) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 flex items-end justify-center z-50 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className={`fixed inset-0 bg-black/70 flex items-end justify-center z-50 p-4 ${
+        isClosing ? "animate-fade-out" : ""
+      }`}
+      onClick={handleBackdropClick}
     >
       <div
-        className="bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] rounded-t-xl w-full max-w-md max-h-[80vh] flex flex-col transform transition-all duration-300 ease-out animate-slide-up"
+        className={`bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] rounded-t-xl w-full max-w-md max-h-[80vh] flex flex-col transform transition-all duration-300 ease-out ${
+          isClosing ? "animate-slide-down" : "animate-slide-up"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -185,7 +203,7 @@ export default function NotificationModal({
             Notifications
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-3 right-3 text-gray-400 hover:text-white"
           >
             <svg
