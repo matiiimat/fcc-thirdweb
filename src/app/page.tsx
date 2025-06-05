@@ -40,7 +40,7 @@ import { Button } from "@/components/ui/Button";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import StatsRadarChart from "./components/StatsRadarChart";
-import NotificationBanner from "./components/NotificationBanner";
+import NotificationModal from "./components/NotificationModal";
 import {
   calculatePlayerRating,
   getStarCount,
@@ -83,6 +83,8 @@ export default function Home() {
   const [addFrameResult, setAddFrameResult] = useState<AddFrameResult | null>(
     null
   );
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(false);
 
   // Wagmi hooks
   const { address, isConnected } = useAccount();
@@ -164,9 +166,61 @@ export default function Home() {
     }
   }, [address, router, isConnected]);
 
+  // Check for notifications
+  useEffect(() => {
+    async function checkNotifications() {
+      if (!address) {
+        setHasNotifications(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/notifications", {
+          headers: {
+            ethAddress: address,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setHasNotifications(data.notifications?.length > 0);
+        }
+      } catch (err) {
+        console.error("Error checking notifications:", err);
+      }
+    }
+
+    if (isConnected && address) {
+      checkNotifications();
+      // Check for notifications every minute
+      const intervalId = setInterval(checkNotifications, 60000);
+      return () => clearInterval(intervalId);
+    }
+  }, [address, isConnected]);
+
   const toggleContext = useCallback(() => {
     setIsContextOpen((prev) => !prev);
   }, []);
+
+  const handleMailboxClick = useCallback(() => {
+    setIsNotificationModalOpen(true);
+  }, []);
+
+  const handleNotificationUpdate = useCallback(() => {
+    // Refresh notification status
+    if (address) {
+      fetch("/api/notifications", {
+        headers: {
+          ethAddress: address,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          setHasNotifications(data.notifications?.length > 0);
+        })
+        .catch((err) => console.error("Error updating notifications:", err));
+    }
+  }, [address]);
 
   if (!isSDKLoaded) {
     return <div>Loading...</div>;
@@ -216,7 +270,11 @@ export default function Home() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Home" />
+        <Header
+          pageName="Home"
+          onMailboxClick={handleMailboxClick}
+          hasNotifications={hasNotifications}
+        />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
         </div>
@@ -271,13 +329,13 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Home" />
+      <Header
+        pageName="Home"
+        onMailboxClick={handleMailboxClick}
+        hasNotifications={hasNotifications}
+      />
       <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
         <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
-          <NotificationBanner
-            playerId={player.playerId}
-            ethAddress={player.ethAddress}
-          />
 
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
             <div className="flex items-center justify-center gap-2 mb-1">
@@ -340,6 +398,12 @@ export default function Home() {
         </div>
       </main>
       <Footer />
+      <NotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        ethAddress={address || ""}
+        onNotificationUpdate={handleNotificationUpdate}
+      />
     </div>
   );
 }
