@@ -2,22 +2,47 @@ import { TRAINING_CONSTANTS } from './constants';
 
 // Calculate player rating based on highest stat (excluding work ethic)
 export function calculatePlayerRating(stats: any) {
+  console.log('Raw stats object:', stats);
+  
   const values = Object.entries(stats)
     .filter(([key]) => key !== 'workEthic')
-    .map(([_, value]) => Number(value));
+    .map(([key, value]) => {
+      const numValue = Number(value);
+      console.log(`${key}: ${value} -> ${numValue}`);
+      return numValue;
+    });
+  
+  console.log('Processed values:', values);
   const highestStat = Math.max(...values);
+  console.log('Highest stat:', highestStat);
+  
   return highestStat;
 }
 
 // Get star count based on player rating
 export function getStarCount(rating: number): number {
-  if (rating >= 16) return 5;
-  if (rating >= 12) return 4;
-  if (rating >= 8) return 3;
-  if (rating >= 6) return 2;
+  console.log('Rating passed to getStarCount:', rating, typeof rating);
+  
+  if (rating >= 16) {
+    console.log('Returning 5 stars');
+    return 5;
+  }
+  if (rating >= 12) {
+    console.log('Returning 4 stars');
+    return 4;
+  }
+  if (rating >= 8) {
+    console.log('Returning 3 stars');
+    return 3;
+  }
+  if (rating >= 6) {
+    console.log('Returning 2 stars');
+    return 2;
+  }
+  
+  console.log('Returning 1 star (default)');
   return 1;
 }
-
 // Get color class based on stat value
 export function getStatColor(value: number) {
   if (value >= 15) return 'text-yellow-400'; // Gold
