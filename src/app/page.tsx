@@ -229,12 +229,13 @@ export default function Home() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Home" />
+        <Header
+          pageName="Home"
+          onMailboxClick={handleMailboxClick}
+          hasNotifications={hasNotifications}
+        />
         <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
           <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
-            {/* Notification Banner Skeleton */}
-            <div className="glass-container w-full h-12 rounded-lg animate-pulse bg-gray-700/30"></div>
-
             {/* Player Info Skeleton */}
             <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
               <div className="flex items-center justify-center gap-2 mb-1">
