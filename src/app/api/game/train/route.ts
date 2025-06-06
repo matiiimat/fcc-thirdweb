@@ -7,6 +7,7 @@ import { authenticatePlayer } from '@/app/middleware/auth';
 import { rateLimits } from '@/app/middleware/rateLimit';
 import { validateSchema, trainSchema } from '@/app/lib/schemas';
 import { runTransaction } from '@/app/lib/transactions';
+import { invalidatePlayerCache } from '@/app/lib/serverCache';
 
 export async function POST(req: NextRequest) {
   try {
@@ -144,6 +145,9 @@ export async function POST(req: NextRequest) {
     if (result.error) {
       return result.error;
     }
+
+    // Invalidate player cache to ensure fresh data on next fetch
+    invalidatePlayerCache(playerId, player.ethAddress);
 
     return NextResponse.json(result.data);
   } catch (error) {

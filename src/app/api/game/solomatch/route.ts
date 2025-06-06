@@ -8,6 +8,7 @@ import { runTransaction } from '@/app/lib/transactions';
 import { TRAINING_CONSTANTS, PLAYER_CONSTANTS } from '@/app/lib/constants';
 import { z } from 'zod';
 import { generateMatchEvents } from '@/app/components/MatchEvents';
+import { invalidatePlayerCache } from '@/app/lib/serverCache';
 
 const solomatchSchema = z.object({
   playerId: z.string(),
@@ -147,6 +148,9 @@ export async function POST(req: NextRequest) {
     if (result.error) {
       return result.error;
     }
+
+    // Invalidate player cache to ensure fresh data on next fetch
+    invalidatePlayerCache(playerId, player.ethAddress);
 
     return NextResponse.json(result.data);
   } catch (error) {
