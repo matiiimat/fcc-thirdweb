@@ -39,9 +39,9 @@ export default function RootLayout({
           property="fc:frame"
           content={JSON.stringify({
             version: "next",
-            imageUrl: "https://fcc-test.netlify.app/logo.png",
+            imageUrl: "https://fcc-test.netlify.app/intro.png",
             button: {
-              title: "fccFC",
+              title: "Play fccFC",
               action: {
                 type: "launch_frame",
                 name: "Play fccFC",
