@@ -9,10 +9,9 @@
       "name": "play fccFC!",
       "iconUrl": "https://fcc-test.netlify.app/logo.png",
       "homeUrl": "https://fcc-test.netlify.app",
-      "imageUrl": "https://fcc-test.netlify.app/intro.png",
-      "buttonTitle": "Check this out",
-      "splashImageUrl": "https://fcc-test.netlify.app/intro.png",
+      "splashImageUrl": "https://fcc-test.netlify.app/logo.png",
       "splashBackgroundColor": "#08090a",
-      "webhookUrl": "https://fcc-test.netlify.app/api/webhook"
+      "webhookUrl": "https://fcc-test.netlify.app/api/webhook",
+      "heroImageUrl": "https://fcc-test.netlify.app/intro1200x630.png"
     }
   }
