@@ -404,7 +404,9 @@ export default function TrainPage() {
               </button>
               <div
                 className={`text-xs ${
-                  !selectedPosition
+                  matchCooldown.onCooldown
+                    ? "text-red-400"
+                    : !selectedPosition
                     ? "text-green-400"
                     : canPlay
                     ? "text-green-400"
