@@ -234,7 +234,7 @@ export default function Home() {
           onMailboxClick={handleMailboxClick}
           hasNotifications={hasNotifications}
         />
-        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
           <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
             {/* Player Info Skeleton */}
             <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
@@ -289,7 +289,7 @@ export default function Home() {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="fcc/FC" />
-        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
           <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto">
             <div className="glass-container p-6 w-full rounded-lg shadow-lg text-center">
               <h1 className="text-2xl font-bold mb-4">Welcome to fcc/FC!</h1>
@@ -335,7 +335,7 @@ export default function Home() {
         onMailboxClick={handleMailboxClick}
         hasNotifications={hasNotifications}
       />
-      <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+      <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
         <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
 
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
