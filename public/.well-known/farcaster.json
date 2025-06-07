@@ -11,7 +11,7 @@
       "homeUrl": "https://fcc-test.netlify.app",
       "splashImageUrl": "https://fcc-test.netlify.app/logo.png",
       "splashBackgroundColor": "#08090a",
-      "webhookUrl": "https://fcc-test.netlify.app/api/webhook",
+      "webhookUrl": "https://api.neynar.com/f/app/9a88edae-91b1-4a71-9535-d6164ccbd20e/event",
       "heroImageUrl": "https://fcc-test.netlify.app/intro1200x630.png"
     }
   }
