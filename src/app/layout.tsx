@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "./components/Header";
 import { Providers } from "./providers";
 import InitializeApp from "./components/InitializeApp";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -52,13 +53,13 @@ export default function RootLayout({
             },
           })}
         />
-        <script defer data-domain="fcc-test.netlify.app" src="https://plausible.io/js/script.js"></script>
       </head>
       <body className={inter.className}>
         <Providers>
           <InitializeApp />
           {children}
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
