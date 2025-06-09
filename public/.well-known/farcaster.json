@@ -1,9 +1,9 @@
 {
-    "accountAssociation": {
+  "accountAssociation": {
     "header": "eyJmaWQiOjE0NjI0LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4NjNlRTg5YTg2MWVFNjI0ZTM1RjI1YjA4QUM0ZjZGQjIyMzg5MDVhRiJ9",
     "payload": "eyJkb21haW4iOiJmY2MtdGVzdC52ZXJjZWwuYXBwIn0",
     "signature": "MHg3ZDljYzQ1ZTczY2ZlNGJhNDEyM2YzNjRhMzEyYzM1ZDE1MzAxYjMxZGFjNmJkZjZjZGMyNDI1NjE5Nzk2N2Q1MmMwNjMzY2IyOGVlZmY5Yzg4MzBiNzVmYTFmZTdmZDExMmE4ZWFiNTU0NzFiYzJhMTIyYzlkN2QzMjg3OGZhODFj"
-    },
+  },
     "frame": {
       "version": "1",
       "name": "fccFC",
