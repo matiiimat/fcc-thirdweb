@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
       return result.error;
     }
 
-    // Invalidate player cache to ensure fresh data on next fetch
+    // Invalidate player cache BEFORE sending response to ensure fresh data on next fetch
     invalidatePlayerCache(playerId, player.ethAddress);
 
     return NextResponse.json(result.data);

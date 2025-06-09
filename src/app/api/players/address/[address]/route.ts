@@ -53,9 +53,9 @@ export async function GET(req: NextRequest, { params }: Params) {
       player.lastConnectionDate = new Date();
       await player.save();
 
-      // Cache the player data (60 seconds TTL)
+      // Cache the player data (30 seconds TTL for more responsive updates)
       const playerData = player.toObject();
-      setInCache(cacheKey, playerData, 60);
+      setInCache(cacheKey, playerData, 30);
       
       console.log('Found player:', {
         id: player._id,

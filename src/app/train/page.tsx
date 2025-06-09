@@ -166,6 +166,45 @@ export default function TrainPage() {
     fetchPlayer();
   }, [address]);
 
+  // Function to refetch player data
+  const refetchPlayer = useCallback(async () => {
+    if (!address) return;
+    
+    try {
+      const response = await fetch(
+        `/api/players/address/${encodeURIComponent(address)}`,
+        { cache: "no-store" }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const validStats = [
+          "strength",
+          "stamina",
+          "passing",
+          "shooting",
+          "defending",
+          "speed",
+          "positioning",
+          "workEthic",
+        ];
+        const cleanStats = Object.fromEntries(
+          Object.entries(data.stats)
+            .filter(
+              ([key]) =>
+                validStats.includes(key) &&
+                !key.startsWith("$") &&
+                !key.startsWith("_")
+            )
+            .map(([key, value]) => [key, Number(value)])
+        );
+        setPlayer({ ...data, stats: cleanStats });
+      }
+    } catch (err) {
+      console.error("Failed to refetch player data:", err);
+    }
+  }, [address]);
+
   const handleTrain = async () => {
     if (!player || !isConnected || !address || training) return;
 
@@ -216,7 +255,8 @@ export default function TrainPage() {
         setShowTrainingAnimation(true);
         setTimeout(() => setShowTrainingAnimation(false), 2000);
 
-        router.refresh();
+        // Immediately refetch player data to ensure cooldown state is updated
+        setTimeout(() => refetchPlayer(), 100);
       } else {
         throw new Error(result.error || "Training failed");
       }
@@ -360,6 +400,11 @@ export default function TrainPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Train" />
       <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/50 text-red-400 text-center p-3 rounded-lg mb-4 text-sm font-medium">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-4">
           {/* Drop In Match Section */}
           <div className="glass-container p-3 sm:p-4 rounded-xl shadow-lg">
@@ -504,10 +549,6 @@ export default function TrainPage() {
             </div>
           </div>
         </div>
-
-        {error && (
-          <div className="text-red-500 text-center mt-2 text-xs">{error}</div>
-        )}
       </main>
       <Footer />
 
