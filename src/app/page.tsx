@@ -367,7 +367,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Status */}
+          {/* Status & Cooldowns */}
           <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 flex justify-between items-center">
