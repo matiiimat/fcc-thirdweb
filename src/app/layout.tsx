@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import { Providers } from "./providers";
 import InitializeApp from "./components/InitializeApp";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -46,7 +47,7 @@ export default function RootLayout({
               action: {
                 type: "launch_frame",
                 name: "Play fccFC",
-                url: "https://fcc-test.netlify.app",
+                url: "https://fcc-test.vercel.app",
                 splashImageUrl: "https://fcc-test.netlify.app/logo.png",
                 splashBackgroundColor: "#08090a",
               },
@@ -60,6 +61,7 @@ export default function RootLayout({
           {children}
         </Providers>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
