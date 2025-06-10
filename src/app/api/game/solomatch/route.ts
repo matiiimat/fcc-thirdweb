@@ -9,6 +9,7 @@ import { TRAINING_CONSTANTS, PLAYER_CONSTANTS } from '@/app/lib/constants';
 import { z } from 'zod';
 import { generateMatchEvents } from '@/app/components/MatchEvents';
 import { invalidatePlayerCache } from '@/app/lib/serverCache';
+import { triggerMatchNotification } from '@/app/lib/neynar';
 
 const solomatchSchema = z.object({
   playerId: z.string(),
@@ -151,6 +152,12 @@ export async function POST(req: NextRequest) {
 
     // Invalidate player cache to ensure fresh data on next fetch
     invalidatePlayerCache(playerId, player.ethAddress);
+
+    // Update the notification trigger timestamp
+    await Player.findOneAndUpdate(
+      { playerId },
+      { $set: { lastMatchNotificationTrigger: new Date() } }
+    );
 
     return NextResponse.json(result.data);
   } catch (error) {

@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/app/lib/mongodb';
 import Player from '@/app/models/Player';
 import { TRAINING_CONSTANTS } from '@/app/lib/constants';
+import { triggerTrainingNotification, triggerMatchNotification } from '@/app/lib/neynar';
 
 interface TriggerRequestBody {
   ethAddress: string;
   type: 'training' | 'match';
+  token?: string; // Optional Farcaster notification token
 }
 
 export async function POST(req: NextRequest) {
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { ethAddress, type } = body;
+    const { ethAddress, type, token } = body;
 
     // Validate required fields
     if (!ethAddress || typeof ethAddress !== 'string') {
@@ -95,8 +97,26 @@ export async function POST(req: NextRequest) {
       { new: true }
     );
 
+    // Send notification if token is provided
+    let notificationSent = false;
+    if (token) {
+      try {
+        if (type === 'training') {
+          const result = await triggerTrainingNotification(player, token);
+          notificationSent = result.sent || false;
+        } else {
+          const result = await triggerMatchNotification(player, token);
+          notificationSent = result.sent || false;
+        }
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+        // Don't fail the API call if notification fails
+      }
+    }
+
     return NextResponse.json({
-      success: true
+      success: true,
+      notificationSent
     });
 
   } catch (error) {

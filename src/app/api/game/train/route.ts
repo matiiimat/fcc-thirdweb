@@ -8,6 +8,7 @@ import { rateLimits } from '@/app/middleware/rateLimit';
 import { validateSchema, trainSchema } from '@/app/lib/schemas';
 import { runTransaction } from '@/app/lib/transactions';
 import { invalidatePlayerCache } from '@/app/lib/serverCache';
+import { triggerTrainingNotification } from '@/app/lib/neynar';
 
 export async function POST(req: NextRequest) {
   try {
@@ -148,6 +149,12 @@ export async function POST(req: NextRequest) {
 
     // Invalidate player cache BEFORE sending response to ensure fresh data on next fetch
     invalidatePlayerCache(playerId, player.ethAddress);
+
+    // Update the notification trigger timestamp
+    await Player.findOneAndUpdate(
+      { playerId },
+      { $set: { lastTrainingNotificationTrigger: new Date() } }
+    );
 
     return NextResponse.json(result.data);
   } catch (error) {
