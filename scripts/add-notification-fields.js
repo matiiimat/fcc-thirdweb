@@ -1,10 +1,15 @@
 import { MongoClient } from 'mongodb';
-import dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.local' });
+// Use environment variable directly (should be set in production)
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('MONGODB_URI environment variable is not set');
+  process.exit(1);
+}
 
 async function addNotificationFields() {
-  const client = new MongoClient(process.env.MONGODB_URI);
+  const client = new MongoClient(MONGODB_URI);
   
   try {
     await client.connect();
