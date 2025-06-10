@@ -39,6 +39,7 @@ export interface IPlayer extends Document {
   playerName: string;
   username: string;
   ethAddress: string;
+  fid?: number; // Farcaster ID (optional to not break existing players)
   team: string;
   stats: IPlayerStats;
   lastTrainingDate: Date | null;
@@ -46,6 +47,9 @@ export interface IPlayer extends Document {
   lastGameResult: IGameResult | null;
   lastConnectionDate: Date | null;
   consecutiveConnections: number;
+  // Notification triggers (optional to not break existing players)
+  lastTrainingNotificationTrigger?: Date | null;
+  lastMatchNotificationTrigger?: Date | null;
   privateTrainer: {
     selectedSkill: keyof IPlayerStats | null;
     remainingSessions: number;
@@ -254,6 +258,17 @@ const PlayerSchema = new Schema<IPlayer>(
       trim: true,
       default: '',
     },
+    fid: {
+      type: Number,
+      required: false,
+      index: true,
+      validate: {
+        validator: function(v: number) {
+          return v > 0;
+        },
+        message: 'FID must be a positive number'
+      }
+    },
     ethAddress: {
       type: String,
       required: true,
@@ -340,6 +355,15 @@ const PlayerSchema = new Schema<IPlayer>(
     },
     contract: {
       type: PlayerContractSchema,
+      default: null
+    },
+    // Notification triggers (optional fields)
+    lastTrainingNotificationTrigger: {
+      type: Date,
+      default: null
+    },
+    lastMatchNotificationTrigger: {
+      type: Date,
       default: null
     }
   },
