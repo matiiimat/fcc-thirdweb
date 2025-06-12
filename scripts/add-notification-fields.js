@@ -18,43 +18,52 @@ async function addNotificationFields() {
     const db = client.db();
     const playersCollection = db.collection('players');
     
-    // Test with specific address first
-    const testAddress = '0x6be82ef4ad6534a66e8e7568956c523bb1b5e6e0';
+    // Test with specific addresses
+    const testAddresses = [
+      '0x3c7c4ec24d84c3ee26992da886aa361d06169623'
+    ];
     
-    // Add the new fields to the test player only
-    const result = await playersCollection.updateOne(
-      {
-        ethAddress: testAddress,
-        // Only update if the player doesn't have these fields yet
-        $or: [
-          { lastTrainingNotificationTrigger: { $exists: false } },
-          { lastMatchNotificationTrigger: { $exists: false } }
-        ]
-      },
-      {
-        $set: {
-          lastTrainingNotificationTrigger: null,
-          lastMatchNotificationTrigger: null
+    // Add the new fields to both test players
+    for (const testAddress of testAddresses) {
+      console.log(`\n🔍 Processing player: ${testAddress}`);
+      
+      const result = await playersCollection.updateOne(
+        {
+          ethAddress: testAddress,
+          // Only update if the player doesn't have these fields yet
+          $or: [
+            { lastTrainingNotificationTrigger: { $exists: false } },
+            { lastMatchNotificationTrigger: { $exists: false } }
+          ]
+        },
+        {
+          $set: {
+            lastTrainingNotificationTrigger: null,
+            lastMatchNotificationTrigger: null
+          }
         }
+      );
+      
+      if (result.matchedCount === 0) {
+        console.log(`❌ No player found with address ${testAddress} or fields already exist`);
+      } else if (result.modifiedCount === 1) {
+        console.log(`✅ Successfully updated player ${testAddress} with notification trigger fields`);
+      } else {
+        console.log(`ℹ️  Player ${testAddress} found but no changes made (fields may already exist)`);
       }
-    );
-    
-    if (result.matchedCount === 0) {
-      console.log(`No player found with address ${testAddress} or fields already exist`);
-    } else if (result.modifiedCount === 1) {
-      console.log(`Successfully updated player ${testAddress} with notification trigger fields`);
-    } else {
-      console.log(`Player ${testAddress} found but no changes made (fields may already exist)`);
-    }
-    
-    // Verify the update
-    const updatedPlayer = await playersCollection.findOne({ ethAddress: testAddress });
-    if (updatedPlayer) {
-      console.log('Updated player fields:', {
-        ethAddress: updatedPlayer.ethAddress,
-        lastTrainingNotificationTrigger: updatedPlayer.lastTrainingNotificationTrigger,
-        lastMatchNotificationTrigger: updatedPlayer.lastMatchNotificationTrigger
-      });
+      
+      // Verify the update
+      const updatedPlayer = await playersCollection.findOne({ ethAddress: testAddress });
+      if (updatedPlayer) {
+        console.log('📋 Updated player fields:', {
+          playerName: updatedPlayer.playerName,
+          ethAddress: updatedPlayer.ethAddress,
+          lastTrainingNotificationTrigger: updatedPlayer.lastTrainingNotificationTrigger,
+          lastMatchNotificationTrigger: updatedPlayer.lastMatchNotificationTrigger
+        });
+      } else {
+        console.log(`❌ Player not found: ${testAddress}`);
+      }
     }
     
   } catch (error) {
