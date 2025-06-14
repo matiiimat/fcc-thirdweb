@@ -1,231 +1,67 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
-import sdk, { Context } from "@farcaster/frame-sdk";
-import Image from "next/image";
-
-export type FrameContext = Context.FrameContext;
-export type SafeAreaInsets = Context.SafeAreaInsets;
-
-export type FrameNotificationDetails = {
-  url: string;
-  token: string;
-};
-
-export type AddFrameRejectedReason =
-  | "invalid_domain_manifest"
-  | "rejected_by_user";
-
-export type AddFrameResult =
-  | {
-      added: true;
-      notificationDetails?: FrameNotificationDetails;
-    }
-  | {
-      added: false;
-      reason: AddFrameRejectedReason;
-    };
-
-import {
-  useAccount,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-  useDisconnect,
-  useConnect,
-} from "wagmi";
-
+import { useCallback, useState, useEffect } from "react";
+import { useAccount, useConnect } from "wagmi";
 import { config } from "./components/providers/WagmiProvider";
 import { Button } from "@/components/ui/Button";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import StatsRadarChart from "./components/StatsRadarChart";
 import NotificationModal from "./components/NotificationModal";
+import AppLoader from "./components/AppLoader";
+import ResourcePreloader from "./components/ResourcePreloader";
+import { useAppInitialization } from "./hooks/useAppInitialization";
 import {
   calculatePlayerRating,
   getStarCount,
   getActionCooldown,
 } from "./lib/game";
 
-interface PlayerData {
-  playerId: string;
-  playerName: string;
-  ethAddress: string;
-  stats: {
-    strength: number;
-    stamina: number;
-    passing: number;
-    shooting: number;
-    defending: number;
-    speed: number;
-    positioning: number;
-    workEthic: number;
-  };
-  lastTrainingDate: string | null;
-  lastGameDate: string | null;
-  lastConnectionDate: string | null;
-  consecutiveConnections: number;
-  lastGameResult?: {
-    score: number;
-    opponent: string;
-    result: "win" | "loss" | "draw";
-  };
-}
-
 export default function Home() {
   const router = useRouter();
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<FrameContext>();
-  const [isContextOpen, setIsContextOpen] = useState(false);
-  const [player, setPlayer] = useState<PlayerData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [addFrameResult, setAddFrameResult] = useState<AddFrameResult | null>(
-    null
-  );
-  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(false);
-
-  // Wagmi hooks
   const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
   const { connect } = useConnect();
+  
+  // Use optimized initialization hook
+  const {
+    isSDKReady,
+    context,
+    player,
+    loading,
+    error,
+    hasNotifications,
+  } = useAppInitialization();
 
-  // Farcaster Frame Integration
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+
+  // Redirect to create player if needed
   useEffect(() => {
-    const load = async () => {
-      try {
-        setContext(await sdk.context);
-        sdk.actions.ready();
-
-        // Automatically prompt user to add frame to their Farcaster client
-        try {
-          // Use type assertion to ensure TypeScript understands the structure
-          const result = (await sdk.actions.addFrame()) as AddFrameResult;
-          setAddFrameResult(result);
-
-          // Use type guards to safely check properties
-          if ("added" in result && result.added === true) {
-            console.log("Frame added successfully", result.notificationDetails);
-          } else if (
-            "added" in result &&
-            result.added === false &&
-            "reason" in result
-          ) {
-            console.log("Frame not added", result.reason);
-          }
-        } catch (addFrameError) {
-          console.error("Error adding frame:", addFrameError);
-        }
-      } catch (error) {
-        console.error("Error initializing Farcaster Frame SDK:", error);
-      }
-    };
-
-    if (sdk && !isSDKLoaded) {
-      setIsSDKLoaded(true);
-      load();
+    if (!loading && isConnected && address && player === null && !error) {
+      router.push("/createPlayer");
     }
-  }, [isSDKLoaded]);
-
-  // Fetch player data when wallet is connected
-  useEffect(() => {
-    async function fetchPlayer() {
-      if (!address) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `/api/players/address/${encodeURIComponent(address)}`,
-          { cache: "no-store" } // Prevent caching
-        );
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            router.push("/createPlayer");
-            return;
-          }
-          throw new Error("Failed to fetch player data");
-        }
-
-        const data = await response.json();
-        setPlayer(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (isConnected) {
-      fetchPlayer();
-    } else {
-      setLoading(false);
-    }
-  }, [address, router, isConnected]);
-
-  // Check for notifications
-  useEffect(() => {
-    async function checkNotifications() {
-      if (!address) {
-        setHasNotifications(false);
-        return;
-      }
-
-      try {
-        const response = await fetch("/api/notifications", {
-          headers: {
-            ethAddress: address,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setHasNotifications(data.notifications?.length > 0);
-        }
-      } catch (err) {
-        console.error("Error checking notifications:", err);
-      }
-    }
-
-    if (isConnected && address) {
-      checkNotifications();
-      // Check for notifications every minute
-      const intervalId = setInterval(checkNotifications, 60000);
-      return () => clearInterval(intervalId);
-    }
-  }, [address, isConnected]);
-
-  const toggleContext = useCallback(() => {
-    setIsContextOpen((prev) => !prev);
-  }, []);
+  }, [loading, isConnected, address, player, error, router]);
 
   const handleMailboxClick = useCallback(() => {
     setIsNotificationModalOpen(true);
   }, []);
 
   const handleNotificationUpdate = useCallback(() => {
-    // Refresh notification status
-    if (address) {
-      fetch("/api/notifications", {
-        headers: {
-          ethAddress: address,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          setHasNotifications(data.notifications?.length > 0);
-        })
-        .catch((err) => console.error("Error updating notifications:", err));
-    }
-  }, [address]);
+    // The hook will handle notification updates automatically
+    // This is kept for compatibility with the NotificationModal component
+  }, []);
 
-  if (!isSDKLoaded) {
-    return <div>Loading...</div>;
+  // Show AppLoader only during initial SDK initialization
+  if (!isSDKReady) {
+    return (
+      <>
+        <AppLoader message="Connecting to Farcaster..." showProgress={true} />
+        <ResourcePreloader />
+      </>
+    );
   }
 
+  // Show loading skeleton while data is being fetched
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
@@ -243,8 +79,6 @@ export default function Home() {
                 <div className="h-6 w-32 bg-gray-700/30 rounded animate-pulse"></div>
               </div>
               <div className="h-6 w-24 mx-auto mb-3 bg-gray-700/30 rounded animate-pulse"></div>
-
-              {/* Stats Chart Skeleton */}
               <div className="w-full aspect-square bg-gray-700/30 rounded animate-pulse"></div>
             </div>
 
@@ -268,6 +102,7 @@ export default function Home() {
     );
   }
 
+  // Show error state
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
@@ -278,13 +113,19 @@ export default function Home() {
         />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-4"
+          >
+            Retry
+          </Button>
         </div>
         <Footer />
       </div>
     );
   }
 
-  // If not connected, show connect button
+  // Show connect wallet screen
   if (!isConnected) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
@@ -299,10 +140,11 @@ export default function Home() {
               >
                 Connect Wallet
               </Button>
-
-              <div className="mt-4 text-xs text-gray-400">
-                <p>Username: {context?.user?.username || "N/A"}</p>
-              </div>
+              {context?.user?.username && (
+                <div className="mt-4 text-xs text-gray-400">
+                  <p>Username: {context.user.username}</p>
+                </div>
+              )}
             </div>
           </div>
         </main>
@@ -311,9 +153,15 @@ export default function Home() {
     );
   }
 
-  // If player is null but connected, we're likely redirecting to createPlayer
+  // Redirect to create player if no player data
   if (!player) {
-    return null;
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-white text-lg">Redirecting...</div>
+        </div>
+      </div>
+    );
   }
 
   // Calculate cooldowns

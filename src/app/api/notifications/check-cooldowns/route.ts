@@ -53,8 +53,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<CheckCooldown
       },
       ethAddress: { $exists: true, $ne: null },
       $or: [
-        { lastTrainingNotificationTrigger: { $exists: false } },
-        { lastTrainingNotificationTrigger: null },
+    { lastTrainingNotificationTrigger: { $exists: false } },
+    { lastTrainingNotificationTrigger: null },
+    { lastTrainingNotificationTrigger: { $lte: new Date(now.getTime() - trainingCooldownMs) } },
         {
           $expr: {
             $lt: ['$lastTrainingNotificationTrigger', '$lastTrainingDate']
