@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/notifications/check-cooldowns",
-      "schedule": "0 */12 * * *"
-    }
-  ]
-}
