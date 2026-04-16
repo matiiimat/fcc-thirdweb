@@ -11,7 +11,6 @@ import Footer from "./components/Footer";
 import StatsRadarChart from "./components/StatsRadarChart";
 import NotificationModal from "./components/NotificationModal";
 import AppLoader from "./components/AppLoader";
-import ResourcePreloader from "./components/ResourcePreloader";
 import { useAppInitialization } from "./hooks/useAppInitialization";
 import {
   calculatePlayerRating,
@@ -55,10 +54,7 @@ export default function Home() {
   // Show AppLoader only during initial SDK initialization
   if (!isSDKReady) {
     return (
-      <>
-        <AppLoader message="Connecting to Farcaster..." showProgress={true} />
-        <ResourcePreloader />
-      </>
+      <AppLoader message="Connecting to Farcaster..." showProgress={true} />
     );
   }
 

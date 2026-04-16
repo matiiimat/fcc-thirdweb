@@ -100,7 +100,6 @@ export default function TrainPage() {
           "x-wallet-address": address,
         },
         body: JSON.stringify({ playerId: player.playerId }),
-        cache: "no-store",
       });
 
       if (!response.ok) {

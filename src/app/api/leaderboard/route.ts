@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/app/lib/mongodb";
 import Player from "@/app/models/Player";
+import { CACHE_KEYS, getFromCache, setInCache } from "@/app/lib/serverCache";
 
 export async function GET() {
   try {
+    const cached = getFromCache<{ players: unknown[] }>(CACHE_KEYS.LEADERBOARD);
+    if (cached) return NextResponse.json(cached);
+
     await connectDB();
 
     // Get top 100 players sorted by XP, excluding players with NaN XP
@@ -23,7 +27,10 @@ export async function GET() {
       { $limit: 100 }
     ]);
 
-    return NextResponse.json({ players });
+    const result = { players };
+    setInCache(CACHE_KEYS.LEADERBOARD, result, 60);
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
     return NextResponse.json(

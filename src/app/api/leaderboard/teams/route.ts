@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import TeamModel from "@/app/models/Team";
 import connectDB from "../../../lib/mongodb";
 import { calculateWinRate } from "@/app/lib/teamStats";
+import { CACHE_KEYS, getFromCache, setInCache } from "@/app/lib/serverCache";
 
 export type LeaderboardSortBy = 
   | "points" 
@@ -28,13 +29,17 @@ interface LeaderboardEntry {
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB();
-
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
+
+    const cacheKey = `${CACHE_KEYS.TEAM_LEADERBOARD}_p${page}_l${limit}`;
+    const cached = getFromCache<{ success: boolean; leaderboard: LeaderboardEntry[] }>(cacheKey);
+    if (cached) return NextResponse.json(cached);
+
+    await connectDB();
 
     // Fetch all teams with their stats
     const teams = await TeamModel.find({
@@ -64,18 +69,18 @@ export async function GET(request: NextRequest) {
           cleanSheets: stats.cleanSheets,
           points,
           winRate,
-          form: stats.gamesPlayed === 0 ? "N/A" : 
-            ((points / (stats.gamesPlayed * 3)) * 100 >= 60 ? "Good" : 
+          form: stats.gamesPlayed === 0 ? "N/A" :
+            ((points / (stats.gamesPlayed * 3)) * 100 >= 60 ? "Good" :
             ((points / (stats.gamesPlayed * 3)) * 100 >= 40 ? "Average" : "Poor")),
         };
       })
       .sort((a, b) => b.points - a.points)
       .slice(skip, skip + limit);
 
-    return NextResponse.json({
-      success: true,
-      leaderboard,
-    });
+    const result = { success: true, leaderboard };
+    setInCache(cacheKey, result, 60);
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching team leaderboard:", error);
     return NextResponse.json(

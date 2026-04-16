@@ -137,15 +137,7 @@ export function useAppInitialization(): UseAppInitializationReturn {
     try {
       const response = await fetch(
         `/api/players/address/${encodeURIComponent(address)}`,
-        {
-          // Use default caching for better performance on subsequent requests
-          cache: "default",
-          signal,
-          // Add headers for better caching
-          headers: {
-            'Cache-Control': 'max-age=30', // Cache for 30 seconds
-          }
-        }
+        { signal }
       );
 
       if (signal?.aborted) return;
@@ -218,12 +210,8 @@ export function useAppInitialization(): UseAppInitializationReturn {
 
     try {
       const response = await fetch("/api/notifications", {
-        headers: {
-          ethAddress: address,
-          'Cache-Control': 'max-age=15', // Cache for 15 seconds
-        },
-        cache: "default",
-        signal
+        headers: { ethAddress: address },
+        signal,
       });
 
       if (signal?.aborted) return;
