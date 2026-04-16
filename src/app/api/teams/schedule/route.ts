@@ -53,6 +53,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Prevent scheduling matches with the MatchSchedule team
+    if (homeTeam.teamName === "MatchSchedule" || awayTeam.teamName === "MatchSchedule") {
+      return NextResponse.json(
+        { error: "Cannot schedule matches with the MatchSchedule team" },
+        { status: 400 }
+      );
+    }
+
     // Find tactics
     const homeTactic = homeTeam.tactics.find(
       (t: ITactic & { _id: Types.ObjectId }) => t._id.toString() === validatedData.homeTacticId

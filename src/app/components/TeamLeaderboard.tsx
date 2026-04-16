@@ -36,7 +36,7 @@ export default function TeamLeaderboard({
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<LeaderboardSortBy>("points");
+  const sortBy = "points" as const;
 
   useEffect(() => {
     async function fetchLeaderboard() {
@@ -110,15 +110,6 @@ export default function TeamLeaderboard({
     <div className={className}>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Team Rankings</h2>
-        <select
-          className="bg-black/30 text-white rounded px-3 py-1 text-sm"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as LeaderboardSortBy)}
-        >
-          <option value="points">Points</option>
-          <option value="wins">Wins</option>
-          <option value="goalDifference">Goal Average (GA)</option>
-        </select>
       </div>
 
       <div className="overflow-x-auto">

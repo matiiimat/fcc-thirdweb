@@ -602,6 +602,11 @@ export const simulateTeamMatch = async (
   homeTeamData: TeamMatchData,
   awayTeamData: TeamMatchData
 ): Promise<MatchResult> => {
+  // Prevent simulating matches with the MatchSchedule team
+  if (homeTeamData.team.teamName === "MatchSchedule" || awayTeamData.team.teamName === "MatchSchedule") {
+    throw new Error("Cannot simulate matches with the MatchSchedule team");
+  }
+
   // Check if teams have enough players (minimum 7)
   if (homeTeamData.players.length < 7 || awayTeamData.players.length < 7) {
     if (homeTeamData.players.length >= 7) {

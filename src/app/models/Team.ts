@@ -47,11 +47,30 @@ export interface ITeamStats {
   }[];
 }
 
+export interface ITeamMatchRecord {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  opponent?: string;
+  isHome?: boolean;
+  date: string;
+  isCompleted: boolean;
+  homeTactic: ITactic;
+  awayTactic: ITactic;
+  result: { homeScore: number; awayScore: number };
+  events?: unknown;
+  homeStats?: unknown;
+  awayStats?: unknown;
+  homePlayerRatings?: unknown;
+  awayPlayerRatings?: unknown;
+}
+
 export interface ITeam extends Document {
   teamName: string;
   captainAddress: string;
   players: string[]; // Array of player ETH addresses, managed via the Manage Team page
   tactics: ITactic[];
+  matches: ITeamMatchRecord[];
   jersey?: IJersey;
   stats: ITeamStats;
   isPublic: boolean; // Whether the team is visible in available teams section
@@ -198,6 +217,10 @@ const TeamSchema = new Schema<ITeam>(
         },
         message: 'Team cannot have more than 3 tactics',
       },
+    },
+    matches: {
+      type: [mongoose.Schema.Types.Mixed] as any,
+      default: [],
     },
     jersey: {
       type: {

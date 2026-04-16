@@ -1,186 +1,77 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
-import sdk, { Context } from "@farcaster/frame-sdk";
 import Image from "next/image";
-
-export type FrameContext = Context.FrameContext;
-export type SafeAreaInsets = Context.SafeAreaInsets;
-
-export type FrameNotificationDetails = {
-  url: string;
-  token: string;
-};
-
-export type AddFrameRejectedReason =
-  | "invalid_domain_manifest"
-  | "rejected_by_user";
-
-export type AddFrameResult =
-  | {
-      added: true;
-      notificationDetails?: FrameNotificationDetails;
-    }
-  | {
-      added: false;
-      reason: AddFrameRejectedReason;
-    };
-
-import {
-  useAccount,
-  useSendTransaction,
-  useWaitForTransactionReceipt,
-  useDisconnect,
-  useConnect,
-} from "wagmi";
-
+import { useCallback, useState, useEffect } from "react";
+import { useAccount, useConnect } from "wagmi";
 import { config } from "./components/providers/WagmiProvider";
 import { Button } from "@/components/ui/Button";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import StatsRadarChart from "./components/StatsRadarChart";
-import NotificationBanner from "./components/NotificationBanner";
+import NotificationModal from "./components/NotificationModal";
+import AppLoader from "./components/AppLoader";
+import { ShareBar } from "./components/ui";
+import { useAppInitialization } from "./hooks/useAppInitialization";
 import {
   calculatePlayerRating,
-  getStarRating,
+  getStarCount,
   getActionCooldown,
 } from "./lib/game";
-
-interface PlayerData {
-  playerId: string;
-  playerName: string;
-  ethAddress: string;
-  stats: {
-    strength: number;
-    stamina: number;
-    passing: number;
-    shooting: number;
-    defending: number;
-    speed: number;
-    positioning: number;
-    workEthic: number;
-  };
-  lastTrainingDate: string | null;
-  lastGameDate: string | null;
-  lastConnectionDate: string | null;
-  consecutiveConnections: number;
-  lastGameResult?: {
-    score: number;
-    opponent: string;
-    result: "win" | "loss" | "draw";
-  };
-}
+import { resolveIdentity } from "./lib/playerIdentity";
+import { playerCardOgUrl, appOrigin } from "./lib/ogUrl";
 
 export default function Home() {
   const router = useRouter();
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<FrameContext>();
-  const [isContextOpen, setIsContextOpen] = useState(false);
-  const [player, setPlayer] = useState<PlayerData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [addFrameResult, setAddFrameResult] = useState<AddFrameResult | null>(
-    null
-  );
-
-  // Wagmi hooks
   const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
   const { connect } = useConnect();
+  
+  // Use optimized initialization hook
+  const {
+    isSDKReady,
+    context,
+    player,
+    loading,
+    error,
+    hasNotifications,
+  } = useAppInitialization();
 
-  // Farcaster Frame Integration
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+
+  // Redirect to create player if needed
   useEffect(() => {
-    const load = async () => {
-      try {
-        setContext(await sdk.context);
-        sdk.actions.ready();
-
-        // Automatically prompt user to add frame to their Farcaster client
-        try {
-          // Use type assertion to ensure TypeScript understands the structure
-          const result = (await sdk.actions.addFrame()) as AddFrameResult;
-          setAddFrameResult(result);
-
-          // Use type guards to safely check properties
-          if ("added" in result && result.added === true) {
-            console.log("Frame added successfully", result.notificationDetails);
-          } else if (
-            "added" in result &&
-            result.added === false &&
-            "reason" in result
-          ) {
-            console.log("Frame not added", result.reason);
-          }
-        } catch (addFrameError) {
-          console.error("Error adding frame:", addFrameError);
-        }
-      } catch (error) {
-        console.error("Error initializing Farcaster Frame SDK:", error);
-      }
-    };
-
-    if (sdk && !isSDKLoaded) {
-      setIsSDKLoaded(true);
-      load();
+    if (!loading && isConnected && address && player === null && !error) {
+      router.push("/createPlayer");
     }
-  }, [isSDKLoaded]);
+  }, [loading, isConnected, address, player, error, router]);
 
-  // Fetch player data when wallet is connected
-  useEffect(() => {
-    async function fetchPlayer() {
-      if (!address) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `/api/players/address/${encodeURIComponent(address)}`,
-          { cache: "no-store" } // Prevent caching
-        );
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            router.push("/createPlayer");
-            return;
-          }
-          throw new Error("Failed to fetch player data");
-        }
-
-        const data = await response.json();
-        setPlayer(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (isConnected) {
-      fetchPlayer();
-    } else {
-      setLoading(false);
-    }
-  }, [address, router, isConnected]);
-
-  const toggleContext = useCallback(() => {
-    setIsContextOpen((prev) => !prev);
+  const handleMailboxClick = useCallback(() => {
+    setIsNotificationModalOpen(true);
   }, []);
 
-  if (!isSDKLoaded) {
-    return <div>Loading...</div>;
+  const handleNotificationUpdate = useCallback(() => {
+    // The hook will handle notification updates automatically
+    // This is kept for compatibility with the NotificationModal component
+  }, []);
+
+  // Show AppLoader only during initial SDK initialization
+  if (!isSDKReady) {
+    return (
+      <AppLoader message="Connecting to Farcaster..." showProgress={true} />
+    );
   }
 
+  // Show loading skeleton while data is being fetched
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Home" />
-        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+      <div className="flex flex-col min-h-screen">
+        <Header
+          pageName="Home"
+          onMailboxClick={handleMailboxClick}
+          hasNotifications={hasNotifications}
+        />
+        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
           <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
-            {/* Notification Banner Skeleton */}
-            <div className="glass-container w-full h-12 rounded-lg animate-pulse bg-gray-700/30"></div>
-
             {/* Player Info Skeleton */}
             <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
               <div className="flex items-center justify-center gap-2 mb-1">
@@ -188,8 +79,6 @@ export default function Home() {
                 <div className="h-6 w-32 bg-gray-700/30 rounded animate-pulse"></div>
               </div>
               <div className="h-6 w-24 mx-auto mb-3 bg-gray-700/30 rounded animate-pulse"></div>
-
-              {/* Stats Chart Skeleton */}
               <div className="w-full aspect-square bg-gray-700/30 rounded animate-pulse"></div>
             </div>
 
@@ -213,24 +102,35 @@ export default function Home() {
     );
   }
 
+  // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-        <Header pageName="Home" />
+      <div className="min-h-screen">
+        <Header
+          pageName="Home"
+          onMailboxClick={handleMailboxClick}
+          hasNotifications={hasNotifications}
+        />
         <div className="flex flex-col items-center mt-4">
           <div className="text-red-500 text-center">{error}</div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-4"
+          >
+            Retry
+          </Button>
         </div>
         <Footer />
       </div>
     );
   }
 
-  // If not connected, show connect button
+  // Show connect wallet screen
   if (!isConnected) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="flex flex-col min-h-screen">
         <Header pageName="fcc/FC" />
-        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
+        <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
           <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto">
             <div className="glass-container p-6 w-full rounded-lg shadow-lg text-center">
               <h1 className="text-2xl font-bold mb-4">Welcome to fcc/FC!</h1>
@@ -240,10 +140,11 @@ export default function Home() {
               >
                 Connect Wallet
               </Button>
-
-              <div className="mt-4 text-xs text-gray-400">
-                <p>Username: {context?.user?.username || "N/A"}</p>
-              </div>
+              {context?.user?.username && (
+                <div className="mt-4 text-xs text-gray-400">
+                  <p>Username: {context.user.username}</p>
+                </div>
+              )}
             </div>
           </div>
         </main>
@@ -252,9 +153,15 @@ export default function Home() {
     );
   }
 
-  // If player is null but connected, we're likely redirecting to createPlayer
+  // Redirect to create player if no player data
   if (!player) {
-    return null;
+    return (
+      <div className="flex flex-col min-h-screen">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-white text-lg">Redirecting...</div>
+        </div>
+      </div>
+    );
   }
 
   // Calculate cooldowns
@@ -269,35 +176,77 @@ export default function Home() {
       true // isPlaying = true
     );
 
-  return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Home" />
-      <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-16 sm:pb-20">
-        <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
-          <NotificationBanner
-            playerId={player.playerId}
-            ethAddress={player.ethAddress}
-          />
+  // Resolve identity (legacy players get safe defaults).
+  const identity = resolveIdentity(player as any);
 
-          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
-            <div className="flex items-center justify-center gap-2 mb-1">
+  // Pre-build the share payload so the button stays inert-cheap on render.
+  const playerRating = calculatePlayerRating(player.stats);
+  const displayName = context?.user?.username || player.playerName;
+  const shareImageUrl = playerCardOgUrl({
+    name: displayName,
+    username: context?.user?.username,
+    rating: Math.round(playerRating * 10), // 0-10 → 0-100
+    team: player.team,
+    traits: identity.traits,
+    pfp: context?.user?.pfpUrl,
+    stats: player.stats,
+  });
+  const shareText = `I'm rated ${playerRating.toFixed(
+    1
+  )} on fcc/FC. Come beat me.`;
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Header
+        pageName="Home"
+        onMailboxClick={handleMailboxClick}
+        hasNotifications={hasNotifications}
+      />
+      <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
+        <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
+
+          {/* Identity — broadcast register */}
+          <div className="data-card p-4 sm:p-6 w-full shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
               {context?.user?.pfpUrl ? (
-                <div className="w-8 h-8 rounded-full overflow-hidden">
-                  <img
+                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-pitch-line/60 shadow-lg shadow-pitch-deep/40">
+                  <Image
                     src={context.user.pfpUrl}
                     alt="Profile"
-                    className="w-full h-full object-cover"
-                    width={32}
-                    height={32}
+                    width={56}
+                    height={56}
+                    className="object-cover"
+                    unoptimized
                   />
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-600"></div>
+                <div className="w-14 h-14 rounded-full bg-pitch-dark border-2 border-pitch-line/60" />
               )}
-              <h2 className="text-xl sm:text-2xl">{context?.user?.username}</h2>
-            </div>
-            <div className="text-lg sm:text-2xl mb-3 text-center">
-              {getStarRating(calculatePlayerRating(player.stats))}
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
+                  Player
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="font-display uppercase tracking-broadcast text-2xl text-chalk truncate leading-none">
+                    {displayName}
+                  </h2>
+                  <ShareBar
+                    variant="icon"
+                    ariaLabel="Share my player card"
+                    text={shareText}
+                    imageUrl={shareImageUrl}
+                    linkUrl={appOrigin()}
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-touchline font-display text-sm leading-none">
+                    {"★".repeat(getStarCount(playerRating))}
+                    <span className="text-floodlight/20">
+                      {"★".repeat(Math.max(0, 5 - getStarCount(playerRating)))}
+                    </span>
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Stats Radar Chart */}
@@ -306,38 +255,59 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Status */}
-          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 flex justify-between items-center">
-                <span className="text-sm sm:text-base text-gray-300">
+          {/* Matchday status — broadcast strip */}
+          <div className="broadcast-card w-full p-3 sm:p-4">
+            <div className="mb-2 text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
+              Matchday Status
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div
+                className={`rounded-sm px-3 py-2 border ${
+                  trainingOnCooldown
+                    ? "border-blood/30 bg-blood/10"
+                    : "border-pitch-line/40 bg-pitch/10"
+                }`}
+              >
+                <div className="text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
                   Training
-                </span>
-                <span
-                  className={`text-sm sm:text-base ${
-                    !trainingOnCooldown ? "text-green-400" : "text-red-400"
+                </div>
+                <div
+                  className={`font-display text-lg leading-none tabular-nums ${
+                    trainingOnCooldown ? "text-blood" : "text-pitch-line"
                   }`}
                 >
-                  {!trainingOnCooldown ? "Ready" : trainingTime}
-                </span>
+                  {!trainingOnCooldown ? "READY" : trainingTime}
+                </div>
               </div>
-              <div className="col-span-2 flex justify-between items-center">
-                <span className="text-sm sm:text-base text-gray-300">
+              <div
+                className={`rounded-sm px-3 py-2 border ${
+                  matchOnCooldown
+                    ? "border-blood/30 bg-blood/10"
+                    : "border-pitch-line/40 bg-pitch/10"
+                }`}
+              >
+                <div className="text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
                   Match
-                </span>
-                <span
-                  className={`text-sm sm:text-base ${
-                    !matchOnCooldown ? "text-green-400" : "text-red-400"
+                </div>
+                <div
+                  className={`font-display text-lg leading-none tabular-nums ${
+                    matchOnCooldown ? "text-blood" : "text-pitch-line"
                   }`}
                 >
-                  {!matchOnCooldown ? "Ready" : matchTime}
-                </span>
+                  {!matchOnCooldown ? "READY" : matchTime}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
       <Footer />
+      <NotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        ethAddress={address || ""}
+        onNotificationUpdate={handleNotificationUpdate}
+      />
     </div>
   );
 }

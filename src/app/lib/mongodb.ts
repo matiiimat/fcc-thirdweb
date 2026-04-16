@@ -1,12 +1,22 @@
 import mongoose from 'mongoose';
 
-// Only try to connect to MongoDB during runtime, not during build time
 const MONGODB_URI = process.env.MONGODB_URI;
 
 let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null, indexesCreated: false };
+}
+
+async function ensureIndexes() {
+  if (cached.indexesCreated) return;
+  try {
+    const PlayerModel = (await import('../models/Player')).default;
+    await PlayerModel.collection.createIndex({ ethAddress: 1 }, { unique: true });
+    cached.indexesCreated = true;
+  } catch (error) {
+    console.error('Error creating database indexes:', error);
+  }
 }
 
 async function connectDB() {
@@ -75,6 +85,7 @@ async function connectDB() {
     throw e;
   }
 
+  await ensureIndexes();
   return cached.conn;
 }
 

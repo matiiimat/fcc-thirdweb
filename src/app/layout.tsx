@@ -1,11 +1,29 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Bebas_Neue, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import { Providers } from "./providers";
-import InitializeApp from "./components/InitializeApp";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const bebas = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-bebas",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "fcc/FC",
@@ -26,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${bebas.variable} ${playfair.variable}`}>
       <head>
         <meta name="application-name" content="fcc/FC" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -39,13 +57,13 @@ export default function RootLayout({
           property="fc:frame"
           content={JSON.stringify({
             version: "next",
-            imageUrl: "https://fcc-test.netlify.app/logo.png",
+            imageUrl: "https://fcc-test.netlify.app/intro.png",
             button: {
-              title: "fccFC",
+              title: "Play fccFC",
               action: {
                 type: "launch_frame",
                 name: "Play fccFC",
-                url: "https://fcc-test.netlify.app",
+                url: "https://fcc-test.vercel.app",
                 splashImageUrl: "https://fcc-test.netlify.app/logo.png",
                 splashBackgroundColor: "#08090a",
               },
@@ -53,11 +71,12 @@ export default function RootLayout({
           })}
         />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
         <Providers>
-          <InitializeApp />
           {children}
         </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

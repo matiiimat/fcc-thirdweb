@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import TeamMatchesSection from "./TeamMatchesSection";
 import TeamStatsDisplay from "./TeamStatsDisplay";
 import { ITactic, IJersey, ITeamStats } from "../models/Team";
@@ -64,7 +65,6 @@ export default function TeamOverview({
   const [error, setError] = useState("");
   const [jerseyModalOpen, setJerseyModalOpen] = useState(false);
   const [contractModalOpen, setContractModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"matches" | "stats">("matches");
   const [playerData, setPlayerData] = useState<any>(null);
   const [pendingContractRequests, setPendingContractRequests] = useState(0);
 
@@ -232,10 +232,12 @@ export default function TeamOverview({
                   onClick={onOpenManageTeam}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] relative"
                 >
-                  <img
+                  <Image
                     src="/icons/iconmanageteam.png"
                     alt="Manage Team"
-                    className="w-8 h-8 mb-2"
+                    width={32}
+                    height={32}
+                    className="mb-2"
                   />
                   Manage Team
                   {pendingContractRequests > 0 && (
@@ -246,10 +248,12 @@ export default function TeamOverview({
                   onClick={onOpenTactics}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <img
+                  <Image
                     src="/icons/icontactics.png"
                     alt="Tactics"
-                    className="w-8 h-8 mb-2"
+                    width={32}
+                    height={32}
+                    className="mb-2"
                   />
                   Tactics
                 </button>
@@ -258,10 +262,12 @@ export default function TeamOverview({
                   className="flex flex-col items-center justify-center px-4 py-3 rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                   style={{ minHeight: "100%" }}
                 >
-                  <img
+                  <Image
                     src="/icons/iconscouting.png"
                     alt="Scouting"
-                    className="w-8 h-8 mb-2 object-contain"
+                    width={32}
+                    height={32}
+                    className="mb-2 object-contain"
                   />
                   Scouting
                 </button>
@@ -269,10 +275,12 @@ export default function TeamOverview({
                   onClick={() => setJerseyModalOpen(true)}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <img
+                  <Image
                     src="/icons/iconcustomize.png"
                     alt="Customize"
-                    className="w-8 h-8 mb-2"
+                    width={32}
+                    height={32}
+                    className="mb-2"
                   />
                   Customize
                 </button>
@@ -285,10 +293,12 @@ export default function TeamOverview({
                   onClick={onOpenManageTeam}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <img
+                  <Image
                     src="/icons/iconmanageteam.png"
                     alt="Players"
-                    className="w-8 h-8 mb-2"
+                    width={32}
+                    height={32}
+                    className="mb-2"
                   />
                   Players
                 </button>
@@ -296,10 +306,12 @@ export default function TeamOverview({
                   onClick={onOpenTactics}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <img
+                  <Image
                     src="/icons/icontactics.png"
                     alt="View Team Tactics"
-                    className="w-8 h-8 mb-2"
+                    width={32}
+                    height={32}
+                    className="mb-2"
                   />
                   Tactics
                 </button>
@@ -307,10 +319,12 @@ export default function TeamOverview({
                   onClick={() => setContractModalOpen(true)}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] relative"
                 >
-                  <img
+                  <Image
                     src="/icons/iconcontract.png"
                     alt="Contract"
-                    className="w-8 h-8 mb-2"
+                    width={32}
+                    height={32}
+                    className="mb-2"
                   />
                   Contract
                   {playerData?.contract?.status === "pending" && (
@@ -322,10 +336,12 @@ export default function TeamOverview({
                   disabled={loading}
                   className="flex flex-col items-center justify-center px-4 py-3 h-full rounded-lg bg-gray-800/60 backdrop-blur-sm text-white font-medium hover:bg-gray-700/60 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:transform-none"
                 >
-                  <img
+                  <Image
                     src="/icons/iconleave.png"
                     alt="Leave Team"
-                    className="w-8 h-8 mb-2"
+                    width={32}
+                    height={32}
+                    className="mb-2"
                   />
                   {loading ? "Leaving..." : "Leave Team"}
                 </button>
@@ -334,45 +350,15 @@ export default function TeamOverview({
           )}
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setActiveTab("matches")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-              activeTab === "matches"
-                ? "bg-green-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-          >
-            Matches
-          </button>
-          <button
-            onClick={() => setActiveTab("stats")}
-            className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${
-              activeTab === "stats"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-            }`}
-          >
-            Statistics
-          </button>
-        </div>
-
         {/* Tab Content */}
-        {activeTab === "matches" ? (
-          <TeamMatchesSection
-            teamName={team.teamName}
-            teamId={team._id}
-            tactics={team.tactics || []}
-            isTeamCaptain={isCaptain}
-            currentTeam={team}
-            onLastMatchClick={onLastMatchClick}
-          />
-        ) : (
-          <div className="glass-container p-4 rounded-xl shadow-lg">
-            <TeamStatsDisplay stats={team.stats} />
-          </div>
-        )}
+        <TeamMatchesSection
+          teamName={team.teamName}
+          teamId={team._id}
+          tactics={team.tactics || []}
+          isTeamCaptain={isCaptain}
+          currentTeam={team}
+          onLastMatchClick={onLastMatchClick}
+        />
       </div>
 
       {/* Add PlayerContractModal */}

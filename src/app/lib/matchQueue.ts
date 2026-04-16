@@ -11,7 +11,11 @@ interface QueuedMatch {
   homeTacticId: string;
   awayTacticId: string;
   scheduledDate: Date;
+  attempts?: number;
 }
+
+const MAX_ATTEMPTS = 3;
+const RETRY_BACKOFF_MS = 30_000;
 
 interface PlayerWithStats {
   ethAddress: string;
@@ -23,8 +27,29 @@ class MatchQueue {
   private static instance: MatchQueue;
   private queue: QueuedMatch[] = [];
   private isProcessing: boolean = false;
+  private nextTimer: ReturnType<typeof setTimeout> | null = null;
+  private nextTimerTarget: number | null = null;
 
   private constructor() {}
+
+  private scheduleNextRun(): void {
+    if (this.queue.length === 0) return;
+    const target = this.queue[0].scheduledDate.getTime();
+    const delay = Math.max(0, target - Date.now());
+
+    if (this.nextTimer && this.nextTimerTarget !== null && this.nextTimerTarget <= target) {
+      return;
+    }
+    if (this.nextTimer) {
+      clearTimeout(this.nextTimer);
+    }
+    this.nextTimerTarget = target;
+    this.nextTimer = setTimeout(() => {
+      this.nextTimer = null;
+      this.nextTimerTarget = null;
+      void this.processQueue();
+    }, delay);
+  }
 
   public static getInstance(): MatchQueue {
     if (!MatchQueue.instance) {
@@ -36,8 +61,9 @@ class MatchQueue {
   public async addMatch(match: QueuedMatch): Promise<void> {
     this.queue.push(match);
     this.queue.sort((a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime());
-    
-    if (!this.isProcessing) {
+    this.scheduleNextRun();
+
+    if (!this.isProcessing && this.queue[0]?.scheduledDate.getTime() <= Date.now()) {
       await this.processQueue();
     }
   }
@@ -45,8 +71,9 @@ class MatchQueue {
   public async addMatches(matches: QueuedMatch[]): Promise<void> {
     this.queue.push(...matches);
     this.queue.sort((a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime());
-    
-    if (!this.isProcessing) {
+    this.scheduleNextRun();
+
+    if (!this.isProcessing && this.queue[0]?.scheduledDate.getTime() <= Date.now()) {
       await this.processQueue();
     }
   }
@@ -57,29 +84,39 @@ class MatchQueue {
     }
 
     this.isProcessing = true;
-    const now = new Date();
 
     try {
-      // Process all matches that are due
-      while (this.queue.length > 0 && this.queue[0].scheduledDate <= now) {
+      while (this.queue.length > 0 && this.queue[0].scheduledDate.getTime() <= Date.now()) {
         const match = this.queue.shift();
-        if (match) {
-          await this.simulateMatch(match);
+        if (!match) continue;
+
+        const ok = await this.simulateMatch(match);
+        if (!ok) {
+          const attempts = (match.attempts ?? 0) + 1;
+          if (attempts < MAX_ATTEMPTS) {
+            this.queue.push({
+              ...match,
+              attempts,
+              scheduledDate: new Date(Date.now() + RETRY_BACKOFF_MS * attempts),
+            });
+            this.queue.sort(
+              (a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime()
+            );
+          } else {
+            console.error(
+              `Match ${match.id} dropped after ${attempts} failed attempts`
+            );
+          }
         }
       }
     } finally {
       this.isProcessing = false;
     }
 
-    // If there are remaining matches, schedule the next check
-    if (this.queue.length > 0) {
-      const nextMatch = this.queue[0];
-      const delay = nextMatch.scheduledDate.getTime() - now.getTime();
-      setTimeout(() => this.processQueue(), delay);
-    }
+    this.scheduleNextRun();
   }
 
-  private async simulateMatch(match: QueuedMatch): Promise<void> {
+  private async simulateMatch(match: QueuedMatch): Promise<boolean> {
     try {
       // Fetch teams with their players
       const [homeTeam, awayTeam] = await Promise.all([
@@ -89,7 +126,7 @@ class MatchQueue {
 
       if (!homeTeam || !awayTeam) {
         console.error(`Teams not found for match ${match.id}`);
-        return;
+        return false;
       }
 
       // Find tactics
@@ -102,7 +139,7 @@ class MatchQueue {
 
       if (!homeTactic || !awayTactic) {
         console.error(`Tactics not found for match ${match.id}`);
-        return;
+        return false;
       }
 
       // Fetch all players for both teams
@@ -162,8 +199,8 @@ class MatchQueue {
         awayTactic
       );
 
-      // Create match record
-      const matchData = {
+      // Create match record — shared fields, then per-team perspective
+      const baseMatchData = {
         id: match.id,
         homeTeam: homeTeam.teamName,
         awayTeam: awayTeam.teamName,
@@ -182,21 +219,25 @@ class MatchQueue {
         events: matchResult.matchEvents,
       };
 
-      // Update both teams with the match result and new statistics
+      const homeRecord = { ...baseMatchData, isHome: true, opponent: awayTeam.teamName };
+      const awayRecord = { ...baseMatchData, isHome: false, opponent: homeTeam.teamName };
+
       await Promise.all([
         TeamModel.findByIdAndUpdate(homeTeam._id, {
-          $push: { matches: matchData },
+          $push: { matches: homeRecord },
           $set: { stats: updatedHomeStats },
         }),
         TeamModel.findByIdAndUpdate(awayTeam._id, {
-          $push: { matches: matchData },
+          $push: { matches: awayRecord },
           $set: { stats: updatedAwayStats },
         }),
       ]);
 
       console.log(`Match ${match.id} simulated successfully`);
+      return true;
     } catch (error) {
       console.error(`Error simulating match ${match.id}:`, error);
+      return false;
     }
   }
 
@@ -210,6 +251,11 @@ class MatchQueue {
 
   public clearQueue(): void {
     this.queue = [];
+    if (this.nextTimer) {
+      clearTimeout(this.nextTimer);
+      this.nextTimer = null;
+      this.nextTimerTarget = null;
+    }
   }
 }
 

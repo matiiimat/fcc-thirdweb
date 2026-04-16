@@ -9,7 +9,6 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: 'Inter', sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
   font-variation-settings: 'slnt' 0;
@@ -18,8 +17,11 @@
 
 @layer base {
   body {
-    @apply min-h-screen text-white relative;
-    background: linear-gradient(to bottom, #0d0f12, #1a1d21);
+    @apply min-h-screen text-floodlight relative;
+    /* Stadium-inside gradient: from pitch shadow down to ink */
+    background:
+      radial-gradient(ellipse at top, rgba(30, 138, 66, 0.08) 0%, transparent 55%),
+      linear-gradient(to bottom, #052614, #0b0d0f);
   }
 
   /* Stadium toggle class for future use */
@@ -29,12 +31,19 @@
 }
 
 @layer components {
+  /* -------------------------------------------------------------------------
+   * Legacy primitives (kept for backwards compatibility while we migrate)
+   * Updated to new token palette.
+   * ----------------------------------------------------------------------- */
   .glass-container {
-    @apply backdrop-blur-sm bg-black/60 border border-green-700/30 rounded-3xl relative z-0;
+    @apply backdrop-blur-sm bg-ink/60 border border-pitch/30 rounded-3xl relative z-0;
   }
-  
+
   .gradient-button {
-    @apply bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 text-white transition-all duration-200 border border-green-600/30 shadow-lg shadow-green-900/20 relative z-0;
+    @apply bg-gradient-to-r from-pitch-dark to-pitch
+           hover:from-pitch hover:to-pitch-line
+           text-floodlight transition-all duration-200
+           border border-pitch-line/40 shadow-lg shadow-pitch-deep/40 relative z-0;
   }
 
   .main-nav {
@@ -43,7 +52,7 @@
   }
 
   .nav-link {
-    @apply flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-700 transition-colors relative z-50;
+    @apply flex flex-col items-center justify-center p-2 rounded-lg hover:bg-white/5 transition-colors relative z-50;
     width: 80px;
     height: 80px;
   }
@@ -65,30 +74,103 @@
     @apply flex-1 p-4 flex flex-col items-center justify-start relative z-0;
     margin-bottom: 100px;
   }
+
+  /* -------------------------------------------------------------------------
+   * Register classes — the three visual languages the app speaks.
+   * Wrap a section with one of these to opt into the matching aesthetic.
+   * ----------------------------------------------------------------------- */
+
+  /* BROADCAST — live match, score bugs, live stats.
+     Dark, chunky, uppercase, tight tracking. */
+  .register-broadcast {
+    @apply font-display tracking-broadcast uppercase text-floodlight;
+  }
+
+  .broadcast-card {
+    @apply register-broadcast bg-ink/80 border border-pitch-line/40
+           rounded-lg shadow-lg shadow-pitch-deep/40 backdrop-blur-sm;
+  }
+
+  .broadcast-score {
+    @apply font-display text-5xl leading-none tabular-nums text-chalk;
+  }
+
+  /* NEWSPRINT / TABLOID — post-match headlines, season review.
+     Warm off-white paper, serif headlines, ink body. */
+  .register-newsprint {
+    @apply bg-paper text-ink;
+  }
+
+  .tabloid-card {
+    @apply register-newsprint rounded-sm shadow-xl p-5
+           border-l-4 border-blood;
+  }
+
+  .tabloid-headline {
+    @apply font-serif font-bold uppercase leading-tight text-ink;
+  }
+
+  .tabloid-byline {
+    @apply font-sans tracking-broadcast uppercase text-xs text-blood;
+  }
+
+  /* DATA CARD — squad lists, stats, league tables.
+     Clean, tabular, mono numerals. */
+  .register-data {
+    @apply font-sans text-floodlight;
+  }
+
+  .data-card {
+    @apply register-data bg-ink/70 border border-pitch/20 rounded-xl
+           backdrop-blur-sm;
+  }
+
+  .data-num {
+    @apply font-display tabular-nums tracking-tight;
+  }
+
+  /* -------------------------------------------------------------------------
+   * Pitch surface — used as a backdrop for tactics boards and match scenes.
+   * ----------------------------------------------------------------------- */
+  .pitch-surface {
+    background-color: #0b6b2e;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 0 40px,
+        rgba(0, 0, 0, 0.06) 40px 80px
+      );
+  }
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out forwards;
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out forwards;
+@keyframes goalFlash {
+  0%   { color: #ffffff; text-shadow: 0 0 0 rgba(230, 180, 34, 0); }
+  40%  { color: #e6b422; text-shadow: 0 0 24px rgba(230, 180, 34, 0.8); }
+  100% { color: #ffffff; text-shadow: 0 0 0 rgba(230, 180, 34, 0); }
 }
+
+.animate-slide-up   { animation: slideUp 0.3s ease-out forwards; }
+.animate-slide-down { animation: slideDown 0.3s ease-out forwards; }
+.animate-fade-in    { animation: fadeIn 0.2s ease-out forwards; }
+.animate-fade-out   { animation: fadeOut 0.2s ease-out forwards; }
+.animate-goal-flash { animation: goalFlash 0.9s ease-out 1; }

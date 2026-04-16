@@ -8,6 +8,13 @@ import { runTransaction } from '@/app/lib/transactions';
 import { TRAINING_CONSTANTS, PLAYER_CONSTANTS } from '@/app/lib/constants';
 import { z } from 'zod';
 import { generateMatchEvents } from '@/app/components/MatchEvents';
+import { invalidatePlayerCache } from '@/app/lib/serverCache';
+import { triggerMatchNotification } from '@/app/lib/neynar';
+import {
+  resolveIdentity,
+  applyPassiveRecovery,
+  applyMatchEvent,
+} from '@/app/lib/playerIdentity';
 
 const solomatchSchema = z.object({
   playerId: z.string(),
@@ -97,19 +104,55 @@ export async function POST(req: NextRequest) {
     const rating = minRating + (ratingRange * ratingFromMentions);
     const finalRating = Math.round(rating * 10) / 10; // Round to 1 decimal
 
+    // Derive a player-team result from the events for morale/form accounting.
+    let playerGoals = 0;
+    let opponentGoals = 0;
+    for (const ev of events) {
+      if (ev.type !== 'goal') continue;
+      if (ev.team === 'player') playerGoals++;
+      else if (ev.team === 'opponent') opponentGoals++;
+    }
+    const matchOutcome: 'win' | 'loss' | 'draw' =
+      playerGoals > opponentGoals
+        ? 'win'
+        : playerGoals < opponentGoals
+        ? 'loss'
+        : 'draw';
+
     // 6. Run game logic in transaction
     const result = await runTransaction(async (session) => {
       // Calculate work ethic increase (10% of the rating)
       const workEthicIncrease = finalRating * 0.1;
-      
+
       // Get current work ethic
       const currentWorkEthic = player.stats.workEthic;
-      
+
       // Calculate new work ethic (capped at MAX_STAT_VALUE)
       const newWorkEthic = Math.min(
         player.stats.workEthic + workEthicIncrease,
         PLAYER_CONSTANTS.MAX_STAT_VALUE
       );
+
+      // Identity tick: passive recovery, then apply match event.
+      const resolved = resolveIdentity(player as any);
+      const hoursIdle = resolved.lastTickedAt
+        ? Math.max(
+            0,
+            (now.getTime() - new Date(resolved.lastTickedAt).getTime()) /
+              (1000 * 60 * 60)
+          )
+        : 0;
+      const recovered = applyPassiveRecovery(resolved, hoursIdle);
+      const nextIdentity = {
+        ...applyMatchEvent(recovered, {
+          rating: finalRating,
+          result: matchOutcome,
+          potm: finalRating >= 8.5,
+          lastRatings: recovered.lastRatings,
+        }),
+        lastRatings: [...(recovered.lastRatings ?? []), finalRating].slice(-5),
+        lastTickedAt: now,
+      };
 
       // Update player with new game date and work ethic
       const updatedPlayer = await Player.findOneAndUpdate(
@@ -117,7 +160,8 @@ export async function POST(req: NextRequest) {
         {
           $set: {
             lastGameDate: now,
-            'stats.workEthic': newWorkEthic
+            'stats.workEthic': newWorkEthic,
+            identity: nextIdentity,
           }
         },
         {
@@ -147,6 +191,15 @@ export async function POST(req: NextRequest) {
     if (result.error) {
       return result.error;
     }
+
+    // Invalidate player cache to ensure fresh data on next fetch
+    invalidatePlayerCache(playerId, player.ethAddress);
+
+    // Update the notification trigger timestamp
+    await Player.findOneAndUpdate(
+      { playerId },
+      { $set: { lastMatchNotificationTrigger: new Date() } }
+    );
 
     return NextResponse.json(result.data);
   } catch (error) {

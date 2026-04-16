@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import sdk from "@farcaster/frame-sdk";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { config } from "../components/providers/WagmiProvider";
+import { useAccount } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { NoWalletState } from "../components/TeamPageStates";
+import { useAppInitialization } from "../hooks/useAppInitialization";
 import {
   calculatePlayerRating,
-  getStarRating,
+  getStarCount,
   getPlayerStats,
   getStatColor,
   getActionCooldown,
@@ -19,31 +19,6 @@ import PositionRecommendationChart from "../components/PositionRecommendationCha
 import PositionSelector from "../components/PositionSelector";
 import MatchPopup from "../components/MatchPopup";
 import { Position } from "../models/Player";
-
-interface PlayerData {
-  playerId: string;
-  playerName: string;
-  username: string;
-  ethAddress: string;
-  stats: {
-    strength: number;
-    stamina: number;
-    passing: number;
-    shooting: number;
-    defending: number;
-    speed: number;
-    positioning: number;
-    workEthic: number;
-  };
-  lastTrainingDate: string | null;
-  lastGameDate: string | null;
-  lastConnectionDate: string | null;
-  consecutiveConnections: number;
-  privateTrainer?: {
-    selectedSkill: keyof typeof STAT_NAMES | null;
-    remainingSessions: number;
-  };
-}
 
 interface TrainingResult {
   stat: string;
@@ -57,14 +32,17 @@ interface TrainingResult {
 export default function TrainPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect();
-  const { disconnect } = useDisconnect();
+  
+  // Use optimized initialization hook
+  const {
+    isSDKReady,
+    context,
+    player,
+    loading: playerLoading,
+    error: playerError,
+    refetchPlayer,
+  } = useAppInitialization();
 
-  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<any>();
-  const [player, setPlayer] = useState<PlayerData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [training, setTraining] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [trainingResult, setTrainingResult] = useState<TrainingResult | null>(
@@ -84,87 +62,28 @@ export default function TrainPage() {
       }
     | undefined
   >();
-  const [isContextOpen, setIsContextOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Farcaster Frame Integration
+  // Redirect to home if connected but no player (hasn't registered)
   useEffect(() => {
-    const load = async () => {
-      try {
-        await sdk.actions.ready();
-        setContext(await sdk.context);
-      } catch (error) {
-        console.error("Error initializing Farcaster Frame SDK:", error);
-      }
-    };
-
-    if (!isSDKLoaded) {
-      setIsSDKLoaded(true);
-      load();
-    }
-  }, [isSDKLoaded]);
-
-  const toggleContext = useCallback(() => {
-    setIsContextOpen((prev) => !prev);
-  }, []);
-
-  useEffect(() => {
-    if (!loading && (!isConnected || !player)) {
+    if (!playerLoading && isConnected && !player) {
       router.push("/");
     }
-  }, [loading, isConnected, player, router]);
+  }, [playerLoading, isConnected, player, router]);
 
-  useEffect(() => {
-    async function fetchPlayer() {
-      if (!address) {
-        setLoading(false);
-        return;
-      }
+  // Show simple loading state while SDK initializes (no AppLoader needed here)
+  if (!isSDKReady) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+        <Header pageName="Train" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
-      try {
-        const response = await fetch(
-          `/api/players/address/${encodeURIComponent(address)}`,
-          { cache: "no-store" }
-        );
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setPlayer(null);
-            return;
-          }
-          throw new Error("Failed to fetch player data");
-        }
-
-        const data = await response.json();
-        const validStats = [
-          "strength",
-          "stamina",
-          "passing",
-          "shooting",
-          "defending",
-          "speed",
-          "positioning",
-          "workEthic",
-        ];
-        const cleanStats = Object.fromEntries(
-          Object.entries(data.stats)
-            .filter(
-              ([key]) =>
-                validStats.includes(key) &&
-                !key.startsWith("$") &&
-                !key.startsWith("_")
-            )
-            .map(([key, value]) => [key, Number(value)])
-        );
-        setPlayer({ ...data, stats: cleanStats });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchPlayer();
-  }, [address]);
 
   const handleTrain = async () => {
     if (!player || !isConnected || !address || training) return;
@@ -181,7 +100,6 @@ export default function TrainPage() {
           "x-wallet-address": address,
         },
         body: JSON.stringify({ playerId: player.playerId }),
-        cache: "no-store",
       });
 
       if (!response.ok) {
@@ -191,32 +109,12 @@ export default function TrainPage() {
 
       const result = await response.json();
       if (result.success && result.training) {
-        const validStats = [
-          "strength",
-          "stamina",
-          "passing",
-          "shooting",
-          "defending",
-          "speed",
-          "positioning",
-          "workEthic",
-        ];
-        const cleanStats = Object.fromEntries(
-          Object.entries(result.player.stats)
-            .filter(
-              ([key]) =>
-                validStats.includes(key) &&
-                !key.startsWith("$") &&
-                !key.startsWith("_")
-            )
-            .map(([key, value]) => [key, Number(value)])
-        );
-        setPlayer({ ...result.player, stats: cleanStats });
         setTrainingResult(result.training);
         setShowTrainingAnimation(true);
         setTimeout(() => setShowTrainingAnimation(false), 2000);
 
-        router.refresh();
+        // Refetch player data to get updated stats and cooldown state
+        setTimeout(() => refetchPlayer(), 100);
       } else {
         throw new Error(result.error || "Training failed");
       }
@@ -254,9 +152,10 @@ export default function TrainPage() {
 
       const result = await response.json();
       if (result.success) {
-        setPlayer(result.player);
         setShowMatchPopup(true);
         setMatchResult(result.matchResult);
+        // Refetch player data to get updated stats
+        setTimeout(() => refetchPlayer(), 100);
       } else {
         throw new Error(result.error || "Failed to start game");
       }
@@ -273,7 +172,7 @@ export default function TrainPage() {
     setMatchResult(undefined);
   };
 
-  if (loading) {
+  if (playerLoading) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
         <Header pageName="Train" />
@@ -324,7 +223,11 @@ export default function TrainPage() {
     );
   }
 
-  if (!isConnected || !address || !player) {
+  if (!isConnected || !address) {
+    return <NoWalletState pageName="Train" />;
+  }
+
+  if (!player) {
     return null;
   }
 
@@ -360,6 +263,11 @@ export default function TrainPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
       <Header pageName="Train" />
       <main className="flex-1 container max-w-xl mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/50 text-red-400 text-center p-3 rounded-lg mb-4 text-sm font-medium">
+            {error}
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-4">
           {/* Drop In Match Section */}
           <div className="glass-container p-3 sm:p-4 rounded-xl shadow-lg">
@@ -404,7 +312,9 @@ export default function TrainPage() {
               </button>
               <div
                 className={`text-xs ${
-                  !selectedPosition
+                  matchCooldown.onCooldown
+                    ? "text-red-400"
+                    : !selectedPosition
                     ? "text-green-400"
                     : canPlay
                     ? "text-green-400"
@@ -461,7 +371,7 @@ export default function TrainPage() {
                 player.privateTrainer.remainingSessions > 0 && (
                   <div className="glass-container bg-green-900/20 p-2 rounded-lg text-xs mt-1">
                     <div className="font-semibold text-green-400">
-                      {STAT_NAMES[player.privateTrainer.selectedSkill]} Training
+                      {STAT_NAMES[player.privateTrainer.selectedSkill as keyof typeof STAT_NAMES]} Training
                       • {player.privateTrainer.remainingSessions} left
                     </div>
                   </div>
@@ -502,10 +412,6 @@ export default function TrainPage() {
             </div>
           </div>
         </div>
-
-        {error && (
-          <div className="text-red-500 text-center mt-2 text-xs">{error}</div>
-        )}
       </main>
       <Footer />
 
@@ -516,6 +422,12 @@ export default function TrainPage() {
           username={player.username}
           onClose={handleMatchEnd}
           matchResult={matchResult}
+          playerSnapshot={{
+            stats: player.stats,
+            team: player.team,
+            identity: player.identity,
+            pfp: context?.user?.pfpUrl,
+          }}
           isBottomSheet={true}
         />
       )}
