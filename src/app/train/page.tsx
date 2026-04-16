@@ -422,6 +422,12 @@ export default function TrainPage() {
           username={player.username}
           onClose={handleMatchEnd}
           matchResult={matchResult}
+          playerSnapshot={{
+            stats: player.stats,
+            team: player.team,
+            identity: player.identity,
+            pfp: context?.user?.pfpUrl,
+          }}
           isBottomSheet={true}
         />
       )}

@@ -11,12 +11,15 @@ import Footer from "./components/Footer";
 import StatsRadarChart from "./components/StatsRadarChart";
 import NotificationModal from "./components/NotificationModal";
 import AppLoader from "./components/AppLoader";
+import { ShareBar } from "./components/ui";
 import { useAppInitialization } from "./hooks/useAppInitialization";
 import {
   calculatePlayerRating,
   getStarCount,
   getActionCooldown,
 } from "./lib/game";
+import { resolveIdentity } from "./lib/playerIdentity";
+import { playerCardOgUrl, appOrigin } from "./lib/ogUrl";
 
 export default function Home() {
   const router = useRouter();
@@ -61,7 +64,7 @@ export default function Home() {
   // Show loading skeleton while data is being fetched
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="flex flex-col min-h-screen">
         <Header
           pageName="Home"
           onMailboxClick={handleMailboxClick}
@@ -102,7 +105,7 @@ export default function Home() {
   // Show error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="min-h-screen">
         <Header
           pageName="Home"
           onMailboxClick={handleMailboxClick}
@@ -125,7 +128,7 @@ export default function Home() {
   // Show connect wallet screen
   if (!isConnected) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="flex flex-col min-h-screen">
         <Header pageName="fcc/FC" />
         <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
           <div className="flex flex-col items-center justify-center h-full max-w-md mx-auto">
@@ -153,7 +156,7 @@ export default function Home() {
   // Redirect to create player if no player data
   if (!player) {
     return (
-      <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+      <div className="flex flex-col min-h-screen">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-white text-lg">Redirecting...</div>
         </div>
@@ -173,8 +176,27 @@ export default function Home() {
       true // isPlaying = true
     );
 
+  // Resolve identity (legacy players get safe defaults).
+  const identity = resolveIdentity(player as any);
+
+  // Pre-build the share payload so the button stays inert-cheap on render.
+  const playerRating = calculatePlayerRating(player.stats);
+  const displayName = context?.user?.username || player.playerName;
+  const shareImageUrl = playerCardOgUrl({
+    name: displayName,
+    username: context?.user?.username,
+    rating: Math.round(playerRating * 10), // 0-10 → 0-100
+    team: player.team,
+    traits: identity.traits,
+    pfp: context?.user?.pfpUrl,
+    stats: player.stats,
+  });
+  const shareText = `I'm rated ${playerRating.toFixed(
+    1
+  )} on fcc/FC. Come beat me.`;
+
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
+    <div className="flex flex-col min-h-screen">
       <Header
         pageName="Home"
         onMailboxClick={handleMailboxClick}
@@ -183,28 +205,48 @@ export default function Home() {
       <main className="flex-1 container mx-auto px-3 sm:px-6 py-2 sm:py-4 pb-24">
         <div className="flex flex-col items-center max-w-md mx-auto space-y-2 sm:space-y-3">
 
-          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
-            <div className="flex items-center justify-center gap-2 mb-1">
+          {/* Identity — broadcast register */}
+          <div className="data-card p-4 sm:p-6 w-full shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
               {context?.user?.pfpUrl ? (
-                <div className="w-8 h-8 rounded-full overflow-hidden">
+                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-pitch-line/60 shadow-lg shadow-pitch-deep/40">
                   <Image
                     src={context.user.pfpUrl}
                     alt="Profile"
-                    width={32}
-                    height={32}
+                    width={56}
+                    height={56}
                     className="object-cover"
                     unoptimized
                   />
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-full bg-gray-600"></div>
+                <div className="w-14 h-14 rounded-full bg-pitch-dark border-2 border-pitch-line/60" />
               )}
-              <h2 className="text-xl sm:text-2xl">{context?.user?.username}</h2>
-            </div>
-            <div className="text-lg sm:text-2xl mb-3 text-center">
-              {Array.from({ length: getStarCount(calculatePlayerRating(player.stats)) }, (_, index) => (
-                <span key={index} className="text-yellow-400">⭐</span>
-              ))}
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
+                  Player
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="font-display uppercase tracking-broadcast text-2xl text-chalk truncate leading-none">
+                    {displayName}
+                  </h2>
+                  <ShareBar
+                    variant="icon"
+                    ariaLabel="Share my player card"
+                    text={shareText}
+                    imageUrl={shareImageUrl}
+                    linkUrl={appOrigin()}
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-touchline font-display text-sm leading-none">
+                    {"★".repeat(getStarCount(playerRating))}
+                    <span className="text-floodlight/20">
+                      {"★".repeat(Math.max(0, 5 - getStarCount(playerRating)))}
+                    </span>
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Stats Radar Chart */}
@@ -213,32 +255,47 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Status */}
-          <div className="glass-container p-3 sm:p-6 w-full rounded-lg sm:rounded-2xl shadow-lg">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 flex justify-between items-center">
-                <span className="text-sm sm:text-base text-gray-300">
+          {/* Matchday status — broadcast strip */}
+          <div className="broadcast-card w-full p-3 sm:p-4">
+            <div className="mb-2 text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
+              Matchday Status
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div
+                className={`rounded-sm px-3 py-2 border ${
+                  trainingOnCooldown
+                    ? "border-blood/30 bg-blood/10"
+                    : "border-pitch-line/40 bg-pitch/10"
+                }`}
+              >
+                <div className="text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
                   Training
-                </span>
-                <span
-                  className={`text-sm sm:text-base ${
-                    !trainingOnCooldown ? "text-green-400" : "text-red-400"
+                </div>
+                <div
+                  className={`font-display text-lg leading-none tabular-nums ${
+                    trainingOnCooldown ? "text-blood" : "text-pitch-line"
                   }`}
                 >
-                  {!trainingOnCooldown ? "Ready" : trainingTime}
-                </span>
+                  {!trainingOnCooldown ? "READY" : trainingTime}
+                </div>
               </div>
-              <div className="col-span-2 flex justify-between items-center">
-                <span className="text-sm sm:text-base text-gray-300">
+              <div
+                className={`rounded-sm px-3 py-2 border ${
+                  matchOnCooldown
+                    ? "border-blood/30 bg-blood/10"
+                    : "border-pitch-line/40 bg-pitch/10"
+                }`}
+              >
+                <div className="text-[10px] uppercase tracking-broadcast text-floodlight/50 font-display">
                   Match
-                </span>
-                <span
-                  className={`text-sm sm:text-base ${
-                    !matchOnCooldown ? "text-green-400" : "text-red-400"
+                </div>
+                <div
+                  className={`font-display text-lg leading-none tabular-nums ${
+                    matchOnCooldown ? "text-blood" : "text-pitch-line"
                   }`}
                 >
-                  {!matchOnCooldown ? "Ready" : matchTime}
-                </span>
+                  {!matchOnCooldown ? "READY" : matchTime}
+                </div>
               </div>
             </div>
           </div>

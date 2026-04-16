@@ -23,6 +23,74 @@ export interface IGameResult {
   position?: Position;
 }
 
+// ---------------------------------------------------------------------------
+// Identity layer (Part 3 of the UX plan).
+//
+// These fields layer *on top of* the existing 7 stats without changing
+// training gameplay. All are optional on the schema so existing documents
+// remain valid; derivation helpers in lib/playerIdentity.ts provide defaults
+// when a player has not yet had these populated.
+// ---------------------------------------------------------------------------
+
+/** One of a fixed pool of personality/style traits. */
+export type PlayerTrait =
+  | 'big_game_player'
+  | 'injury_prone'
+  | 'consistent'
+  | 'late_bloomer'
+  | 'set_piece_specialist'
+  | 'leader'
+  | 'flair'
+  | 'engine'
+  | 'cool_head'
+  | 'workhorse'
+  | 'streaky'
+  | 'ice_in_veins';
+
+export type InjurySeverity = 'knock' | 'minor' | 'moderate' | 'serious';
+
+export interface IPlayerInjury {
+  type: string;
+  severity: InjurySeverity;
+  returnDate: Date | null;
+}
+
+/** Per-season career record entry. */
+export interface ICareerSeason {
+  season: number;
+  team: string;
+  appearances: number;
+  goals: number;
+  assists: number;
+  avgRating: number;
+  honors: string[];
+}
+
+export interface IPlayerIdentity {
+  /** EMA of (last_rating - baseline_rating). -3..+3. */
+  form: number;
+  /** 0..100. */
+  morale: number;
+  /** 0..100. High = tired. Replaces raw cooldowns soft-gate. */
+  fatigue: number;
+  /** 0..100. Underlying fitness. Decays slower than fatigue. */
+  condition: number;
+  /** 2–3 traits rolled at creation, rarely gained. */
+  traits: PlayerTrait[];
+  /** Preferred jersey number. Purely cosmetic. */
+  jerseyNumber?: number;
+  /** 'left' | 'right' | 'both'. Feeds commentary. */
+  preferredFoot?: 'left' | 'right' | 'both';
+  /** Active injury, if any. */
+  injury?: IPlayerInjury | null;
+  /** Per-season historical record. */
+  career?: ICareerSeason[];
+  /** Last N match ratings (length <= 5). Drives the form EMA. */
+  lastRatings?: number[];
+  /** Last time identity was ticked — used to compute passive recovery on read. */
+  lastTickedAt?: Date | null;
+}
+
 // Interface for the player document
 export interface IPlayerContract {
   requestedAmount: number;
@@ -64,6 +132,8 @@ export interface IPlayer extends Document {
     resetTime: Date | null;
   };
   contract?: IPlayerContract;
+  /** Identity layer (form, morale, fatigue, traits, etc.) — optional. */
+  identity?: IPlayerIdentity;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -232,6 +302,73 @@ const PlayerContractSchema = new Schema<IPlayerContract>({
   },
 });
 
+// Schema for per-season career entries
+const CareerSeasonSchema = new Schema<ICareerSeason>(
+  {
+    season: { type: Number, required: true, min: 0 },
+    team: { type: String, required: true, trim: true },
+    appearances: { type: Number, default: 0, min: 0 },
+    goals: { type: Number, default: 0, min: 0 },
+    assists: { type: Number, default: 0, min: 0 },
+    avgRating: { type: Number, default: 0, min: 0, max: 10 },
+    honors: { type: [String], default: [] },
+  },
+  { _id: false }
+);
+
+// Schema for injury state
+const PlayerInjurySchema = new Schema<IPlayerInjury>(
+  {
+    type: { type: String, required: true, trim: true },
+    severity: {
+      type: String,
+      required: true,
+      enum: ['knock', 'minor', 'moderate', 'serious'],
+    },
+    returnDate: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
+// Schema for the identity layer
+const PlayerIdentitySchema = new Schema<IPlayerIdentity>(
+  {
+    form: { type: Number, default: 0, min: -3, max: 3 },
+    morale: { type: Number, default: 60, min: 0, max: 100 },
+    fatigue: { type: Number, default: 0, min: 0, max: 100 },
+    condition: { type: Number, default: 100, min: 0, max: 100 },
+    traits: {
+      type: [String],
+      enum: [
+        'big_game_player',
+        'injury_prone',
+        'consistent',
+        'late_bloomer',
+        'set_piece_specialist',
+        'leader',
+        'flair',
+        'engine',
+        'cool_head',
+        'workhorse',
+        'streaky',
+        'ice_in_veins',
+      ],
+      default: [],
+    },
+    jerseyNumber: { type: Number, min: 1, max: 99, default: undefined },
+    preferredFoot: {
+      type: String,
+      enum: ['left', 'right', 'both', null],
+      default: undefined,
+    },
+    injury: { type: PlayerInjurySchema, default: null },
+    career: { type: [CareerSeasonSchema], default: [] },
+    lastRatings: { type: [Number], default: [] },
+    lastTickedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
 // Main player schema
 const PlayerSchema = new Schema<IPlayer>(
   {
@@ -355,6 +492,10 @@ const PlayerSchema = new Schema<IPlayer>(
     },
     contract: {
       type: PlayerContractSchema,
+      default: null
+    },
+    identity: {
+      type: PlayerIdentitySchema,
       default: null
     },
     // Notification triggers (optional fields)

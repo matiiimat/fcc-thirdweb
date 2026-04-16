@@ -53,11 +53,11 @@ export default function Footer() {
 
   const getButtonClass = (path: string) => {
     const baseClass =
-      "flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300";
+      "flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300 border";
     const neuClass =
-      "bg-[#0d0f12]/90 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.07),inset_2px_2px_5px_rgba(0,0,0,0.5)]";
+      "bg-ink/90 border-pitch-line/20 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.05),inset_2px_2px_5px_rgba(0,0,0,0.5)]";
     const activeClass =
-      "bg-gradient-to-br from-[#1a1d21]/95 to-[#0d0f12]/95 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.12),inset_2px_2px_5px_rgba(0,0,0,0.3)]";
+      "bg-gradient-to-br from-pitch/40 to-pitch-dark/90 border-pitch-line/60 shadow-[inset_-2px_-2px_5px_rgba(255,255,255,0.12),inset_2px_2px_5px_rgba(0,0,0,0.3)]";
 
     return `${baseClass} ${
       isActive(path) ? activeClass : neuClass
@@ -65,9 +65,9 @@ export default function Footer() {
   };
 
   const getTextClass = (path: string) => {
-    return `text-xs font-medium mt-1 transition-colors duration-300 ${
-      isActive(path) ? "text-green-400" : "text-gray-400"
-    } hover:text-gray-300`;
+    return `text-[10px] uppercase tracking-broadcast font-display mt-1 transition-colors duration-300 ${
+      isActive(path) ? "text-touchline" : "text-floodlight/55"
+    }`;
   };
 
   // Haptic feedback function
@@ -90,7 +90,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-[#0d0f12]/85 backdrop-blur-md px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
+    <footer className="fixed bottom-0 left-0 right-0 bg-ink/90 backdrop-blur-md px-4 pt-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.35)] border-t border-pitch-line/20">
       <div className="flex justify-around items-center max-w-screen-lg mx-auto">
         <div className="flex flex-col items-center">
           <button

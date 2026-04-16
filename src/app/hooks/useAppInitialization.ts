@@ -12,6 +12,7 @@ interface PlayerData {
   playerName: string;
   username?: string;
   ethAddress: string;
+  team?: string;
   stats: {
     strength: number;
     stamina: number;
@@ -34,6 +35,17 @@ interface PlayerData {
     score: number;
     opponent: string;
     result: "win" | "loss" | "draw";
+  };
+  identity?: {
+    form?: number;
+    morale?: number;
+    fatigue?: number;
+    condition?: number;
+    traits?: string[];
+    jerseyNumber?: number;
+    preferredFoot?: "left" | "right" | "both";
+    lastRatings?: number[];
+    lastTickedAt?: string | null;
   };
 }
 

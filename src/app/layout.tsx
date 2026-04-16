@@ -1,12 +1,29 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Bebas_Neue, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import { Providers } from "./providers";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const bebas = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-bebas",
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "fcc/FC",
@@ -27,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${bebas.variable} ${playfair.variable}`}>
       <head>
         <meta name="application-name" content="fcc/FC" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -54,7 +71,7 @@ export default function RootLayout({
           })}
         />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
         <Providers>
           {children}
         </Providers>

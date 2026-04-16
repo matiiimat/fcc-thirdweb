@@ -9,6 +9,11 @@ import { validateSchema, trainSchema } from '@/app/lib/schemas';
 import { runTransaction } from '@/app/lib/transactions';
 import { invalidatePlayerCache } from '@/app/lib/serverCache';
 import { triggerTrainingNotification } from '@/app/lib/neynar';
+import {
+  resolveIdentity,
+  applyPassiveRecovery,
+  applyTrainEvent,
+} from '@/app/lib/playerIdentity';
 
 export async function POST(req: NextRequest) {
   try {
@@ -82,9 +87,25 @@ export async function POST(req: NextRequest) {
         )
       );
 
+      // Identity tick: passive recovery since last tick, then apply train event.
+      const resolved = resolveIdentity(player as any);
+      const hoursIdle = resolved.lastTickedAt
+        ? Math.max(
+            0,
+            (now.getTime() - new Date(resolved.lastTickedAt).getTime()) /
+              (1000 * 60 * 60)
+          )
+        : 0;
+      const recovered = applyPassiveRecovery(resolved, hoursIdle);
+      const nextIdentity = {
+        ...applyTrainEvent(recovered, { intensity: 'focused' }),
+        lastTickedAt: now,
+      };
+
       let updateData: any = {
         lastTrainingDate: now,
         'stats.workEthic': newWorkEthic,
+        identity: nextIdentity,
       };
 
       // Check if player has active private trainer
