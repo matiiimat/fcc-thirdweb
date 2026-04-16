@@ -172,7 +172,7 @@ export async function POST(request: NextRequest) {
 
     // Create match record
     const matchId = new Types.ObjectId().toString();
-    const matchData = {
+    const baseMatchData = {
       id: matchId,
       homeTeam: homeTeam.teamName,
       awayTeam: awayTeam.teamName,
@@ -185,6 +185,8 @@ export async function POST(request: NextRequest) {
         awayScore: matchResult.awayScore,
       },
     };
+    const homeRecord = { ...baseMatchData, isHome: true, opponent: awayTeam.teamName };
+    const awayRecord = { ...baseMatchData, isHome: false, opponent: homeTeam.teamName };
 
     // Update team statistics
     let updatedHomeStats, updatedAwayStats;
@@ -234,11 +236,11 @@ export async function POST(request: NextRequest) {
     try {
       const [updatedHome, updatedAway] = await Promise.all([
         TeamModel.findByIdAndUpdate(homeTeam._id, {
-          $push: { matches: matchData },
+          $push: { matches: homeRecord },
           $set: { stats: updatedHomeStats },
         }, { new: true }),
         TeamModel.findByIdAndUpdate(awayTeam._id, {
-          $push: { matches: matchData },
+          $push: { matches: awayRecord },
           $set: { stats: updatedAwayStats },
         }, { new: true })
       ]);
@@ -258,7 +260,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       match: {
-        ...matchData,
+        ...baseMatchData,
         events: matchResult.matchEvents,
       },
       stats: {

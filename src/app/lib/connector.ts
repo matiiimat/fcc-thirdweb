@@ -4,6 +4,14 @@ import { ChainNotConfiguredError, createConnector } from 'wagmi';
 
 frameConnector.type = 'frameConnector' as const;
 
+function getEthProvider() {
+  try {
+    return sdk?.wallet?.ethProvider ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function frameConnector() {
   let connected = true;
 
@@ -13,60 +21,87 @@ export function frameConnector() {
     type: frameConnector.type,
 
     async setup() {
-      this.connect({ chainId: config.chains[0].id });
+      const provider = getEthProvider();
+      if (!provider) return;
+      this.connect({ chainId: config.chains[0].id }).catch(() => {});
     },
     async connect({ chainId } = {}) {
-      const provider = await this.getProvider();
-      const accounts = await provider.request({
-        method: 'eth_requestAccounts',
-      });
+      const provider = getEthProvider();
+      if (!provider) throw new Error('Farcaster SDK not available');
 
-      let currentChainId = await this.getChainId();
-      if (chainId && currentChainId !== chainId) {
-        const chain = await this.switchChain!({ chainId });
-        currentChainId = chain.id;
+      try {
+        const accounts = await provider.request({
+          method: 'eth_requestAccounts',
+        });
+
+        let currentChainId = await this.getChainId();
+        if (chainId && currentChainId !== chainId) {
+          const chain = await this.switchChain!({ chainId });
+          currentChainId = chain.id;
+        }
+
+        connected = true;
+
+        return {
+          accounts: accounts.map((x) => getAddress(x)),
+          chainId: currentChainId,
+        };
+      } catch {
+        connected = false;
+        throw new Error('Farcaster wallet not available');
       }
-
-      connected = true;
-
-      return {
-        accounts: accounts.map((x) => getAddress(x)),
-        chainId: currentChainId,
-      };
     },
     async disconnect() {
       connected = false;
     },
     async getAccounts() {
       if (!connected) throw new Error('Not connected');
-      const provider = await this.getProvider();
-      const accounts = await provider.request({
-        method: 'eth_requestAccounts',
-      });
-      return accounts.map((x) => getAddress(x));
+      const provider = getEthProvider();
+      if (!provider) return [];
+
+      try {
+        const accounts = await provider.request({
+          method: 'eth_requestAccounts',
+        });
+        return accounts.map((x) => getAddress(x));
+      } catch {
+        return [];
+      }
     },
     async getChainId() {
-      const provider = await this.getProvider();
-      const hexChainId = await provider.request({ method: 'eth_chainId' });
-      return fromHex(hexChainId, 'number');
+      const provider = getEthProvider();
+      if (!provider) return config.chains[0].id;
+
+      try {
+        const hexChainId = await provider.request({ method: 'eth_chainId' });
+        return fromHex(hexChainId, 'number');
+      } catch {
+        return config.chains[0].id;
+      }
     },
     async isAuthorized() {
-      if (!connected) {
+      if (!connected) return false;
+      const provider = getEthProvider();
+      if (!provider) return false;
+
+      try {
+        const accounts = await this.getAccounts();
+        return !!accounts.length;
+      } catch {
         return false;
       }
-
-      const accounts = await this.getAccounts();
-      return !!accounts.length;
     },
     async switchChain({ chainId }) {
-      const provider = await this.getProvider();
+      const provider = getEthProvider();
       const chain = config.chains.find((x) => x.id === chainId);
       if (!chain) throw new SwitchChainError(new ChainNotConfiguredError());
 
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: numberToHex(chainId) }],
-      });
+      if (provider) {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: numberToHex(chainId) }],
+        });
+      }
       return chain;
     },
     onAccountsChanged(accounts) {

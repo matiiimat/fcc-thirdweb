@@ -144,110 +144,97 @@ export default function TeamMatchesSection({
     <div className="glass-container p-4 rounded-xl shadow-lg mt-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold text-white">Team Matches</h2>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
-            title={showCalendar ? "Show next match only" : "Show calendar"}
-          >
-            <Image
-              src={
-                showCalendar
-                  ? "/icons/ball-icon.png"
-                  : "/icons/calendar-icon.png"
+      </div>
+
+      {/* Next Match Section */}
+      <div className="mb-6">
+        <h3 className="text-sm font-medium text-green-400 mb-2">
+          Next Match
+        </h3>
+        <div className="space-y-2">
+          {nextMatch ? (
+            <MatchCard
+              match={nextMatch}
+              teamName={teamName}
+              isTeamCaptain={isTeamCaptain}
+              tactics={tactics}
+              onMatchClick={() => handleMatchClick(nextMatch)}
+              onUpdateTactic={(tactic) =>
+                handleUpdateTactic(nextMatch, tactic)
               }
-              alt={showCalendar ? "Next match" : "Calendar"}
-              width={24}
-              height={24}
-              className="opacity-80"
+              updating={updating}
             />
-          </button>
+          ) : (
+            <div className="text-gray-400 text-sm text-center">
+              No upcoming matches scheduled
+            </div>
+          )}
         </div>
       </div>
 
-      {showCalendar ? (
-        <>
-          {/* Upcoming Matches */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-green-400 mb-2">
-              Upcoming Matches
-            </h3>
-            <div className="space-y-2">
-              {limitedUpcomingMatches.length > 0 ? (
-                limitedUpcomingMatches.map((match) => (
-                  <MatchCard
-                    key={match._id}
-                    match={match}
-                    teamName={teamName}
-                    isTeamCaptain={isTeamCaptain}
-                    tactics={tactics}
-                    onMatchClick={() => handleMatchClick(match)}
-                    onUpdateTactic={(tactic) =>
-                      handleUpdateTactic(match, tactic)
-                    }
-                    updating={updating}
-                  />
-                ))
-              ) : (
-                <div className="text-gray-400 text-sm text-center">
-                  No upcoming matches scheduled
+      {/* Past/Upcoming Matches Section */}
+      <div>
+        <h3 className="text-sm font-medium text-blue-400 mb-2">
+          Past & Upcoming Matches
+        </h3>
+        <div className="space-y-2">
+          {matches.length > 0 ? (
+            <>
+              {/* Upcoming Matches */}
+              {upcomingMatches.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-xs font-medium text-green-400 mb-2">
+                    Upcoming
+                  </h4>
+                  {upcomingMatches.map((match) => (
+                    <MatchCard
+                      key={match._id}
+                      match={match}
+                      teamName={teamName}
+                      isTeamCaptain={isTeamCaptain}
+                      tactics={tactics}
+                      onMatchClick={() => handleMatchClick(match)}
+                      onUpdateTactic={(tactic) =>
+                        handleUpdateTactic(match, tactic)
+                      }
+                      updating={updating}
+                    />
+                  ))}
                 </div>
               )}
-            </div>
-          </div>
 
-          {/* Completed Matches */}
-          <div>
-            <h3 className="text-sm font-medium text-blue-400 mb-2">
-              Match History
-            </h3>
-            <div className="space-y-2">
-              {limitedCompletedMatches.length > 0 ? (
-                limitedCompletedMatches.map((match) => (
-                  <MatchCard
-                    key={match._id}
-                    match={match}
-                    teamName={teamName}
-                    isTeamCaptain={isTeamCaptain}
-                    tactics={tactics}
-                    onMatchClick={() => handleMatchClick(match)}
-                  />
-                ))
-              ) : (
-                <div className="text-gray-400 text-sm text-center">
-                  No match history available
+              {/* Past Matches (limited to last 5) */}
+              {completedMatches.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-medium text-gray-400 mb-2">
+                    Past Matches
+                  </h4>
+                  {completedMatches
+                    .slice(0, 5)
+                    .map((match) => (
+                      <MatchCard
+                        key={match._id}
+                        match={match}
+                        teamName={teamName}
+                        isTeamCaptain={isTeamCaptain}
+                        tactics={tactics}
+                        onMatchClick={() => handleMatchClick(match)}
+                        onUpdateTactic={(tactic) =>
+                          handleUpdateTactic(match, tactic)
+                        }
+                        updating={updating}
+                      />
+                    ))}
                 </div>
               )}
+            </>
+          ) : (
+            <div className="text-gray-400 text-sm text-center">
+              No matches available
             </div>
-          </div>
-        </>
-      ) : (
-        // Show only next match
-        <div>
-          <h3 className="text-sm font-medium text-green-400 mb-2">
-            Next Match
-          </h3>
-          <div className="space-y-2">
-            {nextMatch ? (
-              <MatchCard
-                match={nextMatch}
-                teamName={teamName}
-                isTeamCaptain={isTeamCaptain}
-                tactics={tactics}
-                onMatchClick={() => handleMatchClick(nextMatch)}
-                onUpdateTactic={(tactic) =>
-                  handleUpdateTactic(nextMatch, tactic)
-                }
-                updating={updating}
-              />
-            ) : (
-              <div className="text-gray-400 text-sm text-center">
-                No upcoming matches scheduled
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Match Details Popup */}
       {selectedMatch && (

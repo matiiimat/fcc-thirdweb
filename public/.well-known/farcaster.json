@@ -1,18 +1,17 @@
 {
-    "accountAssociation": {
-      "header": "eyJmaWQiOjE0NjI0LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4NjNlRTg5YTg2MWVFNjI0ZTM1RjI1YjA4QUM0ZjZGQjIyMzg5MDVhRiJ9",
-      "payload": "eyJkb21haW4iOiJmY2MtdGVzdC5uZXRsaWZ5LmFwcCJ9",
-      "signature": "MHgwZjRkYzQ2OTQ2MTZjMTM3OGViMWQ1NjA3ODg1ODJhOTAwMzc4NmZjYTNjMmViNTcwMjFkODFjNzExNDIzNTcyMzMyMDcxNDdiMGEwNWQ3Mzg4NjdlNWUzYjE5NjliNjlmMjkzZmU0NWU3MzJmMzcwMjgxNjI3ODRjN2YyMjQ2NjFi"
-    },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjE0NjI0LCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4NjNlRTg5YTg2MWVFNjI0ZTM1RjI1YjA4QUM0ZjZGQjIyMzg5MDVhRiJ9",
+    "payload": "eyJkb21haW4iOiJmY2MtdGVzdC52ZXJjZWwuYXBwIn0",
+    "signature": "MHg3ZDljYzQ1ZTczY2ZlNGJhNDEyM2YzNjRhMzEyYzM1ZDE1MzAxYjMxZGFjNmJkZjZjZGMyNDI1NjE5Nzk2N2Q1MmMwNjMzY2IyOGVlZmY5Yzg4MzBiNzVmYTFmZTdmZDExMmE4ZWFiNTU0NzFiYzJhMTIyYzlkN2QzMjg3OGZhODFj"
+  },
     "frame": {
       "version": "1",
       "name": "fccFC",
-      "iconUrl": "https://fcc-test.netlify.app/logo.png",
-      "homeUrl": "https://fcc-test.netlify.app",
-      "imageUrl": "https://fcc-test.netlify.app/logo.png",
-      "buttonTitle": "Check this out",
+      "iconUrl": "https://fcc-test.netlify.app/icon.png",
+      "homeUrl": "https://fcc-test.vercel.app",
       "splashImageUrl": "https://fcc-test.netlify.app/logo.png",
       "splashBackgroundColor": "#08090a",
-      "webhookUrl": "https://fcc-test.netlify.app/api/webhook"
+      "webhookUrl": "https://api.neynar.com/f/app/9a88edae-91b1-4a71-9535-d6164ccbd20e/event",
+      "heroImageUrl": "https://fcc-test.netlify.app/intro1200x630.png"
     }
   }

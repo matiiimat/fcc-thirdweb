@@ -1,14 +1,18 @@
+import { useConnect } from "wagmi";
+import { config } from "./providers/WagmiProvider";
+import { Button } from "@/components/ui/Button";
 import Header from "./Header";
 import Footer from "./Footer";
 
 interface PageWrapperProps {
   children: React.ReactNode;
+  pageName?: string;
 }
 
-export function PageWrapper({ children }: PageWrapperProps) {
+export function PageWrapper({ children, pageName = "Team" }: PageWrapperProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d0f12] to-[#1a1d21]">
-      <Header pageName="Team" />
+      <Header pageName={pageName} />
       <div className="container max-w-md mx-auto px-3 py-4 pb-20">
         <div className="glass-container p-4 text-center rounded-2xl shadow-lg">
           {children}
@@ -19,9 +23,9 @@ export function PageWrapper({ children }: PageWrapperProps) {
   );
 }
 
-export function LoadingState() {
+export function LoadingState({ pageName }: { pageName?: string }) {
   return (
-    <PageWrapper>
+    <PageWrapper pageName={pageName}>
       <div className="flex justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
       </div>
@@ -29,10 +33,15 @@ export function LoadingState() {
   );
 }
 
-export function NoWalletState() {
+export function NoWalletState({ pageName }: { pageName?: string }) {
+  const { connect } = useConnect();
+
   return (
-    <PageWrapper>
-      <p className="text-gray-400">Please connect your wallet</p>
+    <PageWrapper pageName={pageName}>
+      <p className="text-gray-400 mb-4">Please connect your wallet</p>
+      <Button onClick={() => connect({ connector: config.connectors[0] })}>
+        Connect Wallet
+      </Button>
     </PageWrapper>
   );
 }

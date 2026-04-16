@@ -229,8 +229,7 @@ export default function Store() {
     sendTransaction(
       {
         to: "0xdd5Af00D3172d25C8762193478275b858148a454",
-        //value: 5000000000000000n, // 0.005 ETH in wei (5 * 10^15)
-        value: 1000000000000000n, // add one-two zero if not enough for .187 cents
+        value: 5000000000000000n, // 0.005 ETH in wei (5 * 10^15)
       },
       {
         onSuccess: (hash) => {
@@ -473,8 +472,7 @@ export default function Store() {
                               onClick={sendManagementCertificateTx}
                               className="gradient-button px-3 py-2 rounded-lg whitespace-nowrap text-xs"
                             >
-                              FREE
-                              {/* 0.005 ETH */}
+                               0.005 ETH
                             </button>
                           )
                         ) : item.id === "private_trainer" ? (

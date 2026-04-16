@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { calculatePlayerRating, getStarRating } from "../lib/game";
+import { calculatePlayerRating, getStarCount } from "../lib/game";
 import { Position } from "../models/Player";
 
 interface Player {
@@ -129,7 +129,9 @@ export default function PlayerSelectionModal({
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[0.7rem] leading-none">
-                            {getStarRating(calculatePlayerRating(player.stats))}
+                            {Array.from({ length: getStarCount(calculatePlayerRating(player.stats)) }, (_, index) => (
+                              <span key={index} className="text-yellow-400">⭐</span>
+                            ))}
                           </div>
                         </div>
                       </div>
