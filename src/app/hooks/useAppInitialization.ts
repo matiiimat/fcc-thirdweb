@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import sdk, { Context } from "@farcaster/frame-sdk";
 import { useAccount } from "wagmi";
+import { isDevMode } from "../lib/devConnector";
 
 export type FrameContext = Context.FrameContext;
 
@@ -151,6 +152,24 @@ export function useAppInitialization(): UseAppInitializationReturn {
 
       if (!response.ok) {
         if (response.status === 404) {
+          if (isDevMode) {
+            const createRes = await fetch("/api/players", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                ethAddress: address,
+                team: "Unassigned",
+                username: "DevPlayer",
+              }),
+              signal,
+            });
+            if (createRes.ok) {
+              const created = await createRes.json();
+              setPlayer(created);
+              setError(null);
+              return;
+            }
+          }
           setPlayer(null);
           return;
         }

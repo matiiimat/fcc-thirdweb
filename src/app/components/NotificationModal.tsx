@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 interface Notification {
@@ -33,13 +33,7 @@ export default function NotificationModal({
   const [processing, setProcessing] = useState<string>("");
   const [isClosing, setIsClosing] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchNotifications();
-    }
-  }, [isOpen, ethAddress]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -82,7 +76,13 @@ export default function NotificationModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [ethAddress]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
+    }
+  }, [isOpen, fetchNotifications]);
 
   const handleResponse = async (notificationId: string, accept: boolean) => {
     setProcessing(notificationId);

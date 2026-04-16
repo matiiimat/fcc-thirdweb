@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { NoWalletState } from "../components/TeamPageStates";
 import { useAppInitialization } from "../hooks/useAppInitialization";
 import {
   calculatePlayerRating,
@@ -63,9 +64,9 @@ export default function TrainPage() {
   >();
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect to home if not connected or no player
+  // Redirect to home if connected but no player (hasn't registered)
   useEffect(() => {
-    if (!playerLoading && (!isConnected || !player)) {
+    if (!playerLoading && isConnected && !player) {
       router.push("/");
     }
   }, [playerLoading, isConnected, player, router]);
@@ -223,7 +224,11 @@ export default function TrainPage() {
     );
   }
 
-  if (!isConnected || !address || !player) {
+  if (!isConnected || !address) {
+    return <NoWalletState pageName="Train" />;
+  }
+
+  if (!player) {
     return null;
   }
 

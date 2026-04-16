@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import { Providers } from "./providers";
-import InitializeApp from "./components/InitializeApp";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -57,7 +56,6 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <Providers>
-          <InitializeApp />
           {children}
         </Providers>
         <Analytics />

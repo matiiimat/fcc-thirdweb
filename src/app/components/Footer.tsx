@@ -98,12 +98,13 @@ export default function Footer() {
             className={getButtonClass("/")}
           >
             {profileImage ? (
-              <img
+              <Image
                 src={profileImage}
                 alt="Profile"
-                className="w-5 h-5 rounded-full object-cover"
                 width={20}
                 height={20}
+                className="rounded-full object-cover"
+                unoptimized
               />
             ) : (
               <Image
@@ -111,7 +112,7 @@ export default function Footer() {
                 alt="Player"
                 width={20}
                 height={20}
-                priority
+                loading="lazy"
                 className="transition-transform group-hover:scale-110"
               />
             )}
@@ -130,7 +131,7 @@ export default function Footer() {
               alt="Train"
               width={20}
               height={20}
-              priority
+              loading="lazy"
               className="transition-transform group-hover:scale-110"
             />
           </button>
@@ -146,7 +147,7 @@ export default function Footer() {
               alt="Team"
               width={20}
               height={20}
-              priority
+              loading="lazy"
               className="transition-transform group-hover:scale-110"
             />
           </button>
@@ -162,7 +163,7 @@ export default function Footer() {
               alt="League"
               width={20}
               height={20}
-              priority
+              loading="lazy"
               className="transition-transform group-hover:scale-110"
             />
           </button>
