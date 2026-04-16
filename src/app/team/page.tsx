@@ -16,6 +16,10 @@ import {
 import { generateTeamName } from "../lib/names";
 import { ITactic, ITeamStats } from "../models/Team";
 import { Types } from "mongoose";
+import JerseyCustomizationModal from "../components/JerseyCustomizationModal";
+import ScoutingModal from "../components/ScoutingModal";
+import ManageTeamModal from "../components/ManageTeamModal";
+import TacticsModal from "../components/TacticsModal";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
@@ -82,6 +86,48 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isJerseyModalOpen, setIsJerseyModalOpen] = useState(false);
+  const [isScoutingModalOpen, setIsScoutingModalOpen] = useState(false);
+  const [isManageTeamModalOpen, setIsManageTeamModalOpen] = useState(false);
+  const [isTacticsModalOpen, setIsTacticsModalOpen] = useState(false);
+  const [isPlayerTacticsModalOpen, setIsPlayerTacticsModalOpen] =
+    useState(false);
+  const [isPlayerManageTeamModalOpen, setIsPlayerManageTeamModalOpen] =
+    useState(false);
+  const [isLastMatchModalOpen, setIsLastMatchModalOpen] = useState(false);
+  const [lastMatchModalData, setLastMatchModalData] = useState({
+    homeTeam: "",
+    awayTeam: "",
+    homeScore: 0,
+    awayScore: 0,
+    homeStats: {
+      possession: 0,
+      shots: 0,
+      shotsOnTarget: 0,
+      passes: 0,
+      tackles: 0,
+      fouls: 0,
+    },
+    awayStats: {
+      possession: 0,
+      shots: 0,
+      shotsOnTarget: 0,
+      passes: 0,
+      tackles: 0,
+      fouls: 0,
+    },
+    homePlayerRatings: [],
+    awayPlayerRatings: [],
+    events: [],
+  });
+
+  // Check URL parameters on component mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openManageTeam') === 'true') {
+      setIsManageTeamModalOpen(true);
+    }
+  }, []);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -102,7 +148,9 @@ export default function TeamPage() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      const response = await fetch("/api/teams");
+      const response = await fetch("/api/teams", {
+        cache: "no-store", // Disable caching
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setTeams(data);
@@ -127,7 +175,8 @@ export default function TeamPage() {
 
       // Fetch player data
       const response = await fetch(
-        `/api/players/address/${encodeURIComponent(address)}`
+        `/api/players/address/${encodeURIComponent(address)}`,
+        { cache: "no-store" } // Disable caching
       );
       if (!response.ok) {
         throw new Error("Failed to fetch player data");
@@ -151,7 +200,9 @@ export default function TeamPage() {
       if (data.team && data.team !== "Unassigned") {
         try {
           // Fetch teams data
-          const teamResponse = await fetch("/api/teams");
+          const teamResponse = await fetch("/api/teams", {
+            cache: "no-store", // Disable caching
+          });
           const teams = await teamResponse.json();
           if (!teamResponse.ok) throw new Error("Failed to fetch teams");
 
@@ -159,7 +210,8 @@ export default function TeamPage() {
           if (team) {
             // Fetch team tactics
             const tacticsResponse = await fetch(
-              `/api/teams/tactics?teamName=${team.teamName}`
+              `/api/teams/tactics?teamName=${team.teamName}`,
+              { cache: "no-store" } // Disable caching
             );
             if (!tacticsResponse.ok) throw new Error("Failed to fetch tactics");
             const tactics = await tacticsResponse.json();
@@ -230,7 +282,10 @@ export default function TeamPage() {
 
       const response = await fetch("/api/teams", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache", // Prevent caching
+        },
         body: JSON.stringify({
           teamName,
           captainAddress: address,
@@ -242,6 +297,8 @@ export default function TeamPage() {
 
       setSuccess("Team created successfully!");
       setLoading(true);
+
+      // Force a fresh data fetch
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to create team");
@@ -266,6 +323,7 @@ export default function TeamPage() {
         headers: {
           "Content-Type": "application/json",
           ethAddress: address,
+          "Cache-Control": "no-cache", // Prevent caching
         },
         body: JSON.stringify({
           teamName: teamName,
@@ -277,6 +335,8 @@ export default function TeamPage() {
 
       setSuccess("Successfully joined team!");
       setLoading(true);
+
+      // Force a fresh data fetch
       await fetchPlayerData();
     } catch (error: any) {
       setError(error.message || "Failed to join team");
@@ -289,6 +349,137 @@ export default function TeamPage() {
     setLoading(true);
     setCurrentTeam(null); // Important to update the database with null value
     await fetchPlayerData();
+  };
+
+  const handleCloseJerseyModal = () => {
+    setIsJerseyModalOpen(false);
+  };
+
+  const handleSaveJersey = (jersey: any) => {
+    // Implementation of handleSaveJersey
+  };
+
+  const handleOpenScoutingModal = () => {
+    if (!currentTeam || !address) return;
+
+    // Check if user is captain
+    if (currentTeam.captainAddress.toLowerCase() !== address.toLowerCase()) {
+      setError("Only team captains can access scouting");
+      return;
+    }
+
+    setIsScoutingModalOpen(true);
+  };
+
+  const handleCloseScoutingModal = () => {
+    setIsScoutingModalOpen(false);
+  };
+
+  const handleOpenPlayersModal = () => {
+    if (!currentTeam || !address) return;
+    setIsPlayerManageTeamModalOpen(true);
+  };
+
+  const handleCloseManageTeamModal = () => {
+    setIsManageTeamModalOpen(false);
+  };
+
+  const handleOpenTacticsModal = () => {
+    if (!currentTeam || !address) return;
+
+    // Check if user is captain
+    if (currentTeam.captainAddress.toLowerCase() !== address.toLowerCase()) {
+      setError("Only team captains can manage tactics");
+      return;
+    }
+
+    setIsTacticsModalOpen(true);
+  };
+
+  const handleOpenViewTacticsModal = () => {
+    if (!currentTeam || !address) return;
+    setIsPlayerTacticsModalOpen(true);
+  };
+
+  const handleOpenManageTeamModal = () => {
+    if (!currentTeam || !address) return;
+
+    // Check if user is captain
+    if (currentTeam.captainAddress.toLowerCase() !== address.toLowerCase()) {
+      setError("Only team captains can manage the team");
+      return;
+    }
+
+    setIsManageTeamModalOpen(true);
+  };
+
+  const handleCloseTacticsModal = () => {
+    setIsTacticsModalOpen(false);
+  };
+
+  const handleClosePlayerTacticsModal = () => {
+    setIsPlayerTacticsModalOpen(false);
+  };
+
+  const handleClosePlayerManageTeamModal = () => {
+    setIsPlayerManageTeamModalOpen(false);
+  };
+
+  const handleLastMatchClick = () => {
+    if (!currentTeam || !currentTeam.teamName) {
+      setLastMatchModalData({
+        homeTeam: "No previous match",
+        awayTeam: "No previous match",
+        homeScore: 0,
+        awayScore: 0,
+        homeStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        awayStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        homePlayerRatings: [],
+        awayPlayerRatings: [],
+        events: [],
+      });
+    } else {
+      setLastMatchModalData({
+        homeTeam: currentTeam.teamName,
+        awayTeam: "No previous match",
+        homeScore: 0,
+        awayScore: 0,
+        homeStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        awayStats: {
+          possession: 0,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        homePlayerRatings: [],
+        awayPlayerRatings: [],
+        events: [],
+      });
+    }
+    setIsLastMatchModalOpen(true);
   };
 
   if (!isConnected || !address) {
@@ -350,6 +541,21 @@ export default function TeamPage() {
           team={currentTeam}
           playerAddress={address}
           onLeaveTeam={handleLeaveTeam}
+          onOpenScouting={handleOpenScoutingModal}
+          onOpenManageTeam={
+            currentTeam.captainAddress.toLowerCase() === address.toLowerCase()
+              ? handleOpenManageTeamModal
+              : handleOpenPlayersModal
+          }
+          onOpenTactics={
+            currentTeam.captainAddress.toLowerCase() === address.toLowerCase()
+              ? handleOpenTacticsModal
+              : handleOpenViewTacticsModal
+          }
+          isCaptain={
+            currentTeam.captainAddress.toLowerCase() === address.toLowerCase()
+          }
+          onLastMatchClick={handleLastMatchClick}
         />
       ) : (
         <>
@@ -368,6 +574,89 @@ export default function TeamPage() {
       )}
 
       <StatusMessages error={error} success={success} />
+
+      <JerseyCustomizationModal
+        isOpen={isJerseyModalOpen}
+        onClose={handleCloseJerseyModal}
+        onSave={handleSaveJersey}
+        currentJersey={currentTeam?.jersey}
+        isBottomSheet={true}
+      />
+
+      <ScoutingModal
+        isOpen={isScoutingModalOpen}
+        onClose={handleCloseScoutingModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={true}
+      />
+
+      {/* Captain's Manage Team Modal */}
+      <ManageTeamModal
+        isOpen={isManageTeamModalOpen}
+        onClose={handleCloseManageTeamModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={true}
+        readOnly={false}
+      />
+
+      {/* Player's Manage Team Modal */}
+      <ManageTeamModal
+        isOpen={isPlayerManageTeamModalOpen}
+        onClose={handleClosePlayerManageTeamModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={true} // Full screen for player view
+        readOnly={true}
+      />
+
+      {/* Captain's Tactics Modal */}
+      <TacticsModal
+        isOpen={isTacticsModalOpen}
+        onClose={handleCloseTacticsModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={true}
+        readOnly={false}
+      />
+
+      {/* Player's Tactics Modal */}
+      <TacticsModal
+        isOpen={isPlayerTacticsModalOpen}
+        onClose={handleClosePlayerTacticsModal}
+        captainAddress={address}
+        teamId={currentTeam?._id || ""}
+        isBottomSheet={true} // Full screen for player view
+        readOnly={true}
+      />
+
+      {/* Last Match Modal */}
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center ${
+          isLastMatchModalOpen ? "block" : "hidden"
+        }`}
+      >
+        <div className="bg-white p-8 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold mb-4">Last Match</h2>
+          <p>
+            {lastMatchModalData.homeTeam} vs {lastMatchModalData.awayTeam}
+          </p>
+          <p>
+            {lastMatchModalData.homeScore} - {lastMatchModalData.awayScore}
+          </p>
+          <div className="mt-4">
+            <button
+              className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+              onClick={() => {
+                setIsLastMatchModalOpen(false);
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
     </PageWrapper>
   );
 }

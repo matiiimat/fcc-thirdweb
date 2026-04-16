@@ -6,10 +6,13 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import TeamLeaderboard from "../components/TeamLeaderboard";
 import SeasonStandings from "../components/SeasonStandings";
+import { useRouter } from "next/navigation";
+
 export default function LeaderboardPage() {
   const [activeTab, setActiveTab] = useState<"season" | "overall">("season");
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<any>();
+  const router = useRouter();
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -58,7 +61,13 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Content */}
-          {activeTab === "season" ? <SeasonStandings /> : <TeamLeaderboard />}
+          {activeTab === "season" ? (
+            <SeasonStandings />
+          ) : (
+            <TeamLeaderboard onTeamClick={(teamName) => {
+              router.push(`/team?name=${encodeURIComponent(teamName)}`);
+            }} />
+          )}
         </div>
       </main>
       <Footer />

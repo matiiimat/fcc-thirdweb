@@ -2,146 +2,263 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import mongoose, { Types } from "mongoose";
 import TeamModel, { ITactic } from "@/app/models/Team";
-import PlayerModel, { IPlayer, Position } from "@/app/models/Player";
+import PlayerModel, { IPlayer, Position, IPlayerStats } from "@/app/models/Player";
 import { simulateTeamMatch } from "@/app/lib/teamMatchEngine";
 import { updateTeamStats } from "@/app/lib/teamStats";
 import connectDB from "../../../lib/mongodb";
+import cache, { CACHE_KEYS } from "../../../lib/serverCache";
 
 interface MongoTactic extends ITactic {
   _id: Types.ObjectId;
 }
 
-// Validation schema for the request body
-const matchRequestSchema = z.object({
+interface PlayerWithStats {
+  ethAddress: string;
+  username: string;
+  position: Position;
+  stats: IPlayerStats;
+}
+
+const requestSchema = z.object({
   homeTeamId: z.string(),
   awayTeamId: z.string(),
-  homeTacticId: z.string(),
-  awayTacticId: z.string(),
+  homeTacticId: z.string().optional(),
+  awayTacticId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    // Validate request body
+    // Parse and validate request body
     const body = await request.json();
-    const validatedData = matchRequestSchema.parse(body);
+    console.log("Received match request:", body);
+    
+    const validationResult = requestSchema.safeParse(body);
+    if (!validationResult.success) {
+      console.error("Invalid request body:", validationResult.error);
+      return NextResponse.json(
+        { error: "Invalid request body", details: validationResult.error },
+        { status: 400 }
+      );
+    }
+
+    const { homeTeamId, awayTeamId, homeTacticId, awayTacticId } = validationResult.data;
 
     // Fetch teams
     const [homeTeam, awayTeam] = await Promise.all([
-      TeamModel.findById(validatedData.homeTeamId),
-      TeamModel.findById(validatedData.awayTeamId),
+      TeamModel.findById(homeTeamId),
+      TeamModel.findById(awayTeamId),
     ]);
 
-    if (!homeTeam || !awayTeam) {
+    if (!homeTeam) {
+      console.error("Home team not found:", homeTeamId);
       return NextResponse.json(
-        { error: "One or both teams not found" },
+        { error: "Home team not found" },
         { status: 404 }
       );
     }
 
-    // Validate teams have tactics arrays
-    if (!homeTeam.tactics?.length || !awayTeam.tactics?.length) {
+    if (!awayTeam) {
+      console.error("Away team not found:", awayTeamId);
       return NextResponse.json(
-        { error: "One or both teams don't have any tactics set up" },
-        { status: 400 }
-      );
-    }
-
-    // Find tactics
-    const homeTactic = (homeTeam.tactics as MongoTactic[]).find(
-      (t) => t._id.toString() === validatedData.homeTacticId
-    );
-    const awayTactic = (awayTeam.tactics as MongoTactic[]).find(
-      (t) => t._id.toString() === validatedData.awayTacticId
-    );
-
-    if (!homeTactic || !awayTactic) {
-      return NextResponse.json(
-        { error: "One or both tactics not found" },
+        { error: "Away team not found" },
         { status: 404 }
       );
     }
 
-    // Validate teams have enough players
-    if (!homeTeam.players?.length || !awayTeam.players?.length) {
-      return NextResponse.json(
-        { error: "One or both teams don't have any players" },
-        { status: 400 }
-      );
-    }
+    console.log("Found teams:", {
+      homeTeam: homeTeam.teamName,
+      awayTeam: awayTeam.teamName
+    });
 
-    // Fetch all players for both teams
+    // Get tactics
+    const homeTactic = homeTacticId
+      ? homeTeam.tactics.find((t: MongoTactic) => t._id.toString() === homeTacticId)
+      : homeTeam.tactics[0];
+
+    const awayTactic = awayTacticId
+      ? awayTeam.tactics.find((t: MongoTactic) => t._id.toString() === awayTacticId)
+      : awayTeam.tactics[0];
+
+    // Fetch players
     const [homePlayers, awayPlayers] = await Promise.all([
       PlayerModel.find({ ethAddress: { $in: homeTeam.players } }),
       PlayerModel.find({ ethAddress: { $in: awayTeam.players } }),
     ]);
 
+    console.log("Found players:", {
+      homePlayers: homePlayers.length,
+      awayPlayers: awayPlayers.length
+    });
+
     // Map players to their positions from tactics
     const mapPlayersWithPositions = (
       players: IPlayer[],
-      tactic: ITactic,
-      teamName: string
-    ) => {
-      if (!tactic.playerPositions?.length) {
-        throw new Error(`${teamName} has no player positions set in the tactic`);
+      tactic: ITactic
+    ): PlayerWithStats[] => {
+      if (!tactic) {
+        console.warn("No tactic provided for team");
+        return [];
       }
-
-      if (!players?.length) {
-        throw new Error(`No players found for ${teamName}`);
-      }
-
-      const mappedPlayers = tactic.playerPositions
+      return tactic.playerPositions
         .map((pos) => {
-          if (!pos?.ethAddress) {
-            console.warn(`Position without ethAddress found in ${teamName}'s tactic`);
-            return null;
-          }
-          
-          const player = players.find(p => p?.ethAddress === pos.ethAddress);
-          
+          const player = players.find(
+            (p) => p.ethAddress === pos.ethAddress
+          );
           if (!player) {
-            console.warn(`Player ${pos.ethAddress} not found for ${teamName}`);
-            return null;
-          }
-
-          if (!player.stats) {
-            console.warn(`Player ${pos.ethAddress} has no stats for ${teamName}`);
+            console.warn(`Player not found for position: ${pos.ethAddress}`);
             return null;
           }
 
           return {
             ethAddress: player.ethAddress,
-            username: player.username || player.playerName, // Use username or fallback to playerName
-            position: pos.position as Position,
+            username: player.username,
+            position: pos.position,
             stats: player.stats,
           };
         })
-        .filter((p) => p !== null);
-
-      if (mappedPlayers.length === 0) {
-        throw new Error(`${teamName} has no valid players with positions and stats`);
-      }
-
-      return mappedPlayers;
+        .filter((p): p is PlayerWithStats => p !== null);
     };
 
-    const homeMappedPlayers = mapPlayersWithPositions(homePlayers, homeTactic, homeTeam.teamName);
-    const awayMappedPlayers = mapPlayersWithPositions(awayPlayers, awayTactic, awayTeam.teamName);
+    const homeMappedPlayers = mapPlayersWithPositions(homePlayers, homeTactic);
+    const awayMappedPlayers = mapPlayersWithPositions(awayPlayers, awayTactic);
 
-    // Validate that we have enough mapped players
-    if (homeMappedPlayers.length < 7) {
-      return NextResponse.json(
-        { error: `${homeTeam.teamName} doesn't have enough players with positions assigned (minimum 7 required)` },
-        { status: 400 }
-      );
+    console.log("Mapped players to positions:", {
+      homeMappedPlayers: homeMappedPlayers.length,
+      awayMappedPlayers: awayMappedPlayers.length
+    });
+
+    // Check for special cases
+    const homeHasEnoughPlayers = homeMappedPlayers.length >= 7;
+    const awayHasEnoughPlayers = awayMappedPlayers.length >= 7;
+
+    if (!homeHasEnoughPlayers && !awayHasEnoughPlayers) {
+      console.log("Both teams don't have enough players, returning 0-0");
+      const matchData = {
+        id: new Types.ObjectId().toString(),
+        homeTeam: homeTeam.teamName,
+        awayTeam: awayTeam.teamName,
+        date: new Date().toISOString(),
+        isCompleted: true,
+        homeTactic,
+        awayTactic,
+        result: {
+          homeScore: 0,
+          awayScore: 0,
+        },
+        homeStats: {
+          possession: 50,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        awayStats: {
+          possession: 50,
+          shots: 0,
+          shotsOnTarget: 0,
+          passes: 0,
+          tackles: 0,
+          fouls: 0,
+        },
+        homePlayerRatings: [],
+        awayPlayerRatings: [],
+        events: [],
+      };
+
+      // Update both teams with the match result
+      await Promise.all([
+        TeamModel.findByIdAndUpdate(homeTeam._id, {
+          $push: { matches: matchData },
+        }),
+        TeamModel.findByIdAndUpdate(awayTeam._id, {
+          $push: { matches: matchData },
+        }),
+      ]);
+
+      return NextResponse.json({ match: matchData });
     }
 
-    if (awayMappedPlayers.length < 7) {
-      return NextResponse.json(
-        { error: `${awayTeam.teamName} doesn't have enough players with positions assigned (minimum 7 required)` },
-        { status: 400 }
-      );
+    if (!homeHasEnoughPlayers || !awayHasEnoughPlayers) {
+      console.log("One team doesn't have enough players, awarding 3-0 win");
+      const winner = homeHasEnoughPlayers ? homeTeam : awayTeam;
+      const loser = homeHasEnoughPlayers ? awayTeam : homeTeam;
+      const winnerTactic = homeHasEnoughPlayers ? homeTactic : awayTactic;
+      const loserTactic = homeHasEnoughPlayers ? awayTactic : homeTactic;
+      const winnerMappedPlayers = homeHasEnoughPlayers ? homeMappedPlayers : awayMappedPlayers;
+      const loserMappedPlayers = homeHasEnoughPlayers ? awayMappedPlayers : homeMappedPlayers;
+
+      const matchData = {
+        id: new Types.ObjectId().toString(),
+        homeTeam: homeTeam.teamName,
+        awayTeam: awayTeam.teamName,
+        date: new Date().toISOString(),
+        isCompleted: true,
+        homeTactic,
+        awayTactic,
+        result: {
+          homeScore: homeHasEnoughPlayers ? 3 : 0,
+          awayScore: homeHasEnoughPlayers ? 0 : 3,
+        },
+        homeStats: {
+          possession: homeHasEnoughPlayers ? 70 : 30,
+          shots: homeHasEnoughPlayers ? 15 : 5,
+          shotsOnTarget: homeHasEnoughPlayers ? 8 : 2,
+          passes: homeHasEnoughPlayers ? 400 : 200,
+          tackles: homeHasEnoughPlayers ? 20 : 10,
+          fouls: homeHasEnoughPlayers ? 8 : 12,
+        },
+        awayStats: {
+          possession: homeHasEnoughPlayers ? 30 : 70,
+          shots: homeHasEnoughPlayers ? 5 : 15,
+          shotsOnTarget: homeHasEnoughPlayers ? 2 : 8,
+          passes: homeHasEnoughPlayers ? 200 : 400,
+          tackles: homeHasEnoughPlayers ? 10 : 20,
+          fouls: homeHasEnoughPlayers ? 12 : 8,
+        },
+        homePlayerRatings: homeMappedPlayers.map(p => ({
+          ethAddress: p.ethAddress,
+          rating: homeHasEnoughPlayers ? 7.5 : 4.5,
+        })),
+        awayPlayerRatings: awayMappedPlayers.map(p => ({
+          ethAddress: p.ethAddress,
+          rating: homeHasEnoughPlayers ? 4.5 : 7.5,
+        })),
+        events: [
+          {
+            type: "goal",
+            minute: 15,
+            team: winner.teamName,
+            player: winnerMappedPlayers[0]?.username || "Unknown Player",
+          },
+          {
+            type: "goal",
+            minute: 35,
+            team: winner.teamName,
+            player: winnerMappedPlayers[1]?.username || "Unknown Player",
+          },
+          {
+            type: "goal",
+            minute: 65,
+            team: winner.teamName,
+            player: winnerMappedPlayers[2]?.username || "Unknown Player",
+          },
+        ],
+      };
+
+      // Update both teams with the match result
+      await Promise.all([
+        TeamModel.findByIdAndUpdate(homeTeam._id, {
+          $push: { matches: matchData },
+        }),
+        TeamModel.findByIdAndUpdate(awayTeam._id, {
+          $push: { matches: matchData },
+        }),
+      ]);
+
+      return NextResponse.json({ match: matchData });
     }
 
     const homeTeamData = {
@@ -159,10 +276,12 @@ export async function POST(request: NextRequest) {
     // Simulate the match using the enhanced team match engine
     let matchResult;
     try {
+      console.log("Starting match simulation...");
       matchResult = await simulateTeamMatch(homeTeamData, awayTeamData);
       if (!matchResult) {
         throw new Error("Match simulation produced no result");
       }
+      console.log("Match simulation completed successfully");
     } catch (error) {
       console.error("Match simulation error:", error);
       return NextResponse.json(
@@ -192,66 +311,71 @@ export async function POST(request: NextRequest) {
       events: matchResult.matchEvents,
     };
 
+    console.log("Created match data:", {
+      matchId,
+      homeScore: matchResult.homeScore,
+      awayScore: matchResult.awayScore
+    });
+
     // Update team statistics
     let updatedHomeStats, updatedAwayStats;
     try {
-      // Pass undefined if stats don't exist, let updateTeamStats handle initialization
       updatedHomeStats = updateTeamStats(
         homeTeam.stats,
-        true, // isHomeTeam
+        true,
         matchResult,
         homeTactic
       );
-
       updatedAwayStats = updateTeamStats(
         awayTeam.stats,
-        false, // isHomeTeam
+        false,
         matchResult,
         awayTactic
       );
-
-      if (!updatedHomeStats || !updatedAwayStats) {
-        throw new Error("Failed to generate updated statistics");
-      }
-
-      // Validate the updated stats have the required properties
-      const validateStats = (stats: any, teamName: string) => {
-        if (!stats.gamesPlayed || !Array.isArray(stats.tacticsUsed)) {
-          throw new Error(`Invalid statistics structure for ${teamName}`);
-        }
-      };
-
-      validateStats(updatedHomeStats, homeTeam.teamName);
-      validateStats(updatedAwayStats, awayTeam.teamName);
-
+      console.log("Team stats updated successfully");
     } catch (error) {
-      console.error("Stats update error:", error);
+      console.error("Error updating team stats:", error);
       return NextResponse.json(
-        {
-          error: error instanceof Error
-            ? `Failed to handle team statistics: ${error.message}`
-            : "Failed to handle team statistics"
-        },
+        { error: "Failed to update team statistics" },
         { status: 500 }
       );
     }
 
-    // Return match result with events and updated stats
-    return NextResponse.json({
-      success: true,
-      match: matchData,
-      stats: {
-        home: updatedHomeStats,
-        away: updatedAwayStats,
-      },
-    });
+    // Update both teams with the match result and new statistics
+    try {
+      await Promise.all([
+        TeamModel.findByIdAndUpdate(homeTeam._id, {
+          $push: { matches: matchData },
+          $set: { stats: updatedHomeStats },
+        }),
+        TeamModel.findByIdAndUpdate(awayTeam._id, {
+          $push: { matches: matchData },
+          $set: { stats: updatedAwayStats },
+        }),
+      ]);
+      console.log("Teams updated successfully");
+
+      // Invalidate relevant caches
+      cache.del(CACHE_KEYS.TEAM(homeTeam._id.toString()));
+      cache.del(CACHE_KEYS.TEAM(awayTeam._id.toString()));
+      cache.del(CACHE_KEYS.TEAM_BY_NAME(homeTeam.teamName));
+      cache.del(CACHE_KEYS.TEAM_BY_NAME(awayTeam.teamName));
+      cache.del(CACHE_KEYS.TEAM_LEADERBOARD);
+      cache.del(CACHE_KEYS.TEAM_MATCHES(homeTeam._id.toString()));
+      cache.del(CACHE_KEYS.TEAM_MATCHES(awayTeam._id.toString()));
+    } catch (error) {
+      console.error("Error updating teams:", error);
+      return NextResponse.json(
+        { error: "Failed to update teams with match result" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ match: matchData });
   } catch (error) {
-    console.error("Team match simulation error:", error);
+    console.error("Unexpected error in team match endpoint:", error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to simulate team match",
-      },
+      { error: "An unexpected error occurred" },
       { status: 500 }
     );
   }

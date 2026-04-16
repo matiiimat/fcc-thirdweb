@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Notification {
   _id: string;
@@ -18,6 +19,7 @@ export default function NotificationBanner({
   playerId,
   ethAddress,
 }: NotificationBannerProps) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -184,8 +186,8 @@ export default function NotificationBanner({
                       // Remove the notification from the local state
                       setNotifications([]);
 
-                      // Navigate to the manage team page
-                      window.location.href = "/manageteam";
+                      // Navigate to the team page with modal open
+                      router.push("/team?openManageTeam=true");
                     } catch (err) {
                       console.error(
                         "Error marking notification as viewed:",

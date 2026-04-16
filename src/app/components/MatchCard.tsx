@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ITactic } from "../models/Team";
 import { formatMatchDate } from "../lib/matchUtils";
+import OpponentLastMatchInfo from "./OpponentLastMatchInfo";
 
 interface MatchStats {
   possession: number;
@@ -75,43 +76,72 @@ const MatchCard: React.FC<MatchCardProps> = ({
   updating = false,
 }) => {
   const [selectedTactic, setSelectedTactic] = useState<ITactic | null>(null);
+  const [showOpponentInfo, setShowOpponentInfo] = useState(false);
 
   return (
-    <div
-      className={`glass-container bg-black/20 p-3 rounded-lg ${
-        match.isCompleted ? "cursor-pointer hover:bg-black/30" : ""
-      }`}
-      onClick={onMatchClick}
-    >
-      <div className="flex flex-col">
-        <div className="flex justify-center items-center mb-1">
-          <span
-            className={
-              match.homeTeamName === teamName ? "text-green-400" : "text-white"
-            }
-          >
-            {match.homeTeamName}
-          </span>
-          <span className="text-gray-400 mx-2">
-            {match.result
-              ? `${match.result.homeScore} - ${match.result.awayScore}`
-              : "vs"}
-          </span>
-          <span
-            className={
-              match.awayTeamName === teamName ? "text-green-400" : "text-white"
-            }
-          >
-            {match.awayTeamName}
-          </span>
-        </div>
-        <div className="text-xs text-gray-400 text-center mb-2">
-          {formatMatchDate(match.scheduledDate)}
-          {match.seasonId && match.matchday && (
-            <span className="ml-2">• Matchday {match.matchday}</span>
-          )}
+    <div className="space-y-2">
+      <div
+        className={`glass-container bg-black/20 p-3 rounded-lg ${
+          match.isCompleted ? "cursor-pointer hover:bg-black/30" : ""
+        }`}
+        onClick={onMatchClick}
+      >
+        <div className="flex flex-col">
+          <div className="flex justify-center items-center mb-1">
+            <span
+              className={
+                match.homeTeamName === teamName ? "text-green-400" : "text-white"
+              }
+            >
+              {match.homeTeamName}
+            </span>
+            <span className="text-gray-400 mx-2">
+              {match.result
+                ? `${match.result.homeScore} - ${match.result.awayScore}`
+                : "vs"}
+            </span>
+            <span
+              className={
+                match.awayTeamName === teamName ? "text-green-400" : "text-white"
+              }
+            >
+              {match.awayTeamName}
+            </span>
+          </div>
+          <div className="text-xs text-gray-400 text-center mb-2">
+            {formatMatchDate(match.scheduledDate)}
+            {match.seasonId && match.matchday && (
+              <span className="ml-2">• Matchday {match.matchday}</span>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Show opponent info button for upcoming matches */}
+      {!match.isCompleted && (
+        <button
+          onClick={() => setShowOpponentInfo(!showOpponentInfo)}
+          className="text-sm text-gray-400 hover:text-gray-300"
+        >
+          {showOpponentInfo ? "Hide" : "Show"} Opponent&apos;s Last Match
+        </button>
+      )}
+
+      {/* Opponent's last match info */}
+      {!match.isCompleted && showOpponentInfo && (
+        <OpponentLastMatchInfo
+          opponentTeamId={
+            match.homeTeamName === teamName
+              ? match.awayTeamId
+              : match.homeTeamId
+          }
+          opponentTeamName={
+            match.homeTeamName === teamName
+              ? match.awayTeamName
+              : match.homeTeamName
+          }
+        />
+      )}
 
       {!match.isCompleted && isTeamCaptain && onUpdateTactic && (
         <div className="mt-2">

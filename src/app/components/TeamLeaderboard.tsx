@@ -20,10 +20,18 @@ interface LeaderboardEntry {
 
 interface TeamLeaderboardProps {
   className?: string;
+  page?: number;
+  limit?: number;
+  onTeamClick: (teamName: string) => void;
+  refreshTrigger?: number;
 }
 
 export default function TeamLeaderboard({
   className = "",
+  page = 1,
+  limit = 10,
+  onTeamClick,
+  refreshTrigger = 0,
 }: TeamLeaderboardProps) {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,13 +42,29 @@ export default function TeamLeaderboard({
     async function fetchLeaderboard() {
       try {
         setLoading(true);
-        const response = await fetch(`/api/leaderboard/teams?sortBy=${sortBy}`);
+        setError(null); // Clear any previous errors
+
+        const response = await fetch(
+          `/api/leaderboard/teams?sortBy=${sortBy}&page=${page}&limit=${limit}`
+        );
+
         if (!response.ok) {
-          throw new Error("Failed to fetch leaderboard");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error ||
+              `Failed to fetch leaderboard (${response.status})`
+          );
         }
+
         const data = await response.json();
+
+        if (!data.leaderboard || !Array.isArray(data.leaderboard)) {
+          throw new Error("Invalid leaderboard data received");
+        }
+
         setLeaderboard(data.leaderboard);
       } catch (error) {
+        console.error("Leaderboard fetch error:", error);
         setError(
           error instanceof Error ? error.message : "Failed to fetch leaderboard"
         );
@@ -50,7 +74,7 @@ export default function TeamLeaderboard({
     }
 
     fetchLeaderboard();
-  }, [sortBy]);
+  }, [sortBy, page, limit, refreshTrigger]);
 
   const getFormColor = (form: string) => {
     switch (form) {
@@ -117,7 +141,7 @@ export default function TeamLeaderboard({
                 key={team.teamName}
                 className="border-t border-gray-800 hover:bg-black/20 transition-colors"
               >
-                <td className="py-2 px-3">{index + 1}</td>
+                <td className="py-2 px-3">{(page - 1) * limit + index + 1}</td>
                 <td className="py-2 px-3 font-medium">{team.teamName}</td>
                 <td className="text-center py-2 px-3 font-bold">
                   {team.points}

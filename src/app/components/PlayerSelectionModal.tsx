@@ -9,7 +9,7 @@ interface Player {
   playerName: string;
   username?: string;
   isBot?: boolean;
-  stats?: {
+  stats: {
     strength: number;
     stamina: number;
     passing: number;
@@ -38,7 +38,7 @@ interface PlayerSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   players: Player[];
-  onSelect: (player: Player) => void;
+  onSelect: (player: Player | null) => void;
   selectedPlayer?: Player;
   position: Position;
   assignedPlayers: string[];
@@ -129,11 +129,7 @@ export default function PlayerSelectionModal({
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-[0.7rem] leading-none">
-                            {player.stats
-                              ? getStarRating(
-                                  calculatePlayerRating(player.stats)
-                                )
-                              : "⭐"}
+                            {getStarRating(calculatePlayerRating(player.stats))}
                           </div>
                         </div>
                       </div>

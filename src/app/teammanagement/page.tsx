@@ -43,7 +43,7 @@ interface Player {
   playerName: string;
   username?: string;
   isBot?: boolean;
-  stats?: {
+  stats: {
     strength: number;
     stamina: number;
     passing: number;
@@ -212,8 +212,8 @@ export default function TeamManagementPage() {
     setPlayerModalOpen(true);
   };
 
-  const handlePlayerSelect = (player: Player) => {
-    if (!selectedPosition) return;
+  const handlePlayerSelect = (player: Player | null) => {
+    if (!selectedPosition || !player) return;
 
     // Check if we're clicking on a player that's already in this position
     const existingPlayer = currentTactic.playerPositions.find(

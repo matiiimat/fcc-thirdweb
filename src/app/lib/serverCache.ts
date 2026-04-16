@@ -10,6 +10,7 @@ export const CACHE_KEYS = {
   TEAM_BY_NAME: (name: string) => `team_name_${name}`,
   LEADERBOARD: 'leaderboard',
   TEAM_LEADERBOARD: 'team_leaderboard',
+  TEAM_COUNT: 'team_count',
   MATCHES: 'matches',
   TEAM_MATCHES: (teamId: string) => `team_matches_${teamId}`,
   PLAYER_MATCHES: (playerId: string) => `player_matches_${playerId}`,

@@ -15,6 +15,7 @@ interface MatchPopupProps {
     previousWorkEthic?: number;
     newWorkEthic?: number;
   };
+  isBottomSheet?: boolean;
 }
 
 const MatchPopup: React.FC<MatchPopupProps> = ({
@@ -23,6 +24,7 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
   username,
   onClose,
   matchResult,
+  isBottomSheet = false,
 }) => {
   const [currentMinute, setCurrentMinute] = useState(0);
   const [events, setEvents] = useState<MatchEvent[]>([]);
@@ -89,8 +91,42 @@ const MatchPopup: React.FC<MatchPopupProps> = ({
   const currentEvents = events.filter((event) => event.minute <= currentMinute);
 
   return (
-    <div className="fixed inset-x-0 top-0 bg-black bg-opacity-50 z-50">
-      <div className="bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] rounded-b-lg max-w-md mx-auto p-6 shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className={`
+          relative bg-gradient-to-b from-[#1a1d21] to-[#0d0f12] 
+          rounded-t-xl p-4 w-full max-w-md max-h-[90vh] overflow-y-auto
+          transform transition-all duration-300 ease-out
+          ${isBottomSheet ? "animate-slide-up" : "animate-fade-in"}
+        `}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-white"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
         {/* Score */}
         <div className="text-center mb-4">
           <div className="text-2xl font-bold text-white mb-2">

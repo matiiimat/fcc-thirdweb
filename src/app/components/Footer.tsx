@@ -3,10 +3,49 @@
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import sdk, { Context } from "@farcaster/frame-sdk";
+
+export type FrameContext = Context.FrameContext;
 
 export default function Footer() {
   const router = useRouter();
   const pathname = usePathname();
+  const [isSDKLoaded, setIsSDKLoaded] = useState(false);
+  const [context, setContext] = useState<FrameContext>();
+  const [username, setUsername] = useState("Player");
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  // Farcaster Frame Integration
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const ctx = await sdk.context;
+        setContext(ctx);
+        
+        // Store username and profile image in state
+        if (ctx?.user?.username) {
+          setUsername(ctx.user.username);
+        }
+        
+        if (ctx?.user?.pfpUrl) {
+          setProfileImage(ctx.user.pfpUrl);
+        }
+        
+        sdk.actions.ready();
+      } catch (error) {
+        console.error(
+          "Error initializing Farcaster Frame SDK in Footer:",
+          error
+        );
+      }
+    };
+
+    if (sdk && !isSDKLoaded) {
+      setIsSDKLoaded(true);
+      load();
+    }
+  }, [isSDKLoaded]);
 
   const isActive = (path: string) => {
     return pathname === path;
@@ -39,16 +78,28 @@ export default function Footer() {
             onClick={() => router.push("/")}
             className={getButtonClass("/")}
           >
-            <Image
-              src="/icons/player-icon.png"
-              alt="Player"
-              width={20}
-              height={20}
-              priority
-              className="transition-transform group-hover:scale-110"
-            />
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="w-5 h-5 rounded-full object-cover"
+                width={20}
+                height={20}
+              />
+            ) : (
+              <Image
+                src="/icons/player-icon.png"
+                alt="Player"
+                width={20}
+                height={20}
+                priority
+                className="transition-transform group-hover:scale-110"
+              />
+            )}
           </button>
-          <span className={getTextClass("/")}>Player</span>
+          <span className={getTextClass("/")}>
+            {username}
+          </span>
         </div>
         <div className="flex flex-col items-center">
           <button

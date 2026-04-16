@@ -7,10 +7,8 @@ import { useAccount, useConnect, useDisconnect, useBalance } from "wagmi";
 import { config } from "../components/providers/WagmiProvider";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import EnhancedTeamMatchPopup from "../components/EnhancedTeamMatchPopup";
 import TeamLeaderboard from "../components/TeamLeaderboard";
-import MatchModel from "../models/Match";
-import SeasonModel from "../models/Season";
+import LastMatchModal from "../components/LastMatchModal";
 
 export default function LeaguePage() {
   const router = useRouter();
@@ -20,6 +18,12 @@ export default function LeaguePage() {
 
   // State for tooltip visibility
   const [showTooltip, setShowTooltip] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const teamsPerPage = 10;
+  const [totalTeams, setTotalTeams] = useState(0);
 
   // Fetch the balance of the rewards address
   const {
@@ -39,11 +43,6 @@ export default function LeaguePage() {
   const [context, setContext] = useState<any>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [matchData, setMatchData] = useState<any>(null);
-  const [showMatchPopup, setShowMatchPopup] = useState(false);
-  const [simulatingMatch, setSimulatingMatch] = useState(false);
-  const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
-  const [matchInProgress, setMatchInProgress] = useState(false);
 
   // Farcaster Frame Integration
   useEffect(() => {
@@ -71,128 +70,85 @@ export default function LeaguePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check for active matches when the page loads
+  // Fetch total number of teams for pagination
   useEffect(() => {
-    const checkForActiveMatches = async () => {
+    const fetchTotalTeams = async () => {
       try {
-        // Fetch in-progress matches from the database
-        const response = await fetch("/api/matches?status=inProgress");
-
+        const response = await fetch("/api/teams/count");
         if (response.ok) {
           const data = await response.json();
-
-          if (data.success && data.matches && data.matches.length > 0) {
-            // Get the most recent in-progress match
-            const activeMatch = data.matches[0];
-
-            // Set the match data
-            setMatchData({ match: activeMatch });
-            setMatchInProgress(true);
-            setActiveMatchId(activeMatch._id);
-
-            // Show the match popup if it's in progress
-            setShowMatchPopup(true);
-          }
+          // Ensure we have at least 1 team for pagination calculations
+          setTotalTeams(Math.max(data.count, 1));
+        } else {
+          // Handle API error
+          console.warn("Could not fetch team count, using fallback value");
+          setTotalTeams(1); // Fallback to minimum value
+          setError("Unable to load team count data. Using default pagination.");
         }
       } catch (error) {
-        console.error("Error checking for active matches:", error);
+        console.error("Error fetching team count:", error);
+        setTotalTeams(1); // Fallback to minimum value
+        setError("Unable to load team count data. Using default pagination.");
       }
     };
 
     if (!loading) {
-      checkForActiveMatches();
+      fetchTotalTeams();
     }
-  }, [loading]);
+  }, [loading]); // Only run when loading state changes, not on every render
 
-  // Function to simulate a match between two teams
-  const simulateMatch = async () => {
-    setSimulatingMatch(true);
-    setError(null);
+  // Calculate total pages - ensure at least 1 page even with 0 teams
+  const totalPages = Math.max(Math.ceil(totalTeams / teamsPerPage), 1);
 
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const [isLastMatchModalOpen, setIsLastMatchModalOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<{
+    name: string;
+    lastMatch: any;
+  } | null>(null);
+
+  const handleTeamClick = async (teamName: string) => {
     try {
-      // Team and tactic IDs provided by the user
-      const homeTeamId = "67d6f19c7d3400bac3e7c747";
-      const awayTeamId = "67d6f19c7d3400bac3e7c748";
-      const homeTacticId = "67d6f19c7d3400bac3e7c745";
-      const awayTacticId = "67d6f19c7d3400bac3e7c746";
-
-      // Step 1: Simulate the match - this generates the result immediately
-      const response = await fetch("/api/teams/teammatch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          homeTeamId,
-          awayTeamId,
-          homeTacticId,
-          awayTacticId,
-        }),
-      });
-
+      // Fetch the team's last match
+      const response = await fetch(`/api/teams/last-match?teamName=${encodeURIComponent(teamName)}`);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to simulate match");
+        throw new Error("Failed to fetch last match");
       }
-
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.error || "Failed to simulate match");
-      }
-
-      // Step 2: Save the match to the database as "in progress"
-      // This allows other players to see the match in progress
-      const saveMatchResponse = await fetch("/api/matches/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          homeTeamId: homeTeamId,
-          awayTeamId: awayTeamId,
-          homeTeamName: data.match.homeTeam,
-          awayTeamName: data.match.awayTeam,
-          homeTactic: data.match.homeTactic,
-          awayTactic: data.match.awayTactic,
-          result: data.match.result,
-          homeStats: data.match.homeStats,
-          awayStats: data.match.awayStats,
-          homePlayerRatings: data.match.homePlayerRatings,
-          awayPlayerRatings: data.match.awayPlayerRatings,
-          events: data.match.events,
-          isInProgress: true, // Mark as in progress, not completed
-        }),
+      const lastMatch = await response.json();
+      
+      setSelectedTeam({
+        name: teamName,
+        lastMatch
       });
-
-      if (!saveMatchResponse.ok) {
-        // Get detailed error information from the response
-        const errorData = await saveMatchResponse.json();
-        const errorMessage =
-          errorData.error || "Failed to save match to database";
-        const errorDetails = errorData.details
-          ? `\nDetails: ${errorData.details}`
-          : "";
-        throw new Error(`${errorMessage}${errorDetails}`);
-      }
-
-      const saveMatchData = await saveMatchResponse.json();
-      const matchId = saveMatchData.matchId;
-
-      // Store the match ID for tracking
-      setActiveMatchId(matchId);
-      setMatchInProgress(true);
-
-      // We'll update team stats only when the match is completed
-
-      // Show the match popup immediately
-      setMatchData(data);
-      setShowMatchPopup(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to simulate match");
-    } finally {
-      setSimulatingMatch(false);
+      setIsLastMatchModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching last match:", error);
     }
   };
+
+  // Add this function to trigger a refresh
+  const triggerRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Add event listener for refresh events
+  useEffect(() => {
+    const handleRefresh = () => {
+      triggerRefresh();
+    };
+
+    // Listen for refresh events
+    window.addEventListener("league-refresh", handleRefresh);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("league-refresh", handleRefresh);
+    };
+  }, []);
 
   // Show loading state if either the page is loading or balance is loading
   if (loading || isBalanceLoading) {
@@ -228,12 +184,6 @@ export default function LeaguePage() {
                     <div className="h-6 w-16 bg-gray-700/30 rounded animate-pulse"></div>
                   </div>
                 ))}
-              </div>
-
-              {/* Button Skeleton */}
-              <div className="text-center">
-                <div className="h-10 w-40 mx-auto bg-gray-700/30 rounded-lg animate-pulse"></div>
-                <div className="h-4 w-48 mx-auto mt-2 bg-gray-700/30 rounded animate-pulse"></div>
               </div>
             </div>
           </div>
@@ -293,26 +243,18 @@ export default function LeaguePage() {
                 <div className="absolute left-0 right-0 top-full mt-2 bg-gray-800 rounded-lg p-3 z-10 shadow-lg text-xs text-gray-300 leading-relaxed">
                   <p className="mb-2">
                     The total prize pool is funded by all in-game store
-                    purchases, with 20% deducted for development costs. The
-                    remaining amount is distributed as rewards after the final
+                    purchases, with 20% deducted for development costs. 
+                    The remaining amount is distributed as rewards after the final
                     game of the season, following these rules:
                   </p>
                   <ul className="space-y-1 mb-2">
                     <li>🥇 1st place team: 30% of the prize pool</li>
-                    <li>🥈 2nd place team: 25%</li>
-                    <li>🥉 3rd place team: 20%</li>
-                    <li>🔹 4th place team: 15%</li>
-                    <li>🔹 5th place team: 10%</li>
+                    <li>🥈 2nd place team: 20%</li>
+                    <li>🥉 3rd place team: 15%</li>
+                    <li>🔹 4th place team: 10%</li>
+                    <li>🔹 5th place team: 5%</li>
                   </ul>
-                  <p>
-                    The reward for each team is then evenly divided among all
-                    registered players in that team at the end of the
-                    season&apos;s final match.
-                  </p>
-                  <p className="mt-2">
-                    Payouts are automatic and sent directly to the Farcaster
-                    wallet linked to each player.
-                  </p>
+                  <p>The reward is sent to the captain of each team.</p>
                   <button
                     className="mt-2 text-green-400 font-medium"
                     onClick={() => setShowTooltip(false)}
@@ -324,115 +266,112 @@ export default function LeaguePage() {
             </div>
 
             {/* Team Leaderboard */}
-            <div className="mb-6">
-              <TeamLeaderboard />
+            <div className="mb-4">
+              <TeamLeaderboard 
+                page={currentPage} 
+                limit={teamsPerPage}
+                onTeamClick={handleTeamClick}
+                refreshTrigger={refreshTrigger}
+              />
             </div>
 
-            {/* Test Match Button */}
-            <div className="text-center mb-3">
-              <button
-                onClick={simulateMatch}
-                className={`gradient-button py-2 px-4 rounded-lg text-sm transition-all duration-300 ${
-                  simulatingMatch
-                    ? "opacity-50 cursor-not-allowed"
-                    : "active:scale-95"
-                }`}
-                disabled={simulatingMatch}
-              >
-                {simulatingMatch ? "Simulating..." : "Simulate Test Match"}
-              </button>
-              <p className="text-xs text-gray-400 mt-1">
-                This button is for testing purposes and will be removed later.
-              </p>
-            </div>
+            {/* Pagination Controls - Only show if we have teams */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2 mt-4 mb-2">
+                <button
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-md text-xs ${
+                    currentPage === 1
+                      ? "bg-gray-700/30 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                  }`}
+                  aria-label="Previous page"
+                >
+                  &lt;
+                </button>
+
+                <div className="flex space-x-1">
+                  {[...Array(totalPages)].map((_, i) => {
+                    const pageNum = i + 1;
+                    // Show current page, first, last, and pages around current
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`w-7 h-7 rounded-md text-xs flex items-center justify-center ${
+                            currentPage === pageNum
+                              ? "bg-green-600/70 text-white"
+                              : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    } else if (
+                      (pageNum === currentPage - 2 && currentPage > 3) ||
+                      (pageNum === currentPage + 2 &&
+                        currentPage < totalPages - 2)
+                    ) {
+                      // Show ellipsis for skipped pages
+                      return (
+                        <span
+                          key={pageNum}
+                          className="w-7 h-7 flex items-center justify-center text-gray-400"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+
+                <button
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-md text-xs ${
+                    currentPage === totalPages
+                      ? "bg-gray-700/30 text-gray-500 cursor-not-allowed"
+                      : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                  }`}
+                  aria-label="Next page"
+                >
+                  &gt;
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Error display - show both API errors and balance errors */}
         {(error || isBalanceError) && (
-          <div className="text-red-500 text-center mt-2 text-xs">
-            {error ||
-              (isBalanceError
-                ? "Failed to load prize pool data. Please try again later."
-                : "")}
+          <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-3 mt-4 text-center">
+            <p className="text-red-400 text-xs">
+              {error ||
+                (isBalanceError
+                  ? "Failed to load prize pool data. Please try again later."
+                  : "")}
+            </p>
           </div>
         )}
       </main>
       <Footer />
 
-      {/* Live Match Indicator - only shown when there's an active match but popup is closed */}
-      {matchInProgress && !showMatchPopup && (
-        <div
-          className="fixed bottom-20 right-4 bg-green-600 text-white p-3 rounded-full shadow-lg cursor-pointer flex items-center justify-center animate-pulse"
-          onClick={() => setShowMatchPopup(true)}
-          aria-label="View live match"
-        >
-          <div className="mr-2 w-3 h-3 bg-red-500 rounded-full"></div>
-          <span className="text-sm font-medium">LIVE MATCH</span>
-        </div>
-      )}
-
-      {/* Match Popup */}
-      {showMatchPopup && matchData && (
-        <EnhancedTeamMatchPopup
-          match={matchData.match}
-          teamStats={matchData.stats}
-          onClose={() => setShowMatchPopup(false)}
-          onMatchComplete={async () => {
-            // When match is completed, update the database
-            if (activeMatchId) {
-              try {
-                // 1. Mark the match as completed
-                await fetch(`/api/matches/${activeMatchId}/complete`, {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    result: matchData.match.result,
-                    homeStats: matchData.match.homeStats,
-                    awayStats: matchData.match.awayStats,
-                  }),
-                });
-
-                // 2. Update team stats
-                const homeTeamId = matchData.match.homeTeamId;
-                const awayTeamId = matchData.match.awayTeamId;
-
-                await Promise.all([
-                  fetch(`/api/teams/${homeTeamId}`, {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      stats: matchData.stats.home,
-                    }),
-                  }),
-                  fetch(`/api/teams/${awayTeamId}`, {
-                    method: "PATCH",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                      stats: matchData.stats.away,
-                    }),
-                  }),
-                ]);
-
-                // 3. Clear the active match state
-                setMatchInProgress(false);
-                setActiveMatchId(null);
-
-                // 4. Force refresh the leaderboard
-                // This will be handled by reloading the page or component
-                window.location.reload();
-              } catch (error) {
-                console.error("Error completing match:", error);
-              }
-            }
-          }}
-        />
-      )}
+      {/* Last Match Modal */}
+      <LastMatchModal
+        isOpen={isLastMatchModalOpen}
+        onClose={() => setIsLastMatchModalOpen(false)}
+        matchData={selectedTeam?.lastMatch || null}
+        teamName={selectedTeam?.name || ""}
+      />
     </div>
   );
 }

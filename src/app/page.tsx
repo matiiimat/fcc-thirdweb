@@ -136,7 +136,8 @@ export default function Home() {
 
       try {
         const response = await fetch(
-          `/api/players/address/${encodeURIComponent(address)}`
+          `/api/players/address/${encodeURIComponent(address)}`,
+          { cache: "no-store" } // Prevent caching
         );
 
         if (!response.ok) {
