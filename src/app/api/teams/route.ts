@@ -129,8 +129,9 @@ export async function POST(req: NextRequest) {
       await generateNewSchedule(allTeams);
     }
 
-    // Invalidate team cache
+    // Invalidate caches
     cache.del(CACHE_KEYS.TEAM_LEADERBOARD);
+    cache.del(CACHE_KEYS.PLAYER_BY_ADDRESS(normalizedCaptainAddress));
     setInCache(CACHE_KEYS.TEAM(team._id.toString()), team.toObject(), 300);
     setInCache(CACHE_KEYS.TEAM_BY_NAME(normalizedTeamName), team.toObject(), 300);
 

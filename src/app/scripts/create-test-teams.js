@@ -7,8 +7,11 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// MongoDB connection string - will be replaced by the actual URI
-const uri = "mongodb+srv://username:pass@url/?retryWrites=true&w=majority&appName=name";
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  console.error('MONGODB_URI environment variable is not set');
+  process.exit(1);
+}
 
 
 // Bot player stats configurations

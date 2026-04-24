@@ -3,6 +3,7 @@ import connectDB from "@/app/lib/mongodb";
 import TeamModel from "@/app/models/Team";
 import PlayerModel from "@/app/models/Player";
 import { TEAM_CONSTANTS } from "@/app/lib/constants";
+import { invalidatePlayerCache, invalidateTeamCache } from "@/app/lib/serverCache";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -80,6 +81,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // Update player's team
     player.team = team.teamName;
     await player.save();
+
+    // Invalidate caches so the next fetch returns fresh data
+    invalidatePlayerCache(player._id.toString(), ethAddress);
+    invalidateTeamCache(team._id.toString(), team.teamName);
 
     return NextResponse.json({ success: true, team: team.teamName });
   } catch (error) {

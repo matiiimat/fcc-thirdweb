@@ -7,7 +7,11 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const uri = "mongodb+srv://mathieulr21:CHBTkLgXd9Hq2llV@fcc-test-cluster.ofxet.mongodb.net/?retryWrites=true&w=majority&appName=fcc-test-cluster";
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  console.error('MONGODB_URI environment variable is not set');
+  process.exit(1);
+}
 
 // Main function to initiate a new season
 async function initiateNewSeason() {

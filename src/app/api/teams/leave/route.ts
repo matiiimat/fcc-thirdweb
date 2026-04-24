@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "../../../lib/mongodb";
 import TeamModel from "../../../models/Team";
 import PlayerModel from "../../../models/Player";
+import { invalidatePlayerCache, invalidateTeamCache } from "@/app/lib/serverCache";
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,10 +49,17 @@ export async function POST(req: NextRequest) {
     await team.save();
 
     // Update player's team status
-    await PlayerModel.findOneAndUpdate(
-      { ethAddress: playerAddress },
-      { team: "Unassigned" }
+    const player = await PlayerModel.findOneAndUpdate(
+      { ethAddress: playerAddress.toLowerCase() },
+      { team: "Unassigned" },
+      { new: true }
     );
+
+    // Invalidate caches
+    if (player) {
+      invalidatePlayerCache(player._id.toString(), playerAddress.toLowerCase());
+    }
+    invalidateTeamCache(team._id.toString(), teamName);
 
     return NextResponse.json({ success: true });
   } catch (error) {
